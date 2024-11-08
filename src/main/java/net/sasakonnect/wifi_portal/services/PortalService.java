@@ -168,6 +168,31 @@ public class PortalService {
 	   
 	   return null;
    }
+   public Object reSendOtp(SendOtpDto login) {
+	   var phone = login.getPhone().trim();
+	   if(phone.length() < 9) {
+		   var map = new HashMap<>();
+		   map.put("success",false);
+		   map.put("message","Incorrect phone number");
+		   
+		   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+	   }
+	   
+	   var params = new HashMap<>();
+	   params.put("phone", "+254"+phone);
+	   
+	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.RE_SEND_OTP)
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+	   String responseJson = responseMono.block();
+	   if(responseJson !=null) {
+		   return new Gson().fromJson(responseJson,Map.class);
+	   }
+	   
+	   return null;
+   }
+   
+   
    
    public Object addDevice(AddDeviceDto deviceDto) {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

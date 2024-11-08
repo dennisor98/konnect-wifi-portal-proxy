@@ -9,7 +9,9 @@ public class PortalEndpointsConstant {
 	public final  static  String PORTAL_AUTH = BASE_URL+"/webPortalAuthAttempt";
 	public final  static  String CHAT_SERVER = "http://105.29.165.232:23045/auth/api/v1/user-register";
 
-	public final  static  String SEND_OTP = BASE_URL+"/sendOTP";
+	public final  static  String RE_SEND_OTP = BASE_URL+"/sendOTP";
+	public final  static  String SEND_OTP = BASE_URL+"/login";
+
 	public final  static  String VALIDATE_OTP = BASE_URL+"/confirmOTP";
 	public final  static  String GET_PACKAGES = BASE_URL+"/getSubscriptionpackages";
 	public final  static  String GET_PACKAGE_BY_ID = BASE_URL+"/getSubscriptionpackageById";
