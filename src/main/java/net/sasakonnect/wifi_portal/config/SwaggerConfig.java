@@ -32,6 +32,8 @@ public class SwaggerConfig {
 	OpenAPI openApiInformation() throws Exception {
 		Server localServer = new Server().url("http://localhost:8080/konnect-wifi")
 				.description("Localhost Server URL");
+		Server productionServer = new Server().url("https://mobile.sasakonnect.net/konnect-wifi")
+				.description("Localhost Server URL");
 		
 
 		Contact contact = new Contact().email("konnect.devops@gmail.com").name("Konnect Devops Team");
@@ -52,6 +54,11 @@ public class SwaggerConfig {
 		);
 
 		switch (profileActive) {
+		case "prod": {
+			openApi.info(info).addServersItem(productionServer);
+			break;
+
+		}
 		case "dev": {
 			openApi.info(info).addServersItem(localServer);
 			break;
