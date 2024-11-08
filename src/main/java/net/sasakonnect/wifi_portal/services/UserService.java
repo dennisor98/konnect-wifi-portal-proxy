@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 
@@ -17,6 +18,7 @@ import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.ClientSubDto;
+import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
 import net.sasakonnect.wifi_portal.RequestDto.VerifyOtpDto;
 import net.sasakonnect.wifi_portal.ResponseDto.UserObjectDTO;
@@ -70,6 +72,49 @@ public class UserService  implements UserDetailsService{
 		return false;
 	}
 
+	public void createSuperUser(String phone) {
+		Optional<User> userOpt =  this.userRepository.findByPhone(phone);
+		if(userOpt.isEmpty()) {
+			var encodedPass =  new BCryptPasswordEncoder().encode("admin1234");
+			var user = User.builder().firstname("Admin").lastname("Admin").phone(phone).password(encodedPass).build();
+			try {
+				this.userRepository.save(user);
+			}catch(Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+	
+	public Object createAccount(CreateAccDto  acc) {
+		var data = new HashMap<>();
+		
+		if(acc.getPhone().length() < 9)  {
+			Map<String,Object> map =  new HashMap<>();
+			map.put("success","false");
+			map.put("message","Phone must have at least 9 digits");
+			
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+			
+		}
+		var mobile =  acc.getPhone().trim().substring(acc.getPhone().length() - 9);
+		data.put("phone","+254"+mobile);
+		data.put("firstname",acc.getFirstname());
+		data.put("lastname", acc.getLastname());
+		data.put("email", acc.getEmail());
+		data.put("champCode", acc.getChampCode());
+
+		var body = new Gson().toJson(data);
+		Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.CREATE_ACCOUNT)
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		String responseJson = responseMono.block();
+		
+		if(responseJson !=null) {
+			return new Gson().fromJson(responseJson,Map.class);
+		}
+		return null;
+
+	}
 	    
 
 	    public Object verifyOtp(VerifyOtpDto getOtp) {
@@ -272,53 +317,16 @@ public class UserService  implements UserDetailsService{
 		   body.put("firstname",update.getFirstName());
 		   body.put("lastname",update.getLastName());
 		   body.put("token",u.getToken());
-		   body.put("userId",u.getId());
-		   body.put("konnecter",u.getId());
-		   Mono<VerifyOtpResponseDto> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.UPDATE_CUSTOMER_INFO)
+		   body.put("userId",u.getUserId());
+		   body.put("konnecter",u.getUserId());
+		   Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.UPDATE_CUSTOMER_INFO)
 					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
-					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(VerifyOtpResponseDto.class);
-		   VerifyOtpResponseDto responseJson = responseMono.block();
+					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		   String responseJson = responseMono.block();
 		   if(responseJson !=null) {
-              var resp = responseJson;
-			   if(resp.getSuccess().equalsIgnoreCase("true")) {
-				   var payload = resp.getPayload();
-				   log.error(payload+"payload");
-				   Map<String,Object> map = new HashMap<>();
-				   map.put("success", true);
-				   map.put("message","Account details updated");
-				   Map<String,Object> user = new HashMap<>();
-	            	 user.put("createdAt",payload.getCreatedAt());
-	                 user.put("deleatedAt", payload.getDeleatedAt());
-	                 user.put("updatedAt", payload.getUpdatedAt());
-	                 user.put("id",payload.getUser_id());
-	                 user.put("email", payload.getEmail());
-	                 user.put("firstname", payload.getFirstname());
-	                 user.put("lastname", payload.getLastname());
-	                 user.put("is_active", payload.getIs_active());
-	                 user.put("user_id", payload.getUser_id());
-	                 user.put("phone", payload.getPhone());
-	                 user.put("coupon", payload.getCoupon());
-	                 user.put("champCode", payload.getChampCode());
-	                 user.put("gift_id", payload.getGift_id());
-	                 user.put("token", payload.getToken());
-	                 user.put("last_login", payload.getLast_login());
-	                 user.put("pay_code", payload.getPay_code());
-	                 user.put("isMuted", payload.getIs_muted());
-	                 user.put("created_at", payload.getCreatedAt());
-	                 user.put("updated_at", payload.getUpdated_at());
-	                 user.put("deletedAt", payload.getDeletedAt());
-	                 user.put("avatorColor", payload.getAvatorColor());
-	                 user.put("accountType", payload.getAccountType());
-	                 user.put("canReceivecall", payload.getCanReceivecall());
-	                 user.put("avator_key", payload.getAvator_key());
-	                 user.put("access_token", payload.getAccess_token());
-	                 user.put("refresh_token", payload.getRefresh_token());
-	                 
-	                 map.put("payload", user);
-			   }
-			   
-			   return new Gson().toJson(responseJson,Map.class);
+			   return new Gson().fromJson(responseJson,Map.class);
 		   }
+
 		   return null;
 	   }
 	   
@@ -332,7 +340,6 @@ public class UserService  implements UserDetailsService{
 		   body.put("id",user.getUserId());
 		   body.put("konnecter",user.getUserId());
 		   body.put("token",user.getToken());
-		   log.error(new Gson().toJson(body)+"body");
 		   Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
 				   .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(body)))
 				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
@@ -348,6 +355,8 @@ public class UserService  implements UserDetailsService{
 		   }
 		   return null;
 	   }
+	   
+	   
 			   		
 
 }

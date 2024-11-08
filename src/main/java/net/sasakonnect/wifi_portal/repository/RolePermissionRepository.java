@@ -1,0 +1,18 @@
+package net.sasakonnect.wifi_portal.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import net.sasakonnect.wifi_portal.domain.Permission;
+import net.sasakonnect.wifi_portal.domain.Role;
+import net.sasakonnect.wifi_portal.domain.RolePermission;
+
+public interface RolePermissionRepository extends JpaRepository<RolePermission,String> {
+   Optional<RolePermission> findByRoleAndPermission(Role role ,Permission permission);
+   List<RolePermission> findByRole(Role role);
+   
+   List<Permission> findPermissionByRole(Role role);
+   
+}

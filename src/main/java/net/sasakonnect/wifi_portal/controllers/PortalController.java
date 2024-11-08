@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ClientSubDto;
+import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
+import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
+import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
@@ -29,9 +32,20 @@ public class PortalController extends BasePortalController{
 	@Autowired
 	UserService userService;
 	
+	@PostMapping("register")
+	public Object register(@Valid @RequestBody() CreateAccDto acc) {
+		return this.userService.createAccount(acc);
+	}
+	
    @PostMapping("getDevices")
    public Object getDevices() {
 	   return this.portalService.getDevices();
+   }
+   
+   @PostMapping("getSubscriptionpackageById")
+   public Object getSubscriptionPackageById(@Valid @RequestBody() PackageByMacDto pkg) {
+	   
+	   return this.portalService.getSubsByPackageId(pkg);
    }
    
    @PostMapping("updateCustomer")
@@ -51,6 +65,16 @@ public class PortalController extends BasePortalController{
    
    @PostMapping("confirmOTP")
    public Object verifyOtp(@Valid @RequestBody() VerifyOtpDto otp) {
+	   return this.userService.verifyOtp(otp);
+   }
+   
+   @PostMapping("confirmOTPV2")
+   public Object verifyOtpv2(@Valid @RequestBody() VerifyOtpDto otp) {
+	   return this.userService.verifyOtp(otp);
+   }
+   
+   @PostMapping("validateExtraDevice")
+   public Object addDevice(@Valid @RequestBody() VerifyOtpDto otp) {
 	   return this.userService.verifyOtp(otp);
    }
    
@@ -93,6 +117,11 @@ public class PortalController extends BasePortalController{
    @PostMapping("getActiveSubscriptionrenewalsByPhone")
    public Object getActiveSubscriptionrenewalsByPhone(@Valid @RequestBody SendOtpDto input) {
 	   return this.portalService.getUserSubscriptionsByPhone(input.getPhone());
+   }
+   
+   @PostMapping("getMpesaPaymentByCheckoutRequestID")
+   public Object pollMpesa(@Valid @RequestBody PollMpesaDto input) {
+	   return this.portalService.pollMpesa(input);
    }
    
    

@@ -22,6 +22,8 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
+import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
+import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
@@ -62,13 +64,14 @@ public class PortalService {
    public Object getDevices() {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	   Map<String,Object> req = new HashMap<>();
-	   req.put("id",user.getId());
-	   req.put("konnecter",user.getId());
+	   req.put("id",user.getUserId());
+	   req.put("konnecter",user.getUserId());
 	   req.put("token",user.getToken());
 	   
-	  try {
+	   var body = new Gson().toJson(req);
+	   try {
 		  Mono<String> responseMono = this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_ACTIVE_DEVICE)
-					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(req))
+					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
 					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 		   String responseJson = responseMono.block();
 		   if(responseJson !=null) {
@@ -91,7 +94,7 @@ public class PortalService {
 	   Map<String,Object> map = new HashMap<>();
 	   Mono<PackageResponseDto> responseMono = this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_PACKAGES)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(map)))
-				.header("Authorization", "Basic " + authService.getBasicAuth())
+//				.header("Authorization", "Basic " + authService.getBasicAuth())
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(PackageResponseDto.class);
 	   PackageResponseDto responseJson = responseMono.block();
 	   if(responseJson !=null) {
@@ -288,15 +291,17 @@ public class PortalService {
    }
    
    public Object mpesaStkPush(StkPushDto tillDto) {
+	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	   var data = new HashMap<>();
-	   data.put("firstname", tillDto.getFirstname());
-	   data.put("phone", tillDto.getPhone());
+	   
+	   data.put("firstname", user.getFirstname());
+	   data.put("phone",user.getPhone().trim());
 	   data.put("subscriptionPlanId", tillDto.getSubscriptionPlanId());
-	   data.put("ipAddress", tillDto.getIpAddress());
-	   data.put("authAttempt", tillDto.getAuthAttempt());
-	   data.put("userId", tillDto.getUserId());
-	   data.put("amount", tillDto.getAmount());
-	   data.put("smsContent", tillDto.getSmsContent());
+	   data.put("ipAddress","");
+	   data.put("authAttempt","");
+	   data.put("userId",user.getUserId());
+	   data.put("amount","");
+	   data.put("smsContent","");
 	   
 	   var body = new Gson().toJson(data);
 	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.BUY_PACKAGE_THOUGH_MPESA)
@@ -332,15 +337,51 @@ public class PortalService {
 	   }
 	   return null;
    }
+   
+   public Object pollMpesa(PollMpesaDto mpesa) {
+	   Map<String,Object> data =  new HashMap<>();
+	   data.put("MerchantRequestID", mpesa.getMerchantRequestID());
+	   data.put("CheckoutRequestID", mpesa.getCheckoutRequestID());
+	   data.put("ResponseCode",mpesa.getResponseCode());
+	   data.put("ResponseDescription",mpesa.getResponseDescription());
+	   data.put("CustomerMessage",mpesa.getCheckoutRequestID());
 
+	   var body = new Gson().toJson(data);
+
+	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.POLL_MPESA_FOR_PAYMENT_UPDATE)
+			   .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+			   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+	   String responseJson = responseMono.block();
+	   if(responseJson !=null) {
+		   return new Gson().fromJson(responseJson,Map.class);
+	   }
+
+	   return null;
+   }
+   
+   public Object getSubsByPackageId(PackageByMacDto pkg) {
+	   var data = new HashMap<>();
+	   data.put("id", pkg.getId());
+	   
+	   var body =  new Gson().toJson(data);
+	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_PACKAGE_BY_ID)
+				 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+				 .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		 String responseJson = responseMono.block();
+		 if(responseJson !=null) {
+			 return new Gson().fromJson(responseJson,Map.class);
+		 }
+	   return null;
+   }
+
+   
    public Object getUserObject(String phone) {
 	   var data = new HashMap<>();
 	   data.put("phone", phone.trim());
 	   data.put("dev_id",subsDevId);
 	   try {
-		   ObjectMapper mapper = new ObjectMapper();
+		   ObjectMapper mapper = new ObjectMapper(); 
 		 var body =  mapper.writeValueAsString(data);
-		 log.error(body+"{}");
 		 Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_USER_TOKEN)
 				 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
 				 .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
@@ -356,7 +397,8 @@ public class PortalService {
 	   
 	   return null;
    }
-
+   
+ 
    
    
    
