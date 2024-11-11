@@ -51,6 +51,6 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 tasks.named("bootRun") {
-	mainClass = 'net.sasakonnect.wifi_portal.WalletApplication'
+	mainClass = 'net.sasakonnect.wifi-portal.WalletApplication'
 }
 
