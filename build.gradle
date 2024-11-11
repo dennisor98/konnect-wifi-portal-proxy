@@ -49,8 +49,9 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
-tasks.withType(JavaCompile) {
-    options.instrumentation = false
+tasks.named("bootRun") {
+	mainClass = 'net.sasakonnect.wifi_portal.WifiPortalApplication'
 }
+
 
 
