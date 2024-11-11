@@ -346,11 +346,7 @@ public class UserService  implements UserDetailsService{
 				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 
 		   String responseJson = responseMono.block();
-		   if(responseJson !=null) {
-			   return new Gson().fromJson(responseJson,Map.class);
-			  
-		   }
-		   return null;
+			   return new Gson().fromJson(responseJson, Map.class);
 	   }
 	   
 	   

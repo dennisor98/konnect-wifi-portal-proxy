@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -318,7 +317,19 @@ public class PortalService {
    public Object mpesaStkPush(StkPushDto tillDto) {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	   var data = new HashMap<>();
-	   String mobile = tillDto.getPhone().trim();
+	   
+	   String mobile = null;
+	   if(tillDto.getPhone() !=null) {
+		  mobile = tillDto.getPhone().trim();
+		   if(mobile.length() < 9) {
+			   Map<String,Object> map = new HashMap<>();
+			   map.put("success", "false");
+			   map.put("message","Phone must be at least 9 digits");
+			   
+			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+		   }
+	   }
+	   
 	 
 	   data.put("firstname", user.getFirstname());
 	   data.put("phone",mobile !=null ? "+254"+ mobile.substring(mobile.length() -9 ) : user.getPhone().trim());
