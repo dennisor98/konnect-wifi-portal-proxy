@@ -318,9 +318,10 @@ public class PortalService {
    public Object mpesaStkPush(StkPushDto tillDto) {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	   var data = new HashMap<>();
-	   
+	   String mobile = tillDto.getPhone().trim();
+	 
 	   data.put("firstname", user.getFirstname());
-	   data.put("phone",user.getPhone().trim());
+	   data.put("phone",mobile !=null ? "+254"+ mobile.substring(mobile.length() -9 ) : user.getPhone().trim());
 	   data.put("subscriptionPlanId", tillDto.getSubscriptionPlanId());
 	   data.put("ipAddress","");
 	   data.put("authAttempt","");
