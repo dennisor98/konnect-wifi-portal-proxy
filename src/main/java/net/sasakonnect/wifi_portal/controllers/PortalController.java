@@ -62,6 +62,12 @@ public class PortalController extends BasePortalController{
    public Object sendOtp(@Valid @RequestBody() SendOtpDto otp) {
 	   return this.portalService.sendOtp(otp);
    }
+
+    @PostMapping("reSendOtp")
+   public Object reSendOtp(@Valid @RequestBody() SendOtpDto otp) {
+	   return this.portalService.reSendOtp(otp);
+   }
+
    
    @PostMapping("confirmOTP")
    public Object verifyOtp(@Valid @RequestBody() VerifyOtpDto otp) {
