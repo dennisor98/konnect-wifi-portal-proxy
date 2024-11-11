@@ -1,0 +1,33 @@
+stages:
+  - move
+  - build
+  
+
+build:
+  stage: build
+  script:
+    - echo "Building the application on SSH server..."
+    - hostname
+    - pwd
+    - ssh wifi  "mkdir -p  /home/ahdev/application/wifiproxy-dev/ && cd /home/ahdev/application/wifiproxy-dev/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+
+    - echo "Source code built on remote server"
+  only:
+    - dev
+
+move:
+  stage: move
+  script:
+    - echo "Copying  from remote server to GitLab CI/CD..."
+    - hostname
+    - pwd
+
+
+    - ssh wifi "rm -rf /home/ahdev/application/wifiproxy-dev/*"
+
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi:/home/ahdev/application/wifiproxy-dev/ 
+
+
+    - echo "Artifacts uploaded to GitLab CI/CD."
+  only:
+    - dev
