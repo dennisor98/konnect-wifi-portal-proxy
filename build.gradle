@@ -50,6 +50,9 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+tasks.withType(JavaCompile) {
+    options.instrumentation = false
+}
 tasks.named("bootRun") {
 	mainClass = 'net.sasakonnect.wifi-portal.WalletApplication'
 }
