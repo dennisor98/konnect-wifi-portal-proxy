@@ -126,9 +126,9 @@ public class UserService  implements UserDetailsService{
 	    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
 	    	}
 	        Map<String, Object> params = new HashMap<>();
-	        
+	         var mobile = getOtp.getPhone().trim();
 	        params.put("code",getOtp.getCode());
-	        params.put("phone", "+254"+getOtp.getPhone().trim());
+	        params.put("phone", "+254"+mobile.substring(mobile.length()-9));
 	        params.put("dev_id", otpHash);
 	        
 	        try {
@@ -154,6 +154,7 @@ public class UserService  implements UserDetailsService{
 	           Optional<User> uOpt = this.userRepository.findByPhone(payload.getPhone());
                if(uOpt.isPresent()) {
             	   var u = uOpt.get();
+            	   
             	   Map<String,Object> map = new HashMap<>();
 		            	 map.put("success",true);
 		            	 map.put("userExists",resp.getUserExists());
@@ -345,18 +346,11 @@ public class UserService  implements UserDetailsService{
 				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 
 		   String responseJson = responseMono.block();
-		   if(responseJson !=null) {
-			   var data =  new Gson().fromJson(responseJson,Map.class);
-			   Map<String,Object> map = new HashMap<>();
-			   map.put("success",true);
-			   map.put("subscriptioninfo",data);
-
-			   return ResponseEntity.status(HttpStatus.OK).body(map);
-		   }
-		   return null;
+			   return new Gson().fromJson(responseJson, Map.class);
 	   }
 	   
 	   
-			   		
 
+	   
+			   		
 }

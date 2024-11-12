@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ClientSubDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
@@ -62,11 +63,12 @@ public class PortalController extends BasePortalController{
    public Object sendOtp(@Valid @RequestBody() SendOtpDto otp) {
 	   return this.portalService.sendOtp(otp);
    }
-   @PostMapping("reSendOtp")
+
+    @PostMapping("reSendOtp")
    public Object reSendOtp(@Valid @RequestBody() SendOtpDto otp) {
 	   return this.portalService.reSendOtp(otp);
    }
-   
+
    
    @PostMapping("confirmOTP")
    public Object verifyOtp(@Valid @RequestBody() VerifyOtpDto otp) {
@@ -79,8 +81,8 @@ public class PortalController extends BasePortalController{
    }
    
    @PostMapping("validateExtraDevice")
-   public Object addDevice(@Valid @RequestBody() VerifyOtpDto otp) {
-	   return this.userService.verifyOtp(otp);
+   public Object addDevice(@Valid @RequestBody() AddDeviceDto device) {
+	   return this.portalService.addDevice(device);
    }
    
    @PostMapping("/user/getUserDetailsByPhone")

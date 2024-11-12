@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -211,8 +210,8 @@ public class PortalService {
 	   params.put("id", deviceDto.getId());
 	   params.put("code",deviceDto.getCode());
 	   params.put("token",user.getToken());
-	   params.put("userId",user.getId());
-	   params.put("konnecter",user.getId());
+	   params.put("userId",user.getUserId());
+	   params.put("konnecter",user.getUserId());
 	   params.put("authAttempt",new Gson().toJson(auth));
 	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.ADD_DEVICE_TO_PACKAGE)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
@@ -319,8 +318,21 @@ public class PortalService {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	   var data = new HashMap<>();
 	   
+	   String mobile = null;
+	   if(tillDto.getPhone() !=null) {
+		  mobile = tillDto.getPhone().trim();
+		   if(mobile.length() < 9) {
+			   Map<String,Object> map = new HashMap<>();
+			   map.put("success", "false");
+			   map.put("message","Phone must be at least 9 digits");
+			   
+			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+		   }
+	   }
+	   
+	 
 	   data.put("firstname", user.getFirstname());
-	   data.put("phone",user.getPhone().trim());
+	   data.put("phone",mobile !=null ? "+254"+ mobile.substring(mobile.length() -9 ) : user.getPhone().trim());
 	   data.put("subscriptionPlanId", tillDto.getSubscriptionPlanId());
 	   data.put("ipAddress","");
 	   data.put("authAttempt","");
