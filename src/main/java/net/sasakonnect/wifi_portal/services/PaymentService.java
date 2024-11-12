@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
@@ -42,24 +44,11 @@ public class PaymentService {
 		return null;
 	}
 	public Object stkPush() { 
-//		{    
-//			   "BusinessShortCode": "174379",    
-//			   "Password": "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMTYwMjE2MTY1NjI3",    
-//			   "Timestamp":"20160216165627",    
-//			   "TransactionType": "CustomerPayBillOnline",    
-//			   "Amount": "1",    
-//			   "PartyA":"254708374149",    
-//			   "PartyB":"174379",    
-//			   "PhoneNumber":"254708374149",    
-//			   "CallBackURL": "https://mydomain.com/pat",    
-//			   "AccountReference":"Test",    
-//			   "TransactionDesc":"Test"
-//			}
+
 		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-       var timestamp =  LocalDateTime.now().format(format);
-		Map<String,Object> req =  new HashMap<>();
-		
-		req.put("BusinessShortCode",174379);
+		var timestamp =  LocalDateTime.now().format(format);
+		ObjectNode req = JsonNodeFactory.instance.objectNode();
+		req.put("BusinessShortCode","174379");
 		req.put("Password",this.authService.getMpesaMerchantPassword(timestamp));
 		req.put("Timestamp",timestamp);
 		req.put("TransactionType","CustomerPayBillOnline");
@@ -67,21 +56,18 @@ public class PaymentService {
 		req.put("PartyA","254769156995");
 		req.put("PartyB", shortCode);
 		req.put("PhoneNumber", "254769156995");
-		req.put("CallBackURL","https://c417-105-29-165-234.ngrok-free.app/konnect-wifi/payment/callBack");
+		req.put("CallBackURL","https://c417-105-29-165-234.ngrok-free.app/konnect-wifi/money/callBack");
 		req.put("AccountReference", "Test");
 		req.put("TransactionDesc", "Test");
+
 		
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			
-			var body =  mapper.writeValueAsString(req);
-			log.error(body+"{body}");
+			log.error(req+"{req}");
 			Mono<String> responseMono = this.mpesaClient.webClient
 			        .post()
 			        .uri(MpesaEndpointsConstants.STK_PUSH)
 			        .header("Authorization", this.authService.getMpesaAccessToken())
 			        .contentType(MediaType.APPLICATION_JSON)
-			        .body(BodyInserters.fromValue(body))
+			        .body(BodyInserters.fromValue(req))
 			        .accept(MediaType.APPLICATION_JSON)
 			        .retrieve()
 			        
@@ -94,9 +80,7 @@ public class PaymentService {
 				//    	   return responseJson;
 				return new Gson().fromJson(responseJson,Map.class);
 			}
-		}catch(Exception ex) {
-			ex.printStackTrace();
-		}
+		
 		
 		return null;
 	}

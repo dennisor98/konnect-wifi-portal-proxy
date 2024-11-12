@@ -77,7 +77,7 @@ public class PortalController extends BasePortalController{
    
    @PostMapping("confirmOTPV2")
    public Object verifyOtpv2(@Valid @RequestBody() VerifyOtpDto otp) {
-	   return this.userService.verifyOtp(otp);
+	   return this.userService.verifyOtpV2(otp);
    }
    
    @PostMapping("validateExtraDevice")
