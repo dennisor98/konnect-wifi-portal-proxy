@@ -107,7 +107,7 @@ public class WebSecurityConfig {
 				// Swagger resources like JS and CSS
 				"/webjars/**").permitAll()
                 
-				.requestMatchers("/portal/sendOTP","/portal/confirmOTP")
+				.requestMatchers("/portal/sendOTP","/portal/confirmOTP","/portal/register")
 				.permitAll()
 //				.permitAll()
 				.requestMatchers("/konnect-wifi").permitAll()
