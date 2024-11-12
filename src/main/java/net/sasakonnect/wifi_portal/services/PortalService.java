@@ -210,8 +210,8 @@ public class PortalService {
 	   params.put("id", deviceDto.getId());
 	   params.put("code",deviceDto.getCode());
 	   params.put("token",user.getToken());
-	   params.put("userId",user.getId());
-	   params.put("konnecter",user.getId());
+	   params.put("userId",user.getUserId());
+	   params.put("konnecter",user.getUserId());
 	   params.put("authAttempt",new Gson().toJson(auth));
 	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.ADD_DEVICE_TO_PACKAGE)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
