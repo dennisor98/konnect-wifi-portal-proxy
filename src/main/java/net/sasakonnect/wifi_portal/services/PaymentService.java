@@ -35,10 +35,8 @@ public class PaymentService {
 	MpesaWebClientBean mpesaClient;
 	
 	@Value("${shortCode}")
-	@Value("${shortCode}")
 	String shortCode;
 	
-	@Value("${consumerSecret}")
 	@Value("${consumerSecret}")
 	String password;
 	

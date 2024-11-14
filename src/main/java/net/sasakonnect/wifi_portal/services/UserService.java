@@ -22,7 +22,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.ClientSubDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
-import net.sasakonnect.wifi_portal.RequestDto.ProfileUploadDto;
+//import net.sasakonnect.wifi_portal.RequestDto.ProfileUploadDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
 import net.sasakonnect.wifi_portal.RequestDto.VerifyOtpDto;
 import net.sasakonnect.wifi_portal.ResponseDto.UserObjectDTO;
@@ -32,8 +32,8 @@ import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.Role;
 import net.sasakonnect.wifi_portal.domain.User;
-import net.sasakonnect.wifi_portal.domain.UserImage;
-import net.sasakonnect.wifi_portal.repository.UserImageRepository;
+//import net.sasakonnect.wifi_portal.domain.UserImage;
+//import net.sasakonnect.wifi_portal.repository.UserImageRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
 
@@ -61,8 +61,8 @@ public class UserService  implements UserDetailsService{
 	@Autowired
 	UserRepository userRepository;
 	
-	@Autowired
-	UserImageRepository imageRepository;
+//	@Autowired
+//	UserImageRepository imageRepository;
 
 
 	public User loadUserByUsername(String id) {
@@ -195,7 +195,7 @@ public class UserService  implements UserDetailsService{
 		                 user.put("phone", payload.getPhone());
 		                 user.put("coupon", payload.getCoupon());
 		                 user.put("champCode", payload.getChampCode());
-		                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
+//		                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
 		                 user.put("gift_id", payload.getGift_id());
 		                 user.put("token", payload.getToken());
 		                 user.put("last_login", payload.getLast_login());
@@ -289,7 +289,7 @@ public class UserService  implements UserDetailsService{
 			                 user.put("coupon", payload.getCoupon());
 			                 user.put("champCode", payload.getChampCode());
 			                 user.put("gift_id", payload.getGift_id());
-			                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
+//			                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
 			                 user.put("token", payload.getToken());
 			                 user.put("last_login", payload.getLast_login());
 			                 user.put("pay_code", payload.getPay_code());
@@ -402,57 +402,57 @@ public class UserService  implements UserDetailsService{
 	   
 	   
 	   
-	   public Object uploadProfileImage(ProfileUploadDto profiledto) {
-		   if(! isBase64(profiledto.getBase64Image())) {
-			   var node = JsonNodeFactory.instance.objectNode();
-			   node.put("success", false);
-			   node.put("message","image must be in base64 format");
-			   
-			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
-		   }
-		   User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		   if(user.getProfileImage() != null) {
-			   var profile = user.getProfileImage();
-			   profile.setImage(profiledto.getBase64Image());
-			   try {
-				   this.imageRepository.save(profile);
-				   ObjectNode node = JsonNodeFactory.instance.objectNode();
-				   node.put("success",true);
-				   node.put("message","Profile image uploaded");
-				   node.put("image",profile.getImage());
-
-				   return ResponseEntity.status(HttpStatus.OK).body(node);
-			   }catch(Exception ex) {
-				   ObjectNode node = JsonNodeFactory.instance.objectNode();
-				   node.put("success",false);
-				   node.put("message","Something went wrong");
-
-				   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
-			   }
-
-		   }
-
-		   var image =  UserImage.builder().image(profiledto.getBase64Image()).user(user).build();
-		   try {
-			   var profile =  this.imageRepository.save(image);
-			   ObjectNode node = JsonNodeFactory.instance.objectNode();
-			   user.setProfileImage(profile);
-			   this.userRepository.save(user);
-			   node.put("success",true);
-			   node.put("message","Profile image uploaded");
-			   node.put("image",profile.getImage());
-			   
-			   return ResponseEntity.status(HttpStatus.OK).body(node);
-		   }catch(Exception ex) {
-			   ObjectNode node = JsonNodeFactory.instance.objectNode();
-			   node.put("success",false);
-			   node.put("message","Something went wrong");
-
-			   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
-		   }
-
-
-	   }
+//	   public Object uploadProfileImage(ProfileUploadDto profiledto) {
+//		   if(! isBase64(profiledto.getBase64Image())) {
+//			   var node = JsonNodeFactory.instance.objectNode();
+//			   node.put("success", false);
+//			   node.put("message","image must be in base64 format");
+//			   
+//			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
+//		   }
+//		   User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//		   if(user.getProfileImage() != null) {
+//			   var profile = user.getProfileImage();
+//			   profile.setImage(profiledto.getBase64Image());
+//			   try {
+//				   this.imageRepository.save(profile);
+//				   ObjectNode node = JsonNodeFactory.instance.objectNode();
+//				   node.put("success",true);
+//				   node.put("message","Profile image uploaded");
+//				   node.put("image",profile.getImage());
+//
+//				   return ResponseEntity.status(HttpStatus.OK).body(node);
+//			   }catch(Exception ex) {
+//				   ObjectNode node = JsonNodeFactory.instance.objectNode();
+//				   node.put("success",false);
+//				   node.put("message","Something went wrong");
+//
+//				   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
+//			   }
+//
+//		   }
+//
+//		   var image =  UserImage.builder().image(profiledto.getBase64Image()).user(user).build();
+//		   try {
+//			   var profile =  this.imageRepository.save(image);
+//			   ObjectNode node = JsonNodeFactory.instance.objectNode();
+//			   user.setProfileImage(profile);
+//			   this.userRepository.save(user);
+//			   node.put("success",true);
+//			   node.put("message","Profile image uploaded");
+//			   node.put("image",profile.getImage());
+//			   
+//			   return ResponseEntity.status(HttpStatus.OK).body(node);
+//		   }catch(Exception ex) {
+//			   ObjectNode node = JsonNodeFactory.instance.objectNode();
+//			   node.put("success",false);
+//			   node.put("message","Something went wrong");
+//
+//			   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
+//		   }
+//
+//
+//	   }
 	   
 	   private  boolean isBase64(String str) {
 	        // Check if the string length is a multiple of 4 and contains only valid Base64 characters
