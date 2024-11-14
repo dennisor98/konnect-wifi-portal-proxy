@@ -42,9 +42,9 @@ public class User extends BasePortalDomain implements Serializable,UserDetails{
 	    @Column(length = 15, unique = true, nullable = true)
 	    private String phone;
 	    
-//	    @OneToOne()
-//	    @JoinColumn(name="profile_image",nullable=true)
-//	    private UserImage profileImage;
+	    @OneToOne()
+	    @JoinColumn(name="profile_image",nullable=true)
+	    private UserImage profileImage;
 
 	    @Column(nullable = true)
 	    private String coupon;
