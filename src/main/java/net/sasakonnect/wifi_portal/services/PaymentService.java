@@ -2,8 +2,6 @@ package net.sasakonnect.wifi_portal.services;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -17,7 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
@@ -38,8 +35,10 @@ public class PaymentService {
 	MpesaWebClientBean mpesaClient;
 	
 	@Value("${shortCode}")
+	@Value("${shortCode}")
 	String shortCode;
 	
+	@Value("${consumerSecret}")
 	@Value("${consumerSecret}")
 	String password;
 	
@@ -94,19 +93,19 @@ public class PaymentService {
 		req.put("CallBackURL",mpesaCallBackUrl);
 		req.put("AccountReference", "Test");
 		req.put("TransactionDesc", "Test");
+
 		
-		log.error("{body}"+req);
-
-		Mono<String> responseMono = this.mpesaClient.webClient
-				.post()
-				.uri(MpesaEndpointsConstants.STK_PUSH)
-				.header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(BodyInserters.fromValue(req))
-				.accept(MediaType.APPLICATION_JSON)
-				.retrieve()
-
-				.bodyToMono(String.class);
+			log.error(req+"{req}");
+			Mono<String> responseMono = this.mpesaClient.webClient
+			        .post()
+			        .uri(MpesaEndpointsConstants.STK_PUSH)
+			        .header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
+			        .contentType(MediaType.APPLICATION_JSON)
+			        .body(BodyInserters.fromValue(req))
+			        .accept(MediaType.APPLICATION_JSON)
+			        .retrieve()
+			        
+			        .bodyToMono(String.class);
 
 		try {
 			String responseJson = responseMono.block();

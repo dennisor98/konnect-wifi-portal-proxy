@@ -144,14 +144,15 @@ public class UserService  implements UserDetailsService{
 	        params.put("phone", "+254"+mobile.substring(mobile.length()-9));
 	        params.put("dev_id", otpHash);
 	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
-	        	Optional<User> user = this.userRepository.findByPhone(getOtp.getPhone());
+	        	Optional<User> user = this.userRepository.findByPhone("+254703454954");
 	        	var map = new HashMap<>();
 	        	map.put("success",true);
 	        	map.put("account","test");
 	        	map.put("userExists",true);
-	        	map.put("payload", user);
+	        	map.put("payload", user.get());
 	        	
 	        	return ResponseEntity.status(HttpStatus.OK).body(map);
+	        	
 	        }
 	        try {
 	        var body = new Gson().toJson(params);
@@ -247,12 +248,12 @@ public class UserService  implements UserDetailsService{
 	        params.put("dev_id", otpHash);
 	         
 	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
-	        	Optional<User> user = this.userRepository.findByPhone(getOtp.getPhone());
+	        	Optional<User> userOpt = this.userRepository.findByPhone("+254703454954");
 	        	var map = new HashMap<>();
 	        	map.put("success",true);
 	        	map.put("account","test");
 	        	map.put("userExists",true);
-	        	map.put("payload", user);
+	        	map.put("payload",userOpt.isPresent() ? userOpt.get() : null);
 	        	
 	        	return ResponseEntity.status(HttpStatus.OK).body(map);
 	        	
