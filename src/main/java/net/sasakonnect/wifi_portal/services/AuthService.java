@@ -32,19 +32,17 @@ public class AuthService {
 	private String portalUserPassword;
 
 	@Value("${consumerKey}")
-	private String mpesaUserName;
+	private String consumerKey;
 
-	@Value("${shortCode}")
 	@Value("${shortCode}")
 	private String shortCode;
 
 	@Value("${consumerSecret}")
-	private String mpesaPassword;
+	private String consumerSecret;
 	
 	@Value("${consumerPassKey}")
 	String consumerPassKey;
 
-	private final Cache<String,String> tokenCache;
 
 	public String getBasicAuth() {
 		String data = portalUserName + ":" + portalUserPassword;
@@ -58,7 +56,7 @@ public class AuthService {
 		return new String(encodedBytes);
 	}
 	public String getMpesaMerchantPassword(String timestamp) {
-		String data = shortCode+consumerPassKey+timestamp;
+		String data = shortCode +"bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"+timestamp;
 		byte[] encodedBytes = Base64.getEncoder().encode(data.getBytes());
 		return new String(encodedBytes);
 	}
