@@ -31,22 +31,19 @@ public class AuthService {
 	@Value("${portalUserPassword}")
 	private String portalUserPassword;
 
-	@Value("${mpesaUserName}")
-	private String mpesaUserName;
+	@Value("${consumerKey}")
+	private String consumerKey;
 
-	@Value("${merchantAccount}")
+	@Value("${shortCode}")
 	private String shortCode;
 
-	@Value("${mpesaPassword}")
-	private String mpesaPassword;
+	@Value("${consumerSecret}")
+	private String consumerSecret;
+	
+	@Value("${consumerPassKey}")
+	String consumerPassKey;
 
-	private final Cache<String,String> tokenCache;
 
-	public AuthService() {
-		this.tokenCache = Caffeine.newBuilder()
-				.maximumSize(1) 
-				.build();
-	}
 	public String getBasicAuth() {
 		String data = portalUserName + ":" + portalUserPassword;
 		byte[] encodedBytes = Base64.getEncoder().encode(data.getBytes());
@@ -54,12 +51,12 @@ public class AuthService {
 	}
 
 	private String getMpesaBasicAuth() {
-		String data = mpesaUserName + ":" + mpesaPassword;
+		String data = consumerKey + ":" + consumerSecret;
 		byte[] encodedBytes = Base64.getEncoder().encode(data.getBytes());
 		return new String(encodedBytes);
 	}
 	public String getMpesaMerchantPassword(String timestamp) {
-		String data = shortCode + ":" +"bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"+":"+timestamp;
+		String data = shortCode +"bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"+timestamp;
 		byte[] encodedBytes = Base64.getEncoder().encode(data.getBytes());
 		return new String(encodedBytes);
 	}
