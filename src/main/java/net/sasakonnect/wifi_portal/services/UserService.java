@@ -230,6 +230,10 @@ public class UserService  implements UserDetailsService{
 				  Mono<VerifyOtpResponseDto> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.VALIDATE_OTP)
 							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(VerifyOtpResponseDto.class);
+				  
+				  
+				  
+				  
 				  VerifyOtpResponseDto responseJson = responseMono.block();
 				   if(responseJson !=null) {
 		             var resp =  responseJson;
