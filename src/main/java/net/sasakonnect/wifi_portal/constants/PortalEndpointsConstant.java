@@ -29,6 +29,8 @@ public class PortalEndpointsConstant {
 	public final  static  String GET_USER_TOKEN = BASE_URL+"/getUserToken";
 	public final  static  String GET_KOMP_AUTH_TOKEN = "https://gw.sasakonnect.net/komp/api/v2/create-token";
 	public final  static  String GET_VLAN_INFO = "https://gw.sasakonnect.net/komp/api/v2/setups";
+	public final  static  String WEB_PORTAL_AUTH = "https://api.sasakonnect.net/webPortalAuthAttempt";
+
 
 
 	// https://api.sasakonnect.net/getUserToken

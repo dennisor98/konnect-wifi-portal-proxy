@@ -323,7 +323,7 @@ public class UserService  implements UserDetailsService{
 			                 user.put("coupon", payload.getCoupon());
 			                 user.put("champCode", payload.getChampCode());
 			                 user.put("gift_id", payload.getGift_id());
-//			                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
+			                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
 			                 user.put("token", payload.getToken());
 			                 user.put("last_login", payload.getLast_login());
 			                 user.put("pay_code", payload.getPay_code());
