@@ -254,9 +254,7 @@ public class UserService  implements UserDetailsService{
 	        	m.put("success",true);
 	        	m.put("account","test");
 	        	m.put("userExists",true);
-	        	
 	        	 Map<String,Object> map  = new HashMap<>();
-          
 	        	map.put("createdAt", payload.getCreatedAt());
 	        	map.put("deleatedAt", payload.getDeletedAt());
 	        	map.put("updatedAt", payload.getUpdatedAt());
