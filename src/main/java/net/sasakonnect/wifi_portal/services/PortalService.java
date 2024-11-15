@@ -14,13 +14,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
+import net.sasakonnect.wifi_portal.RequestDto.ConnectTvDto;
 import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
@@ -28,6 +32,7 @@ import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
 import net.sasakonnect.wifi_portal.ResponseDto.InternetPackageDto;
 import net.sasakonnect.wifi_portal.ResponseDto.PackageResponseDto;
+import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.InternetPackages;
@@ -43,6 +48,9 @@ public class PortalService {
 	
 	@Autowired
 	PortalWebClientBean portalWebClient;
+	
+	@Autowired
+	DefaultWebClientBean defaultWeclientBean;
 	
 	@Value("${portalUserName}")
 	private String portalUserName;
@@ -435,7 +443,68 @@ public class PortalService {
 	   return null;
    }
    
- 
+   
+   public Object initiateTvConnection(ConnectTvDto tvconnect) {
+	   //calculate subnet from localIp
+	   String localIp = tvconnect.getLocalIp();
+
+	   String subnet = calculateSubnetFromLocalIp(localIp);
+	   if(subnet == null) {
+		   ObjectNode node = JsonNodeFactory.instance.objectNode();
+		   node.put("success", false);
+		   node.put("message","Failed to obtain VLAN information");
+
+		   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
+	   }
+	   //request vlan information
+	   ObjectNode req =  JsonNodeFactory.instance.objectNode();
+	   req.put("public_ip",tvconnect.getPublicIp());
+	   req.put("subnet", subnet);
+	   String uri = UriComponentsBuilder.fromUriString(PortalEndpointsConstant.GET_VLAN_INFO)
+			   .queryParam("public_ip",tvconnect.getPublicIp())
+			   .queryParam("subnet",subnet)
+			   .build()
+			   .toUriString();
+	   Mono<String> responseMono =  this.defaultWeclientBean.webClient.get().uri(uri)
+			   .header("Authorization",getKompAuthToken())
+			   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+
+	   String responseJson = responseMono.block();
+	   if(responseJson !=null) {
+		   return new Gson().fromJson(responseJson,Map.class);
+	   }
+	   return null;
+   }
+   
+   public String calculateSubnetFromLocalIp(String localIp) {
+	   String[] parts = localIp.split("\\.");
+       
+       if (parts.length >= 2) {
+           return parts[0] + "." + parts[1] + ".0.0";
+       } else {
+           throw new IllegalArgumentException("Invalid IP address format.");
+       }
+   }
+   
+ public String getKompAuthToken() {
+	 ObjectNode req = JsonNodeFactory.instance.objectNode();
+	 req.put("email","apiuser@test.com");
+	 req.put("password","123456");
+	 
+	 Mono<String> responseMono =  this.defaultWeclientBean.webClient.post().uri(PortalEndpointsConstant.GET_KOMP_AUTH_TOKEN)
+			 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(req))
+			 .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+	 
+	 String responseJson = responseMono.block();
+	 if(responseJson !=null) {
+		 Map<String,Object> resp = new Gson().fromJson(responseJson,Map.class);
+		 Map<String,Object> data = ( Map<String,Object>) resp.get("data");
+		 
+		 return (String) data.get("token");
+	 }
+   
+	 return null;
+ }
    
    
    
