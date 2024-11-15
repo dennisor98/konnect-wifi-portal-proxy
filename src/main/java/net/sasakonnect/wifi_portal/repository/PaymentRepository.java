@@ -1,0 +1,12 @@
+package net.sasakonnect.wifi_portal.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import net.sasakonnect.wifi_portal.domain.Payment;
+import net.sasakonnect.wifi_portal.domain.User;
+
+public interface PaymentRepository extends JpaRepository<Payment, String> {
+    List<Payment> findByUser(User user);
+}

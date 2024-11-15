@@ -58,9 +58,7 @@ public class PaymentService {
 		req.put("PhoneNumber", "254769156995");
 		req.put("CallBackURL","https://c417-105-29-165-234.ngrok-free.app/konnect-wifi/money/callBack");
 		req.put("AccountReference", "Test");
-		req.put("TransactionDesc", "Test");
-
-		
+		req.put("TransactionDesc", "Test");	
 			log.error(req+"{req}");
 			Mono<String> responseMono = this.mpesaClient.webClient
 			        .post()
@@ -69,8 +67,7 @@ public class PaymentService {
 			        .contentType(MediaType.APPLICATION_JSON)
 			        .body(BodyInserters.fromValue(req))
 			        .accept(MediaType.APPLICATION_JSON)
-			        .retrieve()
-			        
+			        .retrieve()  
 			        .bodyToMono(String.class);
 
 			   log.error(responseMono+"{mono ...}");
