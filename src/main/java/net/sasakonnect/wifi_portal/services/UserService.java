@@ -249,13 +249,45 @@ public class UserService  implements UserDetailsService{
 	         
 	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
 	        	Optional<User> userOpt = this.userRepository.findByPhone("+254703454954");
-	        	var map = new HashMap<>();
-	        	map.put("success",true);
-	        	map.put("account","test");
-	        	map.put("userExists",true);
-	        	map.put("payload",userOpt.isPresent() ? userOpt.get() : null);
+	        	var payload=userOpt.get();
+	        	var m = new HashMap<>();
+	        	m.put("success",true);
+	        	m.put("account","test");
+	        	m.put("userExists",true);
 	        	
-	        	return ResponseEntity.status(HttpStatus.OK).body(map);
+	        	 Map<String,Object> map  = new HashMap<>();
+          
+	        	map.put("createdAt", payload.getCreatedAt());
+	        	map.put("deleatedAt", payload.getDeletedAt());
+	        	map.put("updatedAt", payload.getUpdatedAt());
+	        	map.put("id", payload.getUserId());
+	        	map.put("email", payload.getEmail());
+	        	map.put("firstname", payload.getFirstname());
+	        	map.put("lastname", payload.getLastname());
+	        	map.put("is_active", payload.isActive());
+	        	map.put("user_id", payload.getUserId());
+	        	map.put("phone", payload.getPhone());
+	        	map.put("coupon", payload.getCoupon());
+	        	map.put("champCode", payload.getChampCode());
+	        	map.put("gift_id", payload.getGiftId());
+//                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
+	        	map.put("token", payload.getToken());
+	        	map.put("last_login", payload.getLastLogin());
+	        	map.put("pay_code", payload.getPayCode());
+	        	map.put("isMuted", payload.isMuted());
+	        	map.put("created_at", payload.getCreatedAt());
+	        	map.put("updated_at", payload.getUpdatedAt());
+	        	map.put("deletedAt", payload.getDeletedAt());
+	        	map.put("avatorColor", payload.getAvatorColor());
+	        	map.put("access_token",this.jwtService.generateToken(payload));
+	        	map.put("refresh_token",this.jwtService.generateRefreshToken(payload));
+	        	
+	        	
+	        	
+	        	
+	        	m.put("payload",map);
+	        	
+	        	return ResponseEntity.status(HttpStatus.OK).body(m);
 	        	
 	        }
 	        try {
