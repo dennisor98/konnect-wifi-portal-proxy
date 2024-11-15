@@ -1,23 +1,24 @@
 package net.sasakonnect.wifi_portal.RequestDto;
-
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ConnectTvDto {
-   @NotNull
    String staMac;
    
-   @NotNull
    String publicIp;
    
-   @NotNull
-   String localIp;
    
-   String interfaceMode;
+   String staIp;
    
-   String pageType;
+   String vlan;
    
+   String mode;
    
    
 }

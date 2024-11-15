@@ -1,5 +1,7 @@
 package net.sasakonnect.wifi_portal.services;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ConnectTvDto;
+import net.sasakonnect.wifi_portal.RequestDto.KompVlanDto;
 import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
@@ -445,10 +448,23 @@ public class PortalService {
    
    
    public Object initiateTvConnection(ConnectTvDto tvconnect) {
+	   if(tvconnect.getVlan() !=null && tvconnect.getMode() !=null) {
+		   Mono<String> responseMono =  this.defaultWeclientBean.webClient.post().uri(PortalEndpointsConstant.WEB_PORTAL_AUTH)
+				   .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				   .bodyValue(this.createUrlEncodedRequestBody(tvconnect))
+				   .header("Authorization","Basic JDJhJDEwJExhQWg1eGhjbzpaMGhLSng1UnZ5bGVHNEhwdkQ3")
+				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		   
+		   String responseJson = responseMono.block();
+		   if(responseJson !=null) {
+			   return new Gson().fromJson(responseJson,Map.class);
+		   }
+	   }
 	   //calculate subnet from localIp
-	   String localIp = tvconnect.getLocalIp();
+	   String localIp = tvconnect.getStaIp();
 
 	   String subnet = calculateSubnetFromLocalIp(localIp);
+	   log.error(subnet);
 	   if(subnet == null) {
 		   ObjectNode node = JsonNodeFactory.instance.objectNode();
 		   node.put("success", false);
@@ -465,14 +481,53 @@ public class PortalService {
 			   .queryParam("subnet",subnet)
 			   .build()
 			   .toUriString();
-	   Mono<String> responseMono =  this.defaultWeclientBean.webClient.get().uri(uri)
-			   .header("Authorization",getKompAuthToken())
+	   Mono<String> response =  this.defaultWeclientBean.webClient.get().uri(uri)
+			   .header("Authorization","Bearer "+getKompAuthToken())
 			   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 
-	   String responseJson = responseMono.block();
-	   if(responseJson !=null) {
-		   return new Gson().fromJson(responseJson,Map.class);
+	   
+	   try {
+		   String responseJson = response.block();
+		   if(responseJson !=null) {
+			   var resp = new Gson().fromJson(responseJson,KompVlanDto.class);
+			   			   
+			var build = ConnectTvDto.builder().mode(resp.getData().getModel().toLowerCase())
+					.publicIp(resp.getData().getPublicIp()).staIp(tvconnect.getStaIp())
+					.staMac(tvconnect.getStaMac()).vlan(resp.getData().getVlan().getVlanName().replace("v","")).build();
+			var body = this.createUrlEncodedRequestBody(build);
+			log.error("body{}"+body);
+			Mono<String> responseMono =  this.defaultWeclientBean.webClient.post().uri(PortalEndpointsConstant.WEB_PORTAL_AUTH)
+					   .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+					   .bodyValue(body)
+					   .header("Authorization","Basic JDJhJDEwJExhQWg1eGhjbzpaMGhLSng1UnZ5bGVHNEhwdkQ3")
+					   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+			
+			try {
+				String connectResponseJson = responseMono.block();
+				if(connectResponseJson !=null) {
+					return new Gson().fromJson(connectResponseJson,Map.class);
+				}
+			}catch(Exception ex) {
+				ObjectNode node = JsonNodeFactory.instance.objectNode();
+				node.put("success",false);
+				node.put("message","Error occured while authenticating device");
+				
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
+			}
+			
+			
+		
+			
+		   }
+	   }catch(Exception ex) {
+		   ex.printStackTrace();
+		   ObjectNode node = JsonNodeFactory.instance.objectNode();
+		   node.put("success",false);
+		   node.put("message","Error obtaining VLAN information");
+
+		   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
 	   }
+	  
 	   return null;
    }
    
@@ -506,6 +561,21 @@ public class PortalService {
 	 return null;
  }
    
+ 
+ private String createUrlEncodedRequestBody(ConnectTvDto tvconnect) {
+     Map<String, String> body = Map.of(
+             "pagetype", tvconnect.getMode().equalsIgnoreCase("gpon") ? "remote" : "100",
+             "vlan", tvconnect.getVlan(),
+             "staMac", tvconnect.getStaMac()
+     );
+
+     // Convert the map to a URL-encoded string
+     return body.entrySet()
+             .stream()
+             .map(entry -> URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8) + "=" +
+                           URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
+             .collect(Collectors.joining("&"));
+ }
    
    
 }
