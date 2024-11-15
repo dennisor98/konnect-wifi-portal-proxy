@@ -59,7 +59,7 @@ public class AuthService {
 		return new String(encodedBytes);
 	}
 	public String getMpesaMerchantPassword(String timestamp) {
-		String data = shortCode + ":" +"bfb279f9aa9bdbcf158e97dd71a467cd2b312cd3f2cb27c32d7b3b5367b5b7a4"+":"+timestamp;
+		String data = shortCode + ":" +"bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"+":"+timestamp;
 		byte[] encodedBytes = Base64.getEncoder().encode(data.getBytes());
 		return new String(encodedBytes);
 	}

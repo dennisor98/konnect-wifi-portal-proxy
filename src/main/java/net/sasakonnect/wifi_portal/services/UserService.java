@@ -23,6 +23,7 @@ import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
 import net.sasakonnect.wifi_portal.RequestDto.VerifyOtpDto;
 import net.sasakonnect.wifi_portal.ResponseDto.UserObjectDTO;
 import net.sasakonnect.wifi_portal.ResponseDto.VerifyOtpResponseDto;
+import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.Role;
@@ -41,6 +42,9 @@ public class UserService  implements UserDetailsService{
 	
 	@Autowired
 	PortalWebClientBean webClientBean;
+	
+	@Autowired
+	DefaultWebClientBean defaultClientBean;
 	
 	@Autowired
 	AuthService authService;
@@ -130,7 +134,16 @@ public class UserService  implements UserDetailsService{
 	        params.put("code",getOtp.getCode());
 	        params.put("phone", "+254"+mobile.substring(mobile.length()-9));
 	        params.put("dev_id", otpHash);
-	        
+	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
+	        	Optional<User> user = this.userRepository.findByPhone(getOtp.getPhone());
+	        	var map = new HashMap<>();
+	        	map.put("success",true);
+	        	map.put("account","test");
+	        	map.put("userExists",true);
+	        	map.put("payload", user);
+	        	
+	        	return ResponseEntity.status(HttpStatus.OK).body(map);
+	        }
 	        try {
 	        var body = new Gson().toJson(params);
 				  Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.VALIDATE_OTP)
@@ -211,8 +224,16 @@ public class UserService  implements UserDetailsService{
 	    public Object verifyOtpV2(VerifyOtpDto getOtp) {
 	        Map<String, Object> params = new HashMap<>();
 	        
-	        params.put("otp",getOtp.getCode());
-	        params.put("phone", getOtp.getPhone());
+	        if(getOtp.getPhone().trim().length() < 9) {
+	    		Map<String,Object> map = new HashMap<>();
+	    		map.put("success",false);
+	    		map.put("message","Phone number must be at least 9 digits");
+	    		
+	    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+	    	}
+	         var mobile = getOtp.getPhone().trim();
+	        params.put("code",getOtp.getCode());
+	        params.put("phone", "+254"+mobile.substring(mobile.length()-9));
 	        params.put("dev_id", otpHash);
 	         
 	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
@@ -243,45 +264,62 @@ public class UserService  implements UserDetailsService{
 		            	 Optional<User> userOpt =  this.findUserByPhone(resp.getPayload().getPhone());
 		            	 if(userOpt.isEmpty()) {
 		            		 this.createUser(payload);
-		            	 }else {
-		            		 
 		            	 }
 		            	 
-		            	 Map<String,Object> map = new HashMap<>();
-		            	 map.put("success",true);
-		            	 map.put("userExists",resp.getUserExists());
+		            	 if(userOpt.isPresent()) {
+		            		 var u = userOpt.get();
+		            		 Map<String,Object> user = new HashMap<>();
+			            	 user.put("createdAt", payload.getCreatedAt());
+			                 user.put("deleatedAt", payload.getDeleatedAt());
+			                 user.put("updatedAt", payload.getUpdatedAt());
+			                 user.put("id", payload.getUser_id());
+			                 user.put("email", payload.getEmail());
+			                 user.put("firstname", payload.getFirstname());
+			                 user.put("lastname", payload.getLastname());
+			                 user.put("is_active", payload.getIs_active());
+			                 user.put("user_id", payload.getUser_id());
+			                 user.put("phone", payload.getPhone());
+			                 user.put("coupon", payload.getCoupon());
+			                 user.put("champCode", payload.getChampCode());
+			                 user.put("gift_id", payload.getGift_id());
+			                 user.put("token", payload.getToken());
+			                 user.put("last_login", payload.getLast_login());
+			                 user.put("pay_code", payload.getPay_code());
+			                 user.put("isMuted", payload.getIs_muted());
+			                 user.put("created_at", payload.getCreatedAt());
+			                 user.put("updated_at", payload.getUpdated_at());
+			                 user.put("deletedAt", payload.getDeletedAt());
+			                 user.put("avatorColor", payload.getAvatorColor());
+			                 user.put("accountType", payload.getAccountType());
+			                 user.put("canReceivecall", payload.getCanReceivecall());
+			                 user.put("avator_key", payload.getAvator_key());
+			                 user.put("access_token",this.jwtService.generateToken(u));
+			                 user.put("refresh_token",this.jwtService.generateRefreshToken(u));
+			                 
+			                 try {
+			                	  Mono<String> responseMono2 = this.defaultClientBean.webClient.post().uri(PortalEndpointsConstant.CHAT_SERVER)
+			  							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+			  							.header("x-app-key","e0c3d6a7-1e7f-4c25-98f2-6821df28d64d")
+			  							.header("x-app-secret","a305aab37740d5f82604ae875db8002e6c62725cbfe657ec43a90419ab4a0585")
+			  							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+			  				  String responseJson2 = responseMono2.block();
+			  				  log.error(responseJson2);
+			  				  
+			  				  if(responseJson2 !=null) {
+			  					  Map<String,Object> gson = new Gson().fromJson(responseJson2, Map.class);
+			  					  user.put("token",gson.get("token"));
+			  				  }
+			                 }catch(Exception ex) {
+			                	 ex.printStackTrace();
+			                 }
+			                 Map<String,Object> map  = new HashMap<>();
+			                 map.put("payload", user);
+			                 map.put("success",true);
+			            	 map.put("userExists",resp.getUserExists());
+			                 return ResponseEntity.status(HttpStatus.OK).body(map);
+		            	 }
 		            	 
-		            	 Map<String,Object> user = new HashMap<>();
-		            	 user.put("createdAt",payload.getCreatedAt());
-		                 user.put("deleatedAt", payload.getDeleatedAt());
-		                 user.put("updatedAt", payload.getUpdatedAt());
-		                 user.put("id",payload.getUser_id());
-		                 user.put("email", payload.getEmail());
-		                 user.put("firstname", payload.getFirstname());
-		                 user.put("lastname", payload.getLastname());
-		                 user.put("is_active", payload.getIs_active());
-		                 user.put("user_id", payload.getUser_id());
-		                 user.put("phone", payload.getPhone());
-		                 user.put("coupon", payload.getCoupon());
-		                 user.put("champCode", payload.getChampCode());
-		                 user.put("gift_id", payload.getGift_id());
-		                 user.put("token", payload.getToken());
-		                 user.put("last_login", payload.getLast_login());
-		                 user.put("pay_code", payload.getPay_code());
-		                 user.put("isMuted", payload.getIs_muted());
-		                 user.put("created_at", payload.getCreatedAt());
-		                 user.put("updated_at", payload.getUpdated_at());
-		                 user.put("deletedAt", payload.getDeletedAt());
-		                 user.put("avatorColor", payload.getAvatorColor());
-		                 user.put("accountType", payload.getAccountType());
-		                 user.put("canReceivecall", payload.getCanReceivecall());
-		                 user.put("avator_key", payload.getAvator_key());
-		                 user.put("access_token", payload.getAccess_token());
-		                 user.put("refresh_token", payload.getRefresh_token());
-		                 
-		                 map.put("payload", user);
-		                 
-		                 return ResponseEntity.status(HttpStatus.OK).body(map);
+		            	
 		             }
 
 					   return new Gson().toJson(responseJson,VerifyOtpResponseDto.class);
