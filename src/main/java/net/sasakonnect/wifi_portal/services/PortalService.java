@@ -1,7 +1,5 @@
 package net.sasakonnect.wifi_portal.services;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +68,9 @@ public class PortalService {
 	
 	@Autowired
 	UserRepository userRepository;
+	
+	@Autowired
+	UserService userService;
 	
    public Object getDevices() {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -388,15 +389,14 @@ public class PortalService {
    
    public Object getUserSubscriptionsByUserId() {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		   Map<String,Object> data =  new HashMap<>();
+		   var data =  JsonNodeFactory.instance.objectNode();
 		   data.put("id",user.getUserId());
 		   data.put("konnecter",user.getUserId());
 		   data.put("token",user.getToken());
 		   
-		   var body = new Gson().toJson(data);
-		   
+		   log.error("{body}"+data);
 		   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
-					 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+					 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(data))
 					 .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 			 String responseJson = responseMono.block();
 			 if(responseJson !=null) {
