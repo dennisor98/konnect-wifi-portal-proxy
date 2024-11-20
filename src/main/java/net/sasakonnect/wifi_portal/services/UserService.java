@@ -309,7 +309,7 @@ public class UserService  implements UserDetailsService{
 			                 
 			                 try {
 			                	  Mono<String> responseMono2 = this.defaultClientBean.webClient.post().uri(PortalEndpointsConstant.CHAT_SERVER)
-			  							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(user))
+			  							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 			  							.header("x-app-key","e0c3d6a7-1e7f-4c25-98f2-6821df28d64d")
 			  							.header("x-app-secret","a305aab37740d5f82604ae875db8002e6c62725cbfe657ec43a90419ab4a0585")
 			  							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
