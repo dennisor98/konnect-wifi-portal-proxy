@@ -490,8 +490,9 @@ public class PortalService {
            String requestBody = "pagetype="+pageType+"&vlan="+tvconnect.getVlan()+"&staMac="+tvconnect.getStaMac();
            log.error(requestBody+"{req}");
 		   Mono<String> responseMono =  this.defaultWeclientBean.webClient.post().uri(PortalEndpointsConstant.WEB_PORTAL_AUTH)
+				   
 				   .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				   .bodyValue(this.createUrlEncodedRequestBody(tvconnect))
+				   .bodyValue(requestBody)
 				   .header("Authorization","Basic JDJhJDEwJExhQWg1eGhjbzpaMGhLSng1UnZ5bGVHNEhwdkQ3")
 				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 		   
@@ -536,11 +537,18 @@ public class PortalService {
 			var build = ConnectTvDto.builder().mode(resp.getData().getModel().toLowerCase())
 					.publicIp(resp.getData().getPublicIp()).staIp(tvconnect.getStaIp())
 					.staMac(tvconnect.getStaMac()).vlan(resp.getData().getVlan().getVlanName().replace("v","")).build();
-			var body = this.createUrlEncodedRequestBody(build);
-			log.error("body{}"+body);
+//			log.error("body{}"+body);
+			if(resp.getData().getModel().equalsIgnoreCase("gpon")) {
+				   pageType = "remote";
+			   }else {
+				   pageType = "100";
+			   }
+		   
+			String requestBody = "pagetype="+pageType+"&vlan="+resp.getData().getVlan().getVlanName().replace("v","") +"&staMac="+tvconnect.getStaMac();
+			log.error(requestBody+"{req}");
 			Mono<String> responseMono =  this.defaultWeclientBean.webClient.post().uri(PortalEndpointsConstant.WEB_PORTAL_AUTH)
-					   .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-					   .bodyValue(body)
+					.contentType(MediaType.APPLICATION_FORM_URLENCODED) // Set content type to form-urlencoded
+					.bodyValue(requestBody)
 					   .header("Authorization","Basic JDJhJDEwJExhQWg1eGhjbzpaMGhLSng1UnZ5bGVHNEhwdkQ3")
 					   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 			
@@ -557,10 +565,10 @@ public class PortalService {
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
 			}
 			
-			
+		   }
 		
 			
-		   }
+		   
 	   }catch(Exception ex) {
 		   ex.printStackTrace();
 		   ObjectNode node = JsonNodeFactory.instance.objectNode();
