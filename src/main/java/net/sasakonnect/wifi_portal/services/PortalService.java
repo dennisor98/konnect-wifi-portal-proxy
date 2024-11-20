@@ -472,7 +472,15 @@ public class PortalService {
    
    public Object initiateTvConnection(ConnectTvDto tvconnect) {
 	   String pageType = null;
+	   String pageType = null;
 	   if(tvconnect.getVlan() !=null && tvconnect.getMode() !=null) {
+		   if(tvconnect.getMode().equalsIgnoreCase("gpon")) {
+			   pageType = "remote";
+		   }else {
+			   pageType = "100";
+		   }
+           String requestBody = "pagetype="+pageType+"&vlan="+tvconnect.getVlan()+"&staMac="+tvconnect.getStaMac();
+           log.error(requestBody+"{req}");
 		   if(tvconnect.getMode().equalsIgnoreCase("gpon")) {
 			   pageType = "remote";
 		   }else {
