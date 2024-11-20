@@ -219,76 +219,76 @@ public class PaymentService {
 	    	
 	    });
 	}
-//	public Object mpesacallBackUrl(Object request){
-//		log.error("{callBack} "+request);
-//		return ResponseEntity.status(HttpStatus.OK);
-//	}
-//	public Object stkPush(StkPushDto stk) { 
-//		 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//		var phone = stk.getPhone();
-//		String mobile = null;
-//		if(phone !=null){
-//			if(phone.trim().length() < 9) {
-//				ObjectNode node = JsonNodeFactory.instance.objectNode();
-//				node.put("success", false);
-//				node.put("message","Phone number must be at least 9 digits");
-//
-//				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
-//			}
-//			
-//			mobile = phone.trim().substring(phone.length() -9);
-//		}else {
-//			var userphone = user.getPhone().trim();
-//			mobile = userphone.substring(userphone.length() -9 );
-//		}
-//     
-//		
-//      
-//		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-//		var timestamp =  LocalDateTime.now().format(format);
-//		ObjectNode req = JsonNodeFactory.instance.objectNode();
-//		var password = this.authService.getMpesaMerchantPassword(timestamp);
-//		req.put("BusinessShortCode",shortCode);
-//		req.put("Password",password);
-//		req.put("Timestamp",timestamp);
-//		req.put("TransactionType","CustomerPayBillOnline");
-//		req.put("Amount",10);
-//		req.put("PartyA","254"+mobile);
-//		req.put("PartyB", shortCode);
-//		req.put("PhoneNumber", "254"+mobile);
-//		req.put("CallBackURL","https://google.com");
-//		req.put("AccountReference", "Test");
-//		req.put("TransactionDesc", "Test");	
-//			log.error(req+"{req}");
-//			Mono<String> responseMono = this.mpesaClient.webClient
-//			        .post()
-//			        .uri(MpesaEndpointsConstants.STK_PUSH)
-//			        .header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-//			        .contentType(MediaType.APPLICATION_JSON)
-//			        .body(BodyInserters.fromValue(req))
-//			        .accept(MediaType.APPLICATION_JSON)
-//			        .retrieve()  
-//			        .bodyToMono(String.class);
-//
-//		try {
-//			String responseJson = responseMono.block();
-//			if(responseJson !=null) {
-//				//    	   return responseJson;
-//				return new Gson().fromJson(responseJson,Map.class);
-//			}
-//			
-//		}catch(Exception ex) {
-//			ex.printStackTrace();
-//			ObjectNode node = JsonNodeFactory.instance.objectNode();
-//			node.put("success",false);
-//			node.put("message","An error ocurred");
-//			
-//			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
-//		}
-//
-//		return null;
-//	}
-//	
+	public Object mpesacallBackUrl(Object request){
+		log.error("{callBack} "+request);
+		return ResponseEntity.status(HttpStatus.OK);
+	}
+	public Object stkPush(StkPushDto stk) { 
+		 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		var phone = stk.getPhone();
+		String mobile = null;
+		if(phone !=null){
+			if(phone.trim().length() < 9) {
+				ObjectNode node = JsonNodeFactory.instance.objectNode();
+				node.put("success", false);
+				node.put("message","Phone number must be at least 9 digits");
+
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
+			}
+			
+			mobile = phone.trim().substring(phone.length() -9);
+		}else {
+			var userphone = user.getPhone().trim();
+			mobile = userphone.substring(userphone.length() -9 );
+		}
+     
+		
+      
+		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+		var timestamp =  LocalDateTime.now().format(format);
+		ObjectNode req = JsonNodeFactory.instance.objectNode();
+		var password = this.authService.getMpesaMerchantPassword(timestamp);
+		req.put("BusinessShortCode",shortCode);
+		req.put("Password",password);
+		req.put("Timestamp",timestamp);
+		req.put("TransactionType","CustomerPayBillOnline");
+		req.put("Amount","1");
+		req.put("PartyA","254"+mobile);
+		req.put("PartyB", shortCode);
+		req.put("PhoneNumber", "254"+mobile);
+		req.put("CallBackURL",mpesaCallBackUrl);
+		req.put("AccountReference", "Test");
+		req.put("TransactionDesc", "Test");	
+			log.error(req+"{req}");
+			Mono<String> responseMono = this.mpesaClient.webClient
+			        .post()
+			        .uri(MpesaEndpointsConstants.STK_PUSH)
+			        .header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
+			        .contentType(MediaType.APPLICATION_JSON)
+			        .body(BodyInserters.fromValue(req))
+			        .accept(MediaType.APPLICATION_JSON)
+			        .retrieve()  
+			        .bodyToMono(String.class);
+
+		try {
+			String responseJson = responseMono.block();
+			if(responseJson !=null) {
+				//    	   return responseJson;
+				return new Gson().fromJson(responseJson,Map.class);
+			}
+			
+		}catch(Exception ex) {
+			ex.printStackTrace();
+			ObjectNode node = JsonNodeFactory.instance.objectNode();
+			node.put("success",false);
+			node.put("message","An error ocurred");
+			
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
+		}
+
+		return null;
+	}
+	
 	private String getSubscriptionCostById(String id) {
 		Optional<InternetPackages> packageOpt = this.internetPackageRepository.findByForeignPackageId(id);
 		if(packageOpt.isPresent()) {
