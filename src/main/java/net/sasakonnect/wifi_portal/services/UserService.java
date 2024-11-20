@@ -426,7 +426,7 @@ public class UserService  implements UserDetailsService{
 		   body.put("id",user.getUserId());
 		   body.put("konnecter",user.getUserId());
 		   body.put("token",user.getToken());
-		   Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.ACTIVE_SUBSCRIPTION_BY_USER_ID)
+		   Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS)
 				   .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(body)))
 				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 
