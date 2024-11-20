@@ -21,26 +21,12 @@ import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 @Service
 public class MessagingService {
 
-<<<<<<< HEAD
    private final ConnectionFactory connectionFactory;
 
    
    @Autowired
     public MessagingService(ConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
-=======
-    private final RabbitTemplate rabbitTemplate;
-//    private final ConnectionFactory connection;
-    private final Queue queue;
-//    private final Channel channel;
-
-    @Autowired
-    public MessagingService(RabbitTemplate rabbitTemplate, Queue queue) {
-        this.rabbitTemplate = rabbitTemplate;
-        this.queue = queue;
-//        this.connection = connection;
-//        this.channel = channel;
->>>>>>> 081f494 (fixed chat token issue bug)
     }
    
    
