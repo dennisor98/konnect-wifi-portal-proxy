@@ -12,15 +12,15 @@ import com.rabbitmq.client.ConnectionFactory;
 public class MessagingService {
 
     private final RabbitTemplate rabbitTemplate;
-    private final ConnectionFactory connection;
+//    private final ConnectionFactory connection;
     private final Queue queue;
 //    private final Channel channel;
 
     @Autowired
-    public MessagingService(RabbitTemplate rabbitTemplate, Queue queue,ConnectionFactory connection) {
+    public MessagingService(RabbitTemplate rabbitTemplate, Queue queue) {
         this.rabbitTemplate = rabbitTemplate;
         this.queue = queue;
-        this.connection = connection;
+//        this.connection = connection;
 //        this.channel = channel;
     }
 

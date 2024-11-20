@@ -248,54 +248,20 @@ public class UserService  implements UserDetailsService{
 	        params.put("dev_id", otpHash);
 	         
 	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
-	        	Optional<User> userOpt = this.userRepository.findByPhone("+254703454954");
-	        	var payload=userOpt.get();
-	        	var m = new HashMap<>();
-	        	m.put("success",true);
-	        	m.put("account","test");
-	        	m.put("userExists",true);
-	        	 Map<String,Object> map  = new HashMap<>();
-	        	map.put("createdAt", payload.getCreatedAt());
-	        	map.put("deleatedAt", payload.getDeletedAt());
-	        	map.put("updatedAt", payload.getUpdatedAt());
-	        	map.put("id", payload.getUserId());
-	        	map.put("email", payload.getEmail());
-	        	map.put("firstname", payload.getFirstname());
-	        	map.put("lastname", payload.getLastname());
-	        	map.put("is_active", payload.isActive());
-	        	map.put("user_id", payload.getUserId());
-	        	map.put("phone", payload.getPhone());
-	        	map.put("coupon", payload.getCoupon());
-	        	map.put("champCode", payload.getChampCode());
-	        	map.put("gift_id", payload.getGiftId());
-//                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
-	        	map.put("token", payload.getToken());
-	        	map.put("last_login", payload.getLastLogin());
-	        	map.put("pay_code", payload.getPayCode());
-	        	map.put("isMuted", payload.isMuted());
-	        	map.put("created_at", payload.getCreatedAt());
-	        	map.put("updated_at", payload.getUpdatedAt());
-	        	map.put("deletedAt", payload.getDeletedAt());
-	        	map.put("avatorColor", payload.getAvatorColor());
-	        	map.put("access_token",this.jwtService.generateToken(payload));
-	        	map.put("refresh_token",this.jwtService.generateRefreshToken(payload));
+	        	Optional<User> user = this.userRepository.findByPhone(getOtp.getPhone());
+	        	var map = new HashMap<>();
+	        	map.put("success",true);
+	        	map.put("account","test");
+	        	map.put("userExists",true);
+	        	map.put("payload", user);
 	        	
-	        	
-	        	
-	        	
-	        	m.put("payload",map);
-	        	
-	        	return ResponseEntity.status(HttpStatus.OK).body(m);
+	        	return ResponseEntity.status(HttpStatus.OK).body(map);
 	        	
 	        }
 	        try {
 				  Mono<VerifyOtpResponseDto> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.VALIDATE_OTP)
 							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(VerifyOtpResponseDto.class);
-				  
-				  
-				  
-				  
 				  VerifyOtpResponseDto responseJson = responseMono.block();
 				   if(responseJson !=null) {
 		             var resp =  responseJson;
@@ -309,6 +275,12 @@ public class UserService  implements UserDetailsService{
 		            	 
 		            	 if(userOpt.isPresent()) {
 		            		 var u = userOpt.get();
+		            		 u.setToken(payload.getToken());
+		            		 try {
+		            			 this.userRepository.save(u);
+		            		 }catch(Exception ex) {
+		            			 
+		            		 }
 		            		 Map<String,Object> user = new HashMap<>();
 			            	 user.put("createdAt", payload.getCreatedAt());
 			                 user.put("deleatedAt", payload.getDeleatedAt());
@@ -323,7 +295,6 @@ public class UserService  implements UserDetailsService{
 			                 user.put("coupon", payload.getCoupon());
 			                 user.put("champCode", payload.getChampCode());
 			                 user.put("gift_id", payload.getGift_id());
-			                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
 			                 user.put("token", payload.getToken());
 			                 user.put("last_login", payload.getLast_login());
 			                 user.put("pay_code", payload.getPay_code());
@@ -338,10 +309,9 @@ public class UserService  implements UserDetailsService{
 			                 user.put("access_token",this.jwtService.generateToken(u));
 			                 user.put("refresh_token",this.jwtService.generateRefreshToken(u));
 			                 
-			                 
 			                 try {
 			                	  Mono<String> responseMono2 = this.defaultClientBean.webClient.post().uri(PortalEndpointsConstant.CHAT_SERVER)
-			  							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(user))
+			  							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 			  							.header("x-app-key","e0c3d6a7-1e7f-4c25-98f2-6821df28d64d")
 			  							.header("x-app-secret","a305aab37740d5f82604ae875db8002e6c62725cbfe657ec43a90419ab4a0585")
 			  							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
@@ -377,6 +347,7 @@ public class UserService  implements UserDetailsService{
 	        return null;
 	               
 	    }
+
 	    
 	    
 	   public Optional<User> findUserByPhone(String phone) {
