@@ -8,15 +8,22 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.config.WebClientBean;
+import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
+import net.sasakonnect.wifi_portal.domain.User;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -24,7 +31,11 @@ import reactor.core.publisher.Mono;
 public class AuthService {
 	@Autowired
 	WebClientBean webClient;
-
+	
+	@Autowired
+	DefaultWebClientBean client;
+	@Value("${subsDevId}")
+	String subsDevId;
 	@Value("${portalUserName}")
 	private String portalUserName;
 
@@ -88,6 +99,8 @@ public class AuthService {
 
 		return null;
 	}
+	
+	
 
 
 
