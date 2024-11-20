@@ -127,6 +127,11 @@ public class PortalController extends BasePortalController{
 	   return this.portalService.getUserSubscriptionsByPhone(input.getPhone());
    }
    
+   @PostMapping("getActiveSubscriptionrenewalsByUserId")
+   public Object getActiveSubscriptionrenewalsByUserId() {
+	   return this.portalService.getUserSubscriptionsByUserId();
+   }
+   
    @PostMapping("getMpesaPaymentByCheckoutRequestID")
    public Object pollMpesa(@Valid @RequestBody PollMpesaDto input) {
 	   return this.portalService.pollMpesa(input);

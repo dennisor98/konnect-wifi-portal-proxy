@@ -386,6 +386,27 @@ public class PortalService {
 	   return null;
    }
    
+   public Object getUserSubscriptionsByUserId() {
+	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		   Map<String,Object> data =  new HashMap<>();
+		   data.put("id",user.getUserId());
+		   data.put("konnecter",user.getUserId());
+		   data.put("token",user.getToken());
+		   
+		   var body = new Gson().toJson(data);
+		   
+		   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
+					 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+					 .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+			 String responseJson = responseMono.block();
+			 if(responseJson !=null) {
+				 return new Gson().fromJson(responseJson,Map.class);
+			 }
+		   
+	   
+	   return null;
+   }
+   
    public Object pollMpesa(PollMpesaDto mpesa) {
 	   Map<String,Object> data =  new HashMap<>();
 	   data.put("MerchantRequestID", mpesa.getMerchantRequestID());
