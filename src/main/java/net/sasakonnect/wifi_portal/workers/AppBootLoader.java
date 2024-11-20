@@ -17,6 +17,7 @@ import net.sasakonnect.wifi_portal.domain.UserRole;
 import net.sasakonnect.wifi_portal.repository.RolePermissionRepository;
 import net.sasakonnect.wifi_portal.repository.RoleRepository;
 import net.sasakonnect.wifi_portal.repository.UserRoleRepository;
+import net.sasakonnect.wifi_portal.services.MessagingService;
 import net.sasakonnect.wifi_portal.services.PermissionService;
 import net.sasakonnect.wifi_portal.services.RoleService;
 import net.sasakonnect.wifi_portal.services.UserService;
@@ -35,10 +36,13 @@ public class AppBootLoader implements ApplicationListener<ApplicationReadyEvent>
 	UserRoleRepository userRoleRepository;
 	@Autowired
 	PermissionService permissionService;
-	
+	@Autowired
+	MessagingService msgService;	
 	@Override
 	@Transactional
 	public void onApplicationEvent(ApplicationReadyEvent event) {
+		this.msgService.sendMessage("Hello yooh");
+//		this.msgService.receiveMessage();
 		//create super user
 		this.userService.createSuperUser("+254700000000");
       //create super admin role

@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class PortalEndpointsConstant {
 	
-	public final  static  String BASE_URL = "https://api.sasakonnect.net";
+	public final  static  String BASE_URL="https://api.sasakonnect.net";
 	public final  static  String PORTAL_AUTH = BASE_URL+"/webPortalAuthAttempt";
 	public final  static  String CHAT_SERVER = "https://mfood.sasakonnect.net/konnect-chat/auth/api/v1/user-register";
 
