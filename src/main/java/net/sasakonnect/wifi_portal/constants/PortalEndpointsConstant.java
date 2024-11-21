@@ -7,7 +7,7 @@ public class PortalEndpointsConstant {
 	
 	public final  static  String BASE_URL = "https://api.sasakonnect.net";
 	public final  static  String PORTAL_AUTH = BASE_URL+"/webPortalAuthAttempt";
-	public final  static  String CHAT_SERVER = "http://105.29.165.232:23045/auth/api/v1/user-register";
+	public final  static  String CHAT_SERVER = "https://mfood.sasakonnect.net/konnect-chat/auth/api/v1/user-register";
 
 	public final  static  String RE_SEND_OTP = BASE_URL+"/sendOTP";
 	public final  static  String SEND_OTP = BASE_URL+"/login";
