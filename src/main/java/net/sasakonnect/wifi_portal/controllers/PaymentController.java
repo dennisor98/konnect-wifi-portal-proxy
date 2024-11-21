@@ -12,6 +12,7 @@ import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
+//import net.sasakonnect.wifi_portal.services.MessagingService;
 import net.sasakonnect.wifi_portal.services.PaymentService;
 
 @CustomController
@@ -22,6 +23,9 @@ public class PaymentController {
 	@Autowired
 	PaymentService paymentService;
 	
+//	@Autowired
+//	MessagingService messageService;
+//	
 	@PostMapping("/callBack")
 	public Object callBackResolver(Object request) {
 		return ResponseEntity.ok(this.paymentService.mpesacallBackUrl(request));
@@ -36,6 +40,11 @@ public class PaymentController {
    public Object queryMpesaByChecoutRequestId(@Valid @RequestBody() PollMpesaDto stk) {
 	   return this.paymentService.getTxStatusByCheckoutRequestId(stk.getCheckoutRequestID());
    }
+   
+//   @PostMapping("mpesa/init")
+//   public Object mpesaInit() {
+//	   return this.messageService.processMpesaStkPush("Mpesa Messaging");
+//   }
 }
 
 
