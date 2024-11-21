@@ -100,7 +100,7 @@ public class WebSecurityConfig {
 	@Bean
 	@Order(1)
 	SecurityFilterChain auth0FilterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests((authz) -> authz.requestMatchers("konnect-wifi/**","api-docs/**", // Swagger API documentation
+		http.authorizeHttpRequests((authz) -> authz.requestMatchers("api-docs/**", // Swagger API documentation
 				"/swagger-ui/**", // Swagger UI web interface
 				"/swagger-resources/**",
 				"swagger-config",
@@ -109,8 +109,8 @@ public class WebSecurityConfig {
                 
 				.requestMatchers("/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/confirmOTPV2")
 				.permitAll()
-//				.permitAll()
-				.requestMatchers("/konnect-wifi").permitAll()
+				.requestMatchers("/sdk/**").permitAll()
+
 				.requestMatchers(HttpMethod.OPTIONS, "/**")
 				.permitAll() // Permit OPTIONS requests
 				.anyRequest().authenticated()

@@ -25,8 +25,11 @@ public class Payment extends BasePortalDomain {
 	    @Column(name = "payment_payload")
 	    private String paymentPayload;
 	    
-	    @Column(name = "txt_id", length = 255)
+	    @Column(name = "txt_id", length = 255,nullable = true)
 	    private String txtId;
+	    
+	    @Column(name = "konnect_checkout_id", length = 255,nullable = false)
+	    private String konnectCheckoutId;
 	    
 	    @Column(nullable = false)
 	    private Boolean verified; // Map BIT(1) to Boolean
