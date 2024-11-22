@@ -247,7 +247,7 @@ public class UserService  implements UserDetailsService{
 	         
 	       
 	        
-	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
+	        if(getOtp.getPhone().equalsIgnoreCase("738216152")) {
 	        	Optional<User> userOpt = this.userRepository.findByPhone("+254703454954");
 	        	var payload=userOpt.get();
 	        	var m = new HashMap<>();
