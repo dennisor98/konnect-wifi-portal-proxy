@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ClientSubDto;
+import net.sasakonnect.wifi_portal.RequestDto.ConnectTvDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
 import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
@@ -126,9 +127,19 @@ public class PortalController extends BasePortalController{
 	   return this.portalService.getUserSubscriptionsByPhone(input.getPhone());
    }
    
+   @PostMapping("getActiveSubscriptionrenewalsByUserId")
+   public Object getActiveSubscriptionrenewalsByUserId() {
+	   return this.portalService.getUserSubscriptionsByUserId();
+   }
+   
    @PostMapping("getMpesaPaymentByCheckoutRequestID")
    public Object pollMpesa(@Valid @RequestBody PollMpesaDto input) {
 	   return this.portalService.pollMpesa(input);
+   }
+   
+   @PostMapping("connectTv")
+   public Object connectTv(@Valid @RequestBody ConnectTvDto input) {
+	   return this.portalService.initiateTvConnection(input);
    }
    
    

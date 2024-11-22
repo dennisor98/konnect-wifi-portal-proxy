@@ -176,7 +176,6 @@ public class PaymentService {
 		var timestamp =  LocalDateTime.now().format(format);
 		ObjectNode req = JsonNodeFactory.instance.objectNode();
 		var password = this.authService.getMpesaMerchantPassword(timestamp);
-		log.error("password"+password);
 		req.put("BusinessShortCode",shortCode);
 		req.put("Password",password);
 		req.put("Timestamp",timestamp);

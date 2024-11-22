@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class PortalEndpointsConstant {
 	
-	public final  static  String BASE_URL = "https://api.sasakonnect.net";
+	public final  static  String BASE_URL="https://api.sasakonnect.net";
 	public final  static  String PORTAL_AUTH = BASE_URL+"/webPortalAuthAttempt";
 	public final  static  String CHAT_SERVER = "https://mfood.sasakonnect.net/konnect-chat/auth/api/v1/user-register";
 
@@ -29,6 +29,8 @@ public class PortalEndpointsConstant {
 	public final  static  String GET_USER_TOKEN = BASE_URL+"/getUserToken";
 	public final  static  String GET_KOMP_AUTH_TOKEN = "https://gw.sasakonnect.net/komp/api/v2/create-token";
 	public final  static  String GET_VLAN_INFO = "https://gw.sasakonnect.net/komp/api/v2/setups";
+	public final  static  String WEB_PORTAL_AUTH = "https://api.sasakonnect.net/webPortalAuthAttempt";
+
 
 
 	// https://api.sasakonnect.net/getUserToken
