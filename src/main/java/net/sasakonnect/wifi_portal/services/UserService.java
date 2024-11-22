@@ -251,9 +251,9 @@ public class UserService  implements UserDetailsService{
 	        	Optional<User> userOpt = this.userRepository.findByPhone("+254703454954");
 	        	var payload=userOpt.get();
 	        	var m = new HashMap<>();
-	        	m.put("success",true);
+	        	m.put("success","true");
 	        	m.put("account","test");
-	        	m.put("userExists",true);
+	        	m.put("userExists","true");
 	        	 Map<String,Object> map  = new HashMap<>();
 	        	map.put("createdAt", payload.getCreatedAt());
 	        	map.put("deleatedAt", payload.getDeletedAt());
