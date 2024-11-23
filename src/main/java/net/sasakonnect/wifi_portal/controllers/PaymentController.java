@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
@@ -21,6 +22,7 @@ import net.sasakonnect.wifi_portal.services.PaymentService;
 @CustomController
 @RequestMapping("payment")
 @Tag(name="Payment")
+@Slf4j
 public class PaymentController {
 	
 	@Autowired
@@ -36,6 +38,8 @@ public class PaymentController {
 	
 	@PostMapping(value = "/callBack", produces = "application/json")
 	public ResponseEntity<Map<String, String>> callBackResolver(@RequestBody(required = false) String requestBody) {
+	    log.info(requestBody);
+
 	    Map<String, String> response = new HashMap<>();
 	    response.put("status", "success");
 	    response.put("message", "Callback handled successfully");
