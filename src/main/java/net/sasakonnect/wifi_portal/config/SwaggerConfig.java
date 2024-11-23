@@ -32,8 +32,10 @@ public class SwaggerConfig {
 	OpenAPI openApiInformation() throws Exception {
 		Server localServer = new Server().url("http://localhost:8080/konnect-wifi")
 				.description("Localhost Server URL");
-		Server productionServer = new Server().url("https://mobile.sasakonnect.net/konnect-wifi")
-				.description("Localhost Server URL");
+		Server devServer = new Server().url("https://mobile.sasakonnect.net/konnect-wifi")
+				.description("Dev  Server URL");
+		Server productionServer = new Server().url("https://mfood.sasakonnect.net/konnect-wifi")
+				.description("Production Server URL");
 		
 
 		Contact contact = new Contact().email("konnect.devops@gmail.com").name("Konnect Devops Team");
@@ -52,24 +54,13 @@ public class SwaggerConfig {
 		openApi.addSecurityItem(new SecurityRequirement().addList("Bearer Authentication")).components(components
 
 		);
+		openApi.info(info).addServersItem(localServer);
+		openApi.info(info).addServersItem(devServer);
+		openApi.info(info).addServersItem(productionServer);
 
-		switch (profileActive) {
-		case "prod": {
-			openApi.info(info).addServersItem(productionServer);
-			break;
+	
 
-		}
-		case "dev": {
-			openApi.info(info).addServersItem(localServer);
-			break;
-
-		}
-		default: {
-			openApi.info(info).addServersItem(localServer);
-
-		}
-
-		}
+		
 
 		return openApi;
 	}
