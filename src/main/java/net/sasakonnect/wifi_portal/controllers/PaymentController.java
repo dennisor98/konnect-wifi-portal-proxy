@@ -1,5 +1,8 @@
 package net.sasakonnect.wifi_portal.controllers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,9 +29,17 @@ public class PaymentController {
 //	@Autowired
 //	MessagingService messageService;
 //	
-	@PostMapping("/callBack")
-	public Object callBackResolver(Object request) {
-		return ResponseEntity.ok(this.paymentService.mpesacallBackUrl(request));
+//	@PostMapping("/callBack")
+//	public Object callBackResolver(@RequestBody() Object request) {
+//		return ResponseEntity.ok();
+//	}
+	
+	@PostMapping(value = "/callBack", produces = "application/json")
+	public ResponseEntity<Map<String, String>> callBackResolver(@RequestBody(required = false) String requestBody) {
+	    Map<String, String> response = new HashMap<>();
+	    response.put("status", "success");
+	    response.put("message", "Callback handled successfully");
+	    return ResponseEntity.ok(response);
 	}
 	
    @PostMapping("mpesa/stkPush")
