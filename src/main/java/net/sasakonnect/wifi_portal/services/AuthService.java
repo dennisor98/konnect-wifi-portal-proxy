@@ -53,7 +53,7 @@ public class AuthService {
 	
 	@Value("${consumerPassKey}")
 	String consumerPassKey;
-
+//bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919
 
 	public String getBasicAuth() {
 		String data = portalUserName + ":" + portalUserPassword;
@@ -67,7 +67,7 @@ public class AuthService {
 		return new String(encodedBytes);
 	}
 	public String getMpesaMerchantPassword(String timestamp) {
-		String data = shortCode +"bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"+timestamp;
+		String data = shortCode +consumerPassKey+timestamp;
 		byte[] encodedBytes = Base64.getEncoder().encode(data.getBytes());
 		return new String(encodedBytes);
 	}
