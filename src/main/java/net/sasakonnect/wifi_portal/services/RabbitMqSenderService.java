@@ -28,4 +28,11 @@ public class RabbitMqSenderService {
         rabbitTemplate.convertAndSend("transactionExchange", "transaction.confirm", paymentRequest);
         return ;
     }
+
+	public void updatePayment(String requestBody) {
+        rabbitTemplate.convertAndSend("transactionExchange", "transaction.callBack", requestBody);
+
+		// TODO Auto-generated method stub
+		
+	}
 }

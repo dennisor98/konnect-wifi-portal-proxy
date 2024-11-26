@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -39,22 +43,36 @@ public class PaymentController {
 	@PostMapping(value = "/callBack", produces = "application/json")
 	public ResponseEntity<Map<String, String>> callBackResolver(@RequestBody(required = false) String requestBody) {
 	    log.info(requestBody);
-
+	    ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode;
+		try {
+			rootNode = mapper.readTree(requestBody);
+			 String checkoutRequestID = rootNode.path("Body")
+                     .path("stkCallback")
+                     .path("CheckoutRequestID")
+                     .asText();
+			 this.paymentService.updatePaymentWithCheckoutId(checkoutRequestID,requestBody);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+       
 	    Map<String, String> response = new HashMap<>();
 	    response.put("status", "success");
 	    response.put("message", "Callback handled successfully");
 	    return ResponseEntity.ok(response);
 	}
 	
-   @PostMapping("mpesa/stkPush")
-   public Object mpesaStkPushInit(@Valid @RequestBody() StkPushDto stk) {
-	   return this.paymentService.stkPush(stk);
-   }
+//   @PostMapping("mpesa/stkPush")
+//   public Object mpesaStkPushInit(@Valid @RequestBody() StkPushDto stk) {
+//	   return this.paymentService.stkPush(stk);
+//   }
    
-   @PostMapping("mpesa/confirmTransaction")
-   public Object queryMpesaByChecoutRequestId(@Valid @RequestBody() PollMpesaDto stk) {
-	   return this.paymentService.getTxStatusByCheckoutRequestId(stk.getCheckoutRequestID());
-   }
+//   @PostMapping("mpesa/confirmTransaction")
+//   public Object queryMpesaByChecoutRequestId(@Valid @RequestBody() PollMpesaDto stk) {
+//	   return this.paymentService.getTxStatusByCheckoutRequestId(stk.getCheckoutRequestID());
+//   }
    
 //   @PostMapping("mpesa/init")
 //   public Object mpesaInit() {

@@ -1,5 +1,7 @@
 package net.sasakonnect.wifi_portal.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,7 +24,7 @@ public class Payment extends BasePortalDomain {
 	    private User user;
 	    
 	    @Lob
-	    @Column(name = "payment_payload")
+	    @Column(name = "payment_payload", nullable = true, columnDefinition = "LONGTEXT")
 	    private String paymentPayload;
 	    
 	    @Column(name = "txt_id", length = 255,nullable = true)
@@ -42,6 +44,7 @@ public class Payment extends BasePortalDomain {
 	    private String paymentVerificationPayload;
 	    
 	    @ManyToOne(fetch = FetchType.LAZY)
+	    @JsonIgnore
 	    @JoinColumn(name = "app_id", nullable = true)
 	    private App app;
 }
