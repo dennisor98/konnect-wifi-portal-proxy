@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
@@ -26,6 +27,7 @@ import com.rabbitmq.client.Channel;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.MpesaResponse;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
@@ -63,6 +65,9 @@ public class PaymentService {
 //	
 	@Autowired
 	AuthService authService;
+	
+	@Autowired
+	MessagingService msgService;
 	
 	@Autowired
 	InternetPackageRepository internetPackageRepository;
@@ -274,7 +279,9 @@ public class PaymentService {
 			String responseJson = responseMono.block();
 			if(responseJson !=null) {
 				//    	   return responseJson;
-				return new Gson().fromJson(responseJson,Map.class);
+				var resp = new Gson().fromJson(responseJson,PollMpesaDto.class);
+				this.msgService.processMpesaStkPush(resp);
+				return resp;
 			}
 			
 		}catch(Exception ex) {
@@ -352,8 +359,6 @@ public class PaymentService {
 			}
 			
 			mobile = phone.trim().substring(phone.length() -9);
-		}else {
-			return null;
 		}
      
 		
@@ -391,6 +396,7 @@ public class PaymentService {
 			if(responseJson !=null) {
 	            
 	            // Deserialize JSON into MpesaResponse object
+				ObjectMapper objectMapper = new ObjectMapper();
 	            MpesaResponse response = objectMapper.readValue(responseJson, MpesaResponse.class);
 	           var currentApp= this.appService.findAppByAppKey(appKey)	;	//    	   return responseJson;
 				

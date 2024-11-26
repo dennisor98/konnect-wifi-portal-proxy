@@ -14,12 +14,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@ToString(exclude = "profileImage")
 public class User extends BasePortalDomain implements Serializable,UserDetails{
 	 @Column(nullable = true)
 	    private String password;
