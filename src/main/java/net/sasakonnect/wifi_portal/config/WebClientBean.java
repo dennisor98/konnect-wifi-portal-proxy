@@ -1,5 +1,6 @@
 package net.sasakonnect.wifi_portal.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
@@ -16,11 +17,13 @@ import reactor.core.publisher.Mono;
 @Configuration
 @Slf4j
 public class WebClientBean {
+	@Value("${mpesa.api.url}")
+	private String mpesaUrl;
 	@PostConstruct
 	public void portalWebClient() {
 		this.webClient = WebClient.builder()
 				.codecs(configurer -> configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder()))
-				.baseUrl("https://sandbox.safaricom.co.ke")
+				.baseUrl(mpesaUrl)
 				.filter(logRequest())
 				.filter(logResponse())
 				.build();

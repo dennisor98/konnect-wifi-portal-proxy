@@ -2,17 +2,23 @@ package net.sasakonnect.wifi_portal.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class App extends BasePortalDomain {
+public class App extends BasePortalDomain implements Serializable {
 
-    @Column(unique = true, nullable = false)
+    private static final long serialVersionUID = 1L;
+
+	@Column(unique = true, nullable = false)
     private String name;
 
     @Column(unique = true, nullable = false)
@@ -42,6 +48,7 @@ public class App extends BasePortalDomain {
 
     @Column(nullable = true)
     private String mpesaTillNo;
+    @JsonIgnore
     @OneToMany(mappedBy = "app", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments;
     

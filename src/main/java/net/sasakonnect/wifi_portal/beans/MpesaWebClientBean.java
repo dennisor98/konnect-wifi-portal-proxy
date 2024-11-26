@@ -1,12 +1,14 @@
 package net.sasakonnect.wifi_portal.beans;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.beans.factory.annotation.Value;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -18,13 +20,14 @@ import reactor.core.publisher.Mono;
 public class MpesaWebClientBean {
 	@Autowired
 	AuthService authService;
-
+	    @Value("${mpesa.api.url}")
+	    private String apiUrl;
 	@PostConstruct
 	public void mpesaWebClientBean() {
 		this.webClient = WebClient.builder()
 				.codecs(configurer -> configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder()))
 				.filter(logRequest())
-				.baseUrl("https://sandbox.safaricom.co.ke")
+				.baseUrl(apiUrl)
 				.build();
 	}
 

@@ -23,14 +23,16 @@ public class RabbitConfig {
 
     @Bean
     Queue checkOutIdConfirmationQueue() {
-        return new Queue("checkOutIdConfirmationQueue", true);
+       return new Queue("checkOutIdConfirmationQueue", true);
+   }
+    @Bean
+     Queue transactionCallBackNotificationQueue() {
+        return new Queue("transactionCallBackNotificationQueue", true);
     }
-
     @Bean
     Queue failedPaymentNotificationQueue() {
-        return new Queue("failedPaymentNotificationQueue", true);
-    }
-
+       return new Queue("failedPaymentNotificationQueue", true);
+   }
     @Bean
     TopicExchange exchange() {
         return new TopicExchange("transactionExchange");
@@ -57,4 +59,10 @@ public class RabbitConfig {
         TopicExchange exchange) {
         return BindingBuilder.bind(failedPaymentNotificationQueue).to(exchange).with("transaction.failedPayment");
     }
+    @Bean
+    Binding bindingTransactionCallBackNotification(Queue transactionCallBackNotificationQueue, TopicExchange exchange) {
+       return BindingBuilder.bind(transactionCallBackNotificationQueue).to(exchange).with("transaction.callBack");
+   }
+   
+    
 }
