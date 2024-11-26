@@ -326,7 +326,6 @@ public class UserService  implements UserDetailsService{
 			                 user.put("coupon", payload.getCoupon());
 			                 user.put("champCode", payload.getChampCode());
 			                 user.put("gift_id", payload.getGift_id());
-			                 user.put("image", u.getProfileImage() !=null ?  u.getProfileImage().getImage() : null);
 			                 user.put("token", payload.getToken());
 			                 user.put("last_login", payload.getLast_login());
 			                 user.put("pay_code", payload.getPay_code());
@@ -429,7 +428,7 @@ public class UserService  implements UserDetailsService{
 		   body.put("id",user.getUserId());
 		   body.put("konnecter",user.getUserId());
 		   body.put("token",user.getToken());
-		   Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS)
+		   Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.ACTIVE_SUBSCRIPTION_BY_USER_ID)
 				   .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(body)))
 				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 
@@ -498,11 +497,9 @@ public class UserService  implements UserDetailsService{
 	        }
 
 	        try {
-	            // Attempt to decode the string
 	            Base64.getDecoder().decode(str);
 	            return true;
 	        } catch (IllegalArgumentException e) {
-	            // An exception here means it's not valid Base64
 	            return false;
 	        }
 	    }
