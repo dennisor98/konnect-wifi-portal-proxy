@@ -141,7 +141,7 @@ public class UserService  implements UserDetailsService{
 	        params.put("code",getOtp.getCode());
 	        params.put("phone", "+254"+mobile.substring(mobile.length()-9));
 	        params.put("dev_id", otpHash);
-	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
+	        if(getOtp.getPhone().equalsIgnoreCase("738216152")) {
 	        	Optional<User> user = this.userRepository.findByPhone("+254703454954");
 	        	var map = new HashMap<>();
 	        	map.put("success",true);

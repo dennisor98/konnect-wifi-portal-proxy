@@ -7,8 +7,38 @@ import java.util.stream.Collectors;
 
 public class GlobalPermissionsConstants {
 	public static class CreateRole extends PermissionEntry {
-		public final String PERMISSION = "can.create.role";
-		public final String DESCRIPTION = "Allows a user to create a system role";
+		public final static String PERMISSION = "can.create.role";
+		public final static String DESCRIPTION = "Allows a user to create a system role";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+
+	}
+	
+	public static class CanGetRoles extends PermissionEntry {
+		public final static String PERMISSION = "can.get.roles";
+		public final static String DESCRIPTION = "Can get all user roles";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+
+	}
+	
+	public static class CanEditRole extends PermissionEntry {
+		public final static String PERMISSION = "can.edit.role";
+		public final static String DESCRIPTION = "Allows a user to edit a system role";
 		@Override
 		public String getPERMISSION() {
 			return PERMISSION;
@@ -22,8 +52,8 @@ public class GlobalPermissionsConstants {
 	}
 	
 	public static class DeleteRole extends PermissionEntry {
-		public final String PERMISSION = "can.delete.role";
-		public final String DESCRIPTION = "Allows a user to delete a system role";
+		public final static String PERMISSION = "can.delete.role";
+		public final static String DESCRIPTION = "Allows a user to delete a system role";
 		@Override
 		public String getPERMISSION() {
 			return PERMISSION;
