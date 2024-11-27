@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -65,8 +67,8 @@ public class PaymentService {
     public WebClient.Builder webClientBuilder;
 
 	
-//	@Value("${shortCode}")
-//	String shortCode;
+	@Value("${shortCode}")
+	String shortCode;
 //	
 //	@Value("${consumerSecret}")
 //	String password;

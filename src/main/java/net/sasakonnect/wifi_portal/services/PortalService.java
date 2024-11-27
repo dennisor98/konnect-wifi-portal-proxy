@@ -26,7 +26,6 @@ import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ConnectTvDto;
 import net.sasakonnect.wifi_portal.RequestDto.KompVlanDto;
-import net.sasakonnect.wifi_portal.RequestDto.KompVlanDto;
 import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
@@ -390,25 +389,16 @@ public class PortalService {
    
    public Object getUserSubscriptionsByUserId() {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-<<<<<<< HEAD
 		   var data =  JsonNodeFactory.instance.objectNode();
-=======
-		   Map<String,Object> data =  new HashMap<>();
->>>>>>> 081f494 (fixed chat token issue bug)
 		   data.put("id",user.getUserId());
 		   data.put("konnecter",user.getUserId());
 		   data.put("token",user.getToken());
 		   
-<<<<<<< HEAD
 		   log.error("{body}"+data);
-		   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
-					 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(data))
-=======
-		   var body = new Gson().toJson(data);
+		  
 		   
 		   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
-					 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
->>>>>>> 081f494 (fixed chat token issue bug)
+					 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(data))
 					 .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 			 String responseJson = responseMono.block();
 			 if(responseJson !=null) {
@@ -511,7 +501,6 @@ public class PortalService {
 		   }
 	   }
 	   //calculate subnet from localIp
-	   String localIp = tvconnect.getStaIp();
 	   String localIp = tvconnect.getStaIp();
 
 	   String subnet = calculateSubnetFromLocalIp(localIp);

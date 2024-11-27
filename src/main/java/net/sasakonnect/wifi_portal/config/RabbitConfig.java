@@ -34,9 +34,7 @@ public class RabbitConfig {
     Queue failedPaymentNotificationQueue() {
        return new Queue("failedPaymentNotificationQueue", true);
    }
-    Queue failedPaymentNotificationQueue() {
-        return new Queue("failedPaymentNotificationQueue", true);
-    }
+    
 
     @Bean
     TopicExchange exchange() {
