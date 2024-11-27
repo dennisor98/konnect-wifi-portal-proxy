@@ -1,7 +1,5 @@
 package net.sasakonnect.wifi_portal.services;
 import net.sasakonnect.wifi_portal.domain.Payment;
-import org.springframework.retry.annotation.Backoff;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -11,7 +9,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -68,8 +65,8 @@ public class PaymentService {
 	@Autowired
 	AuthService authService;
 	
-	@Autowired
-	MessagingService msgService;
+//	@Autowired
+//	MessagingService msgService;
 	
 	@Autowired
 	InternetPackageRepository internetPackageRepository;
@@ -282,7 +279,7 @@ public class PaymentService {
 			if(responseJson !=null) {
 				//    	   return responseJson;
 				var resp = new Gson().fromJson(responseJson,PollMpesaDto.class);
-				this.msgService.processMpesaStkPush(resp);
+//				this.msgService.processMpesaStkPush(resp);
 				return resp;
 			}
 			

@@ -497,11 +497,9 @@ public class UserService  implements UserDetailsService{
 	        }
 
 	        try {
-	            // Attempt to decode the string
 	            Base64.getDecoder().decode(str);
 	            return true;
 	        } catch (IllegalArgumentException e) {
-	            // An exception here means it's not valid Base64
 	            return false;
 	        }
 	    }

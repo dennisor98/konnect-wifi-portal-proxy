@@ -1,5 +1,6 @@
 package net.sasakonnect.wifi_portal.services;
 
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
-
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
@@ -39,6 +38,7 @@ import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.InternetPackages;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
+import net.sasakonnect.wifi_portal.repository.UserDevicesRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
 
@@ -65,11 +65,10 @@ public class PortalService {
 	AuthService authService;
 	@Value("${subsDevId}")
 	private String subsDevId;
-	
 	@Autowired
-	UserRepository userRepository;
-	
+	private UserRepository userRepository;
 	@Autowired
+	
 	UserService userService;
 	
    public Object getDevices() {
@@ -514,6 +513,7 @@ public class PortalService {
 			   .queryParam("subnet",subnet)
 			   .build()
 			   .toUriString();
+
 	   Mono<String> response =  this.defaultWeclientBean.webClient.get().uri(uri)
 			   .header("Authorization","Bearer "+getKompAuthToken())
 			   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
@@ -600,6 +600,7 @@ public class PortalService {
    
 	 return null;
  }
+
    
 
    
