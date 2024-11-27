@@ -29,6 +29,7 @@ import com.rabbitmq.client.Channel;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.MpesaCallBackDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.MpesaResponse;
@@ -41,6 +42,7 @@ import net.sasakonnect.wifi_portal.domain.InternetPackages;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
 import net.sasakonnect.wifi_portal.repository.PaymentRepository;
+import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -95,6 +97,7 @@ public class PaymentService {
 	ThreadExecuterBean threadExceutorBean;
 	@Autowired
 	MpesaStkPush mpesaStkPush;
+	
     private Payment saveOrUpdatePayment(PaymentRequest payment,App app,String mpesaCheckoutId) {
         // Check if a payment with the same konnectCheckoutId exists
         Optional<Payment> existingPayment = paymentRepository.findByKonnectCheckoutId(payment.getKonnectCheckoutID());
@@ -161,17 +164,32 @@ public class PaymentService {
 		                     .asText();
 					    System.out.println("Called Back called: " + checkoutRequestID);
 					 var payment=   paymentRepository.findByTxtIdIgnoreCase(checkoutRequestID);
-
+					 var paymentData = new Gson().fromJson(paymentRequest,MpesaCallBackDto.class);
+					 var callback = paymentData.getBody().getStkCallback();
 					 if(payment.isPresent()) {
 						var pay= payment.get();
 //						pay.setPaymentPayload(paymentRequest);
 //						paymentRepository.save(pay)	;
+						User user = pay.getUser();
+						String userName = null;
+						if(user!=null) {
+							userName = user.getFirstname()+" "+user.getLastname();
+						}
 					    System.out.println("Called Back notify merchant at : " + pay.getApp().getCallbackUrl());
-
+					    ObjectNode params =  JsonNodeFactory.instance.objectNode();
+						params.put("TransType","CustomerBuyGoodsOnline");
+						params.put("TransID",pay.getTxtId());
+						params.put("TransTime",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(3).getValue().toString():null);
+						params.put("TransAmount",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(0).getValue().toString():null);
+						params.put("BusinessShortCode",shortCode);
+						params.put("BillRefNumber", callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(1).getValue().toString():null);
+						params.put("Mobile",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(4).getValue().toString():null);
+				        params.put("name", userName);
+				        params.put("userId", user !=null ? user.getUserId() : null);
 					    var webClient = webClientBuilder.build()
 					    	    .post()
 					    	    .uri(pay.getApp().getCallbackUrl())
-					    	    .bodyValue(pay)  // Send the payment request as the body
+					    	    .bodyValue(params)  // Send the payment request as the body
 					    	    .retrieve()
 					    	    .onStatus(
 					    	        status -> !status.is2xxSuccessful(), // Check if the status is NOT 2xx (including 200)
@@ -240,6 +258,26 @@ public class PaymentService {
 	public Object mpesacallBackUrl(Object request){
 		log.error("{callBack} "+request);
 		return ResponseEntity.status(HttpStatus.OK);
+	}
+	
+	public Object interNetMpesaCallbackUrl(MpesaCallBackDto data) {
+		log.error("{callBack} "+data);
+		var callback = data.getBody().getStkCallback();
+		if(callback !=null) {
+			
+		ObjectNode params =  JsonNodeFactory.instance.objectNode();
+		params.put("TransType","CustomerBuyGoodsOnline");
+		params.put("TransID",callback.getCheckoutRequestID());
+		params.put("TransTime",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(3).getValue().toString():null);
+		params.put("TransAmount",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(0).getValue().toString():null);
+		params.put("BusinessShortCode",shortCode);
+		params.put("BillRefNumber", callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(1).getValue().toString():null);
+		params.put("Mobile",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(4).getValue().toString():null);
+        params.put("name", "");
+
+		}
+		return ResponseEntity.status(HttpStatus.OK);
+
 	}
 	public Object stkPush(StkPushDto stk) { 
 		 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
