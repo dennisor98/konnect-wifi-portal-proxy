@@ -4,10 +4,12 @@ import org.springframework.retry.annotation.Backoff;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -34,15 +37,16 @@ import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.MpesaResponse;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
+import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.MpesaWebClientBean;
 import net.sasakonnect.wifi_portal.beans.ThreadExecuterBean;
 import net.sasakonnect.wifi_portal.constants.MpesaEndpointsConstants;
 import net.sasakonnect.wifi_portal.domain.App;
 import net.sasakonnect.wifi_portal.domain.InternetPackages;
 import net.sasakonnect.wifi_portal.domain.User;
+import net.sasakonnect.wifi_portal.repository.AppRepository;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
 import net.sasakonnect.wifi_portal.repository.PaymentRepository;
-import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -67,6 +71,8 @@ public class PaymentService {
 	MpesaWebClientBean mpesaClient;
 	@Autowired
     public WebClient.Builder webClientBuilder;
+	@Autowired
+	DefaultWebClientBean webClient;
 
 	
 	@Value("${shortCode}")
@@ -97,6 +103,15 @@ public class PaymentService {
 	ThreadExecuterBean threadExceutorBean;
 	@Autowired
 	MpesaStkPush mpesaStkPush;
+	@Autowired
+	AppRepository appRepository;
+	
+	 private final RabbitTemplate rabbitTemplate;
+	    
+
+	    public PaymentService(RabbitTemplate rabbitTemplate) {
+	        this.rabbitTemplate = rabbitTemplate;
+	    }
 	
     private Payment saveOrUpdatePayment(PaymentRequest payment,App app,String mpesaCheckoutId) {
         // Check if a payment with the same konnectCheckoutId exists
@@ -106,8 +121,6 @@ public class PaymentService {
             // If it exists, update the payment (you can modify the payment fields as needed)
             Payment existing = existingPayment.get();
             existing.setTxtId(mpesaCheckoutId);
-
-				
             existing.setIsSuccessful(false);
             existing.setVerified(false);
             return paymentRepository.save(existing);
@@ -123,9 +136,6 @@ public class PaymentService {
             Payment existing = existingPayment.get();
               existing.setVerified(true);
               existing.setPaymentPayload(message);
-              
-				
-            
             return paymentRepository.save(existing);
         }
         return null;
@@ -133,20 +143,21 @@ public class PaymentService {
 	
 	@RabbitListener(queues = "paymentRequestQueue")
 	public void handlePaymentRequest(PaymentRequest paymentRequest) {
-		this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID());
+		this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID(),null);
 	    System.out.println("Received Payment Request: " + paymentRequest);
 	
 	    threadExceutorBean.addTask(new Runnable() {
 
 			@Override
 			public void run() {
-				triggerMpesaStkPush(paymentRequest)		;
+				triggerMpesaStkPush(paymentRequest);
 				
 			}
 	    	
 	    });
 	}
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
+//	@Transactional
 	public void handleTransactionCallBackNotificationQueueRequest(String paymentRequest) {
 //	
 	
@@ -211,10 +222,13 @@ public class PaymentService {
 					    	        System.out.println("Response: " + response);
 					    	    });
 
-											
-					 }else {
-						 log.warn("could not find transaction for checkout id"+checkoutRequestID);
-					 }
+										
+						 }else {
+							 log.warn("could not find transaction for checkout id"+checkoutRequestID);
+						 }
+					}catch(Exception ex) {
+						ex.printStackTrace();
+					}
 
 					 //this.paymentService.updatePaymentWithCheckoutId(checkoutRequestID,requestBody);
 				} catch (JsonProcessingException e) {
@@ -227,6 +241,8 @@ public class PaymentService {
 	    	
 	    });
 	}
+	
+
 	@RabbitListener(queues = "checkOutIdConfirmationQueue")
 	public void checkOutIDConfirmationQueue(PaymentRequest paymentRequest,Channel channel,@Header(AmqpHeaders.DELIVERY_TAG) long tag) {
 	    threadExceutorBean.addTask(new Runnable() {
@@ -238,10 +254,10 @@ public class PaymentService {
 						   log.error("THE COUNT "+count);
 			               log.info("Start Polling this"+paymentRequest);	
 			           	Thread.sleep(20000);
-                          ///  MpesaResponse results=getTxStatusByCheckoutRequestId(paymentRequest.getExternalCheckoutId());
-			             //  saveOrUpdatePaymentMessage(results.toString(),paymentRequest.getKonnectCheckoutID());
-		            	//	//channel.basicAck(tag, false);
-		                 //  log.info("Polling results"+results);		
+                            MpesaResponse results=getTxStatusByCheckoutRequestId(paymentRequest.getExternalCheckoutId());
+			               saveOrUpdatePaymentMessage(results.toString(),paymentRequest.getKonnectCheckoutID());
+		            		//channel.basicAck(tag, false);
+		                   log.info("Polling results"+results);		
 
 					
 					
@@ -257,32 +273,18 @@ public class PaymentService {
 	}
 	public Object mpesacallBackUrl(Object request){
 		log.error("{callBack} "+request);
+        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
+
 		return ResponseEntity.status(HttpStatus.OK);
 	}
 	
-	public Object interNetMpesaCallbackUrl(MpesaCallBackDto data) {
-		log.error("{callBack} "+data);
-		var callback = data.getBody().getStkCallback();
-		if(callback !=null) {
-			
-		ObjectNode params =  JsonNodeFactory.instance.objectNode();
-		params.put("TransType","CustomerBuyGoodsOnline");
-		params.put("TransID",callback.getCheckoutRequestID());
-		params.put("TransTime",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(3).getValue().toString():null);
-		params.put("TransAmount",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(0).getValue().toString():null);
-		params.put("BusinessShortCode",shortCode);
-		params.put("BillRefNumber", callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(1).getValue().toString():null);
-		params.put("Mobile",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(4).getValue().toString():null);
-        params.put("name", "");
 
-		}
-		return ResponseEntity.status(HttpStatus.OK);
-
-	}
 	public Object stkPush(StkPushDto stk) { 
 		 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var phone = stk.getPhone();
 		String mobile = null;
+		String appKey = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e";
+		Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(appKey);
 		if(phone !=null){
 			if(phone.trim().length() < 9) {
 				ObjectNode node = JsonNodeFactory.instance.objectNode();
@@ -356,46 +358,46 @@ public class PaymentService {
 		return "0";
 	}
 	
-//	public MpesaResponse getTxStatusByCheckoutRequestId(String checkoutRequestId) {
-//		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-//		var timestamp =  LocalDateTime.now().format(format);
-//		ObjectNode body = JsonNodeFactory.instance.objectNode();
-//		body.put("BusinessShortCode",shortCode);
-//		body.put("Password",this.authService.getMpesaMerchantPassword(timestamp));
-//		body.put("Timestamp", timestamp);
-//		body.put("CheckoutRequestID",checkoutRequestId);
-//		log.info("body"+body.toPrettyString());
-//		
-//		Mono<String> responseMono = this.mpesaClient.webClient
-//				.post()
-//				.uri(MpesaEndpointsConstants.TX_QUERY)
-//				.header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-//				.contentType(MediaType.APPLICATION_JSON)
-//				.body(BodyInserters.fromValue(body))
-//				.accept(MediaType.APPLICATION_JSON)
-//				.retrieve()
-//
-//				.bodyToMono(String.class);
-//
-//		try {
-//			String responseJson = responseMono.block();
-//			if(responseJson !=null) {
-//				return new Gson().fromJson(responseJson,MpesaResponse.class);
-//			}
-//			
-//		}catch(Exception ex) {
-//			ex.printStackTrace();
-//			ObjectNode node = JsonNodeFactory.instance.objectNode();
-//			node.put("success",false);
-//			node.put("message","An error ocurred");
-//			return null;
-//			
-//		}
-//		
-//
-//		return null;
-//	}
-//	
+	public MpesaResponse getTxStatusByCheckoutRequestId(String checkoutRequestId) {
+		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+		var timestamp =  LocalDateTime.now().format(format);
+		ObjectNode body = JsonNodeFactory.instance.objectNode();
+		body.put("BusinessShortCode",shortCode);
+		body.put("Password",this.authService.getMpesaMerchantPassword(timestamp));
+		body.put("Timestamp", timestamp);
+		body.put("CheckoutRequestID",checkoutRequestId);
+		log.info("body"+body.toPrettyString());
+		
+		Mono<String> responseMono = this.mpesaClient.webClient
+				.post()
+				.uri(MpesaEndpointsConstants.TX_QUERY)
+				.header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
+				.contentType(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromValue(body))
+				.accept(MediaType.APPLICATION_JSON)
+				.retrieve()
+
+				.bodyToMono(String.class);
+
+		try {
+			String responseJson = responseMono.block();
+			if(responseJson !=null) {
+				return new Gson().fromJson(responseJson,MpesaResponse.class);
+			}
+			
+		}catch(Exception ex) {
+			ex.printStackTrace();
+			ObjectNode node = JsonNodeFactory.instance.objectNode();
+			node.put("success",false);
+			node.put("message","An error ocurred");
+			return null;
+			
+		}
+		
+
+		return null;
+	}
+	
 	public Object triggerMpesaStkPush(@Valid PaymentRequest stk) {
 		var appKey=stk.getAppKey();
 		var phone = stk.getPhoneNumber();
@@ -512,7 +514,9 @@ public class PaymentService {
          if(currentApp.isPresent()){
       	   var pay=Payment.builder().app(currentApp.get())
 						
-						.konnectCheckoutId(konnectTransactionId)     				
+						.konnectCheckoutId(konnectTransactionId) 
+						.txtId(konnectTransactionId)
+						.user(user)
      				.isSuccessful(false)
      				.verified(false).build()			;
      				return this.paymentRepository.save(pay);
