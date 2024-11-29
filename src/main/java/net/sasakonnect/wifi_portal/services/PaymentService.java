@@ -45,6 +45,17 @@ import reactor.core.publisher.Mono;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Retryable;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpHeaders;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
+
+
 @Service
 @Slf4j
 public class PaymentService {
@@ -165,7 +176,7 @@ public class PaymentService {
 					    	    .onStatus(
 					    	        status -> !status.is2xxSuccessful(), // Check if the status is NOT 2xx (including 200)
 					    	        clientResponse -> {
-					    	        	
+					    	        	// keep this job to call the client 
 					    	            // Custom logic when status is NOT 2xx (i.e., not 200)
 					    	            return clientResponse.bodyToMono(String.class)
 					    	                    .flatMap(responseBody -> {
@@ -424,6 +435,39 @@ public class PaymentService {
 
 		return null;
 	}
+    public  String sendPostRequest(String url, Map<String, String> requestData) throws Exception {
+        // Create a HttpClient instance
+        HttpClient client = HttpClient.newHttpClient();
+
+        // Convert Map to JSON
+        String jsonPayload = buildJsonPayload(requestData);
+
+        // Create the HttpRequest with POST method and the JSON body
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer "+authService.getMpesaAccessToken())
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
+                .build();
+
+        // Send the request and get the response
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // Print out the response code and body
+        System.out.println("Response Code: " + response.statusCode());
+        System.out.println("Response Body: " + response.body());
+        return  response.body();
+    }
+    public static String buildJsonPayload(Map<String, String> requestData) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        for (Map.Entry<String, String> entry : requestData.entrySet()) {
+            sb.append("\"" + entry.getKey() + "\":\"" + entry.getValue() + "\",");
+        }
+        sb.deleteCharAt(sb.length() - 1);  // Remove last comma
+        sb.append("}");
+        return sb.toString();
+    }
 	private Payment createPaymentRequest(String appKey,String konnectTransactionId) {
          var currentApp= this.appService.findAppByAppKey(appKey)	;	//    	   return responseJson;
 			

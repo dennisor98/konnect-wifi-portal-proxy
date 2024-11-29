@@ -34,11 +34,7 @@ public class PaymentController {
 	
 //	@Autowired
 //	MessagingService messageService;
-//	
-//	@PostMapping("/callBack")
-//	public Object callBackResolver(@RequestBody() Object request) {
-//		return ResponseEntity.ok();
-//	}
+
 	
 	@PostMapping(value = "/callBack", produces = "application/json")
 	public ResponseEntity<Map<String, String>> callBackResolver(@RequestBody(required = false) String requestBody) {
@@ -63,11 +59,12 @@ public class PaymentController {
 	    response.put("message", "Callback handled successfully");
 	    return ResponseEntity.ok(response);
 	}
-	
-//   @PostMapping("mpesa/stkPush")
-//   public Object mpesaStkPushInit(@Valid @RequestBody() StkPushDto stk) {
-//	   return this.paymentService.stkPush(stk);
-//   }
+
+   @PostMapping("mpesa/stkPush")
+   public Object mpesaStkPushInit(@Valid @RequestBody() StkPushDto stk) {
+	  // return this.paymentService.stkPush(stk);
+	   return null;
+   }
    
 //   @PostMapping("mpesa/confirmTransaction")
 //   public Object queryMpesaByChecoutRequestId(@Valid @RequestBody() PollMpesaDto stk) {
