@@ -16,7 +16,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @NoArgsConstructor
 public class App extends BasePortalDomain implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 4824202649560077634L;
 
 	@Column(unique = true, nullable = false)
     private String name;

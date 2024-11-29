@@ -47,18 +47,6 @@ import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import reactor.core.publisher.Mono;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.retry.annotation.Retryable;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpHeaders;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
-
-
 @Service
 @Slf4j
 public class PaymentService {
@@ -137,26 +125,32 @@ public class PaymentService {
         }
         return null;
     }
+
 	
 	@RabbitListener(queues = "paymentRequestQueue")
-	public void handlePaymentRequest(PaymentRequest paymentRequest) {
-		this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID(),null);
-	    System.out.println("Received Payment Request: " + paymentRequest);
-	
-	    threadExceutorBean.addTask(new Runnable() {
-
-			@Override
-			public void run() {
-				triggerMpesaStkPush(paymentRequest);
-				
-			}
-	    	
-	    });
+	public void handlePaymentRequest(String jsonPayload) {
+	    try {
+	        PaymentRequest paymentRequest = new ObjectMapper().readValue(jsonPayload, PaymentRequest.class);
+	        System.out.println("Received Payment Request: " + paymentRequest);
+	        
+	        this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID(), null);
+	        
+	        threadExceutorBean.addTask(new Runnable() {
+	            @Override
+	            public void run() {
+	                triggerMpesaStkPush(paymentRequest);
+	            }
+	        });
+	    } catch (JsonProcessingException e) {
+	        e.printStackTrace();
+	    }
 	}
+
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
 //	@Transactional
 	public void handleTransactionCallBackNotificationQueueRequest(String paymentRequest) {
 //	
+		log.error("payment callback"+paymentRequest);
 	
 	    threadExceutorBean.addTask(new Runnable() {
 
@@ -226,39 +220,6 @@ public class PaymentService {
 //					                    // Handle the response if status is 2xx
 //					                    System.out.println("Response: " + response);
 //					                });
-					    System.out.println("Called Back called: " + checkoutRequestID);
-					 var payment=   paymentRepository.findByTxtIdIgnoreCase(checkoutRequestID);
-
-					 if(payment.isPresent()) {
-						var pay= payment.get();
-//						pay.setPaymentPayload(paymentRequest);
-//						paymentRepository.save(pay)	;
-					    System.out.println("Called Back notify merchant at : " + pay.getApp().getCallbackUrl());
-
-					    var webClient = webClientBuilder.build()
-					    	    .post()
-					    	    .uri(pay.getApp().getCallbackUrl())
-					    	    .bodyValue(pay)  // Send the payment request as the body
-					    	    .retrieve()
-					    	    .onStatus(
-					    	        status -> !status.is2xxSuccessful(), // Check if the status is NOT 2xx (including 200)
-					    	        clientResponse -> {
-					    	        	// keep this job to call the client 
-					    	            // Custom logic when status is NOT 2xx (i.e., not 200)
-					    	            return clientResponse.bodyToMono(String.class)
-					    	                    .flatMap(responseBody -> {
-					    	                        // Perform any action here based on the response body or status
-					    	                        return Mono.error(new RuntimeException("Payment API call failed with status: " + clientResponse.statusCode()));
-					    	                    });
-					    	        })
-					    	    .bodyToMono(String.class) // If the status is 200, proceed with the response body
-					    	    .doOnTerminate(() -> {
-					    	        // Optional: Add any additional final actions after the request completes
-					    	    })
-					    	    .subscribe(response -> {
-					    	        // Handle the response if status is 200
-					    	        System.out.println("Response: " + response);
-					    	    });
 
 										
 						 }else {
@@ -309,13 +270,13 @@ public class PaymentService {
 	    	
 	    });
 	}
-	public Object mpesacallBackUrl(Object request){
-		log.error("{callBack} "+request);
-        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
-
-		return ResponseEntity.status(HttpStatus.OK);
-	}
-	
+//	public Object mpesacallBackUrl(Object request){
+//		log.error("{callBack} "+request);
+//        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
+//
+//		return ResponseEntity.status(HttpStatus.OK);
+//	}
+//	
 
 	public Object stkPush(StkPushDto stk) { 
 		 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -504,7 +465,7 @@ public class PaymentService {
 
 		try {
 			String responseJson = responseMono.block();
-			
+			  log.error("response"+responseJson);
 			if(responseJson !=null) {
 	            
 	            // Deserialize JSON into MpesaResponse object
@@ -535,41 +496,6 @@ public class PaymentService {
 		return null;
 	}
 	private Payment createPaymentRequest(String appKey,String konnectTransactionId,User user) {
-	}
-    public  String sendPostRequest(String url, Map<String, String> requestData) throws Exception {
-        // Create a HttpClient instance
-        HttpClient client = HttpClient.newHttpClient();
-
-        // Convert Map to JSON
-        String jsonPayload = buildJsonPayload(requestData);
-
-        // Create the HttpRequest with POST method and the JSON body
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer "+authService.getMpesaAccessToken())
-                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
-                .build();
-
-        // Send the request and get the response
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        // Print out the response code and body
-        System.out.println("Response Code: " + response.statusCode());
-        System.out.println("Response Body: " + response.body());
-        return  response.body();
-    }
-    public static String buildJsonPayload(Map<String, String> requestData) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        for (Map.Entry<String, String> entry : requestData.entrySet()) {
-            sb.append("\"" + entry.getKey() + "\":\"" + entry.getValue() + "\",");
-        }
-        sb.deleteCharAt(sb.length() - 1);  // Remove last comma
-        sb.append("}");
-        return sb.toString();
-    }
-	private Payment createPaymentRequest(String appKey,String konnectTransactionId) {
          var currentApp= this.appService.findAppByAppKey(appKey)	;	//    	   return responseJson;
 			
          if(currentApp.isPresent()){
@@ -669,55 +595,4 @@ public class PaymentService {
 		// TODO Auto-generated method stub
 		
 	}
-	
-	
-
-public Object registerUrl() {
-    String validationUrl = "https://mfood.sasakonnect.net/konnect-wifi/payment/callBack";
-    String confirmationUrl = "https://mfood.sasakonnect.net/konnect-wifi/payment/callBack";
-    String shortCode = "5467224";
-
-    // Step 2: Build the data map to be sent in the request
-    Map<String, String> requestData = new HashMap<>();
-    requestData.put("ShortCode", shortCode);
-    requestData.put("ResponseType", "Cancelled");
-    requestData.put("ValidationURL", validationUrl);
-    requestData.put("ConfirmationURL", confirmationUrl);
-
-    // Step 3: Log the request data
-    var token=authService.getMpesaAccessToken();
-
-    // Step 4: Send the request using HttpClient
-    try {
-        String url = "https://api.safaricom.co.ke/mpesa/c2b/v1/registerurl";
-
-        // Convert the requestData map to JSON
-        ObjectMapper objectMapper = new ObjectMapper();
-        String requestBody = objectMapper.writeValueAsString(requestData);
-        System.out.println("Request Data: " + requestBody);
-
-        // Create HttpClient instance
-        HttpClient client = HttpClient.newHttpClient();
-
-        // Build the HTTP request
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer "+token) // Replace with your token
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-        // Send the request and get the response
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        // Log and return the response
-        System.out.println("Response Code: " + response.statusCode());
-        System.out.println("Response Body: " + response.body());
-
-        return response.body(); // Return the response body
-    } catch (Exception e) {
-        e.printStackTrace();
-        return "error";
-    }
-}
 }
