@@ -14,7 +14,7 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     List<Payment> findByUser(User user);
     Optional<Payment> findByKonnectCheckoutId(String konnectCheckoutId);
     
-    @Query("SELECT p FROM Payment p JOIN FETCH p.app WHERE LOWER(p.txtId) = LOWER(:txtId)")
+    @Query("SELECT p FROM Payment p JOIN FETCH p.app JOIN FETCH p.user WHERE p.txtId = :txtId")
     Optional<Payment> findByTxtIdIgnoreCase(@Param("txtId") String txtId);
 
 }

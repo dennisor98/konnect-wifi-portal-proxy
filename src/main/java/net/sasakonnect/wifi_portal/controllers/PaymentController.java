@@ -1,25 +1,20 @@
 package net.sasakonnect.wifi_portal.controllers;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
-import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
+//import net.sasakonnect.wifi_portal.services.MessagingService;
 //import net.sasakonnect.wifi_portal.services.MessagingService;
 import net.sasakonnect.wifi_portal.services.PaymentService;
 
@@ -39,6 +34,7 @@ public class PaymentController {
 	@PostMapping(value = "/callBack", produces = "application/json")
 	public ResponseEntity<Map<String, String>> callBackResolver(@RequestBody(required = false) String requestBody) {
 	    log.info(requestBody);
+	    this.paymentService.mpesacallBackUrl(requestBody);
 	    ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode;
 		try {
@@ -59,11 +55,10 @@ public class PaymentController {
 	    response.put("message", "Callback handled successfully");
 	    return ResponseEntity.ok(response);
 	}
-
+	
    @PostMapping("mpesa/stkPush")
    public Object mpesaStkPushInit(@Valid @RequestBody() StkPushDto stk) {
-	  // return this.paymentService.stkPush(stk);
-	   return null;
+	   return this.paymentService.stkPush(stk);
    }
    
 //   @PostMapping("mpesa/confirmTransaction")

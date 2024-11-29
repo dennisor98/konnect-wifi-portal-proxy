@@ -141,7 +141,7 @@ public class UserService  implements UserDetailsService{
 	        params.put("code",getOtp.getCode());
 	        params.put("phone", "+254"+mobile.substring(mobile.length()-9));
 	        params.put("dev_id", otpHash);
-	        if(getOtp.getPhone().equalsIgnoreCase("+254738216152")) {
+	        if(getOtp.getPhone().equalsIgnoreCase("738216152")) {
 	        	Optional<User> user = this.userRepository.findByPhone("+254703454954");
 	        	var map = new HashMap<>();
 	        	map.put("success",true);
@@ -285,7 +285,7 @@ public class UserService  implements UserDetailsService{
 	        	
 	        	m.put("payload",map);
 	        	
-	        	return ResponseEntity.status(HttpStatus.OK).body(m);
+	        	return ResponseEntity.status(HttpStatus.OK).body(map);
 	        	
 	        }
 
@@ -497,11 +497,9 @@ public class UserService  implements UserDetailsService{
 	        }
 
 	        try {
-	            // Attempt to decode the string
 	            Base64.getDecoder().decode(str);
 	            return true;
 	        } catch (IllegalArgumentException e) {
-	            // An exception here means it's not valid Base64
 	            return false;
 	        }
 	    }

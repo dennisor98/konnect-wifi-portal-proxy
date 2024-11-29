@@ -18,6 +18,7 @@ public class RabbitMqSenderService {
     }
 
     public Object sendPaymentRequest(PaymentRequest paymentRequest) {
+    	System.out.println("{payreq}"+paymentRequest);
         var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
         paymentRequest.setKonnectCheckoutID(payment_checkoutId);
         rabbitTemplate.convertAndSend("transactionExchange", "transaction.payment", paymentRequest); 
