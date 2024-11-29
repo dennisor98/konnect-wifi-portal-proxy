@@ -44,6 +44,8 @@ public class RabbitConfig {
     }
 
     // Bind each queue with a different routing key pattern
+  
+    
     @Bean
     Binding bindingCheckOutIdConfirmation(
         @Qualifier("checkOutIdConfirmationQueue") Queue checkOutIdConfirmationQueue,
@@ -53,11 +55,18 @@ public class RabbitConfig {
 
     @Bean
     Binding bindingPaymentRequest(
-        @Qualifier("paymentRequestQueue") Queue paymentRequestQueue,
+        @Qualifier("transactionCallBackNotificationQueue") Queue transactionCallBackNotificationQueue,
         TopicExchange exchange) {
-        return BindingBuilder.bind(paymentRequestQueue).to(exchange).with("transaction.payment");
+        return BindingBuilder.bind(transactionCallBackNotificationQueue).to(exchange).with("transaction.payment");
     }
 
+    
+    @Bean
+    Binding bindingPaymentNotification(
+        @Qualifier("transactionCallBackNotificationQueue") Queue paymentRequestQueue,
+        TopicExchange exchange) {
+        return BindingBuilder.bind(paymentRequestQueue).to(exchange).with("transaction.callbackNotification");
+    }
     @Bean
     Binding bindingFailedPaymentNotification(
         @Qualifier("failedPaymentNotificationQueue") Queue failedPaymentNotificationQueue,

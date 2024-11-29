@@ -48,8 +48,8 @@ public class App extends BasePortalDomain implements Serializable {
 
     @Column(nullable = true)
     private String mpesaTillNo;
-    @JsonIgnore
-    @OneToMany(mappedBy = "app", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Payment> payments;
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "app", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<Payment> payments;
     
 }

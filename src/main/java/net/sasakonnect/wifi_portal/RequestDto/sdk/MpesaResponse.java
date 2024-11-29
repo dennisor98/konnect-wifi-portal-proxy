@@ -16,19 +16,19 @@ import lombok.NoArgsConstructor;
 public class MpesaResponse  implements Serializable{
 
     @JsonProperty("MerchantRequestID")
-    private String merchantRequestID;
+    private String MerchantRequestID;
 
     @JsonProperty("CheckoutRequestID")
-    private String checkoutRequestID;
+    private String CheckoutRequestID;
 
     @JsonProperty("ResponseCode")
-    private String responseCode;
+    private String ResponseCode;
 
     @JsonProperty("ResponseDescription")
-    private String responseDescription;
+    private String ResponseDescription;
 
     @JsonProperty("CustomerMessage")
-    private String customerMessage;
+    private String CustomerMessage;
 
 
   
