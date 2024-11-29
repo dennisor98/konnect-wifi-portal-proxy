@@ -50,18 +50,6 @@ import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import reactor.core.publisher.Mono;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.retry.annotation.Retryable;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpHeaders;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
-
-
 @Service
 @Slf4j
 public class PaymentService {
@@ -140,26 +128,32 @@ public class PaymentService {
         }
         return null;
     }
+
 	
 	@RabbitListener(queues = "paymentRequestQueue")
-	public void handlePaymentRequest(PaymentRequest paymentRequest) {
-		this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID(),null);
-	    System.out.println("Received Payment Request: " + paymentRequest);
-	
-	    threadExceutorBean.addTask(new Runnable() {
-
-			@Override
-			public void run() {
-				triggerMpesaStkPush(paymentRequest);
-				
-			}
-	    	
-	    });
+	public void handlePaymentRequest(String jsonPayload) {
+	    try {
+	        PaymentRequest paymentRequest = new ObjectMapper().readValue(jsonPayload, PaymentRequest.class);
+	        System.out.println("Received Payment Request: " + paymentRequest);
+	        
+	        this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID(), null);
+	        
+	        threadExceutorBean.addTask(new Runnable() {
+	            @Override
+	            public void run() {
+	                triggerMpesaStkPush(paymentRequest);
+	            }
+	        });
+	    } catch (JsonProcessingException e) {
+	        e.printStackTrace();
+	    }
 	}
+
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
 //	@Transactional
 	public void handleTransactionCallBackNotificationQueueRequest(String paymentRequest) {
 //	
+		log.error("payment callback"+paymentRequest);
 	
 	    threadExceutorBean.addTask(new Runnable() {
 
@@ -271,13 +265,13 @@ public class PaymentService {
 	    	
 	    });
 	}
-	public Object mpesacallBackUrl(Object request){
-		log.error("{callBack} "+request);
-        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
-
-		return ResponseEntity.status(HttpStatus.OK);
-	}
-	
+//	public Object mpesacallBackUrl(Object request){
+//		log.error("{callBack} "+request);
+//        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
+//
+//		return ResponseEntity.status(HttpStatus.OK);
+//	}
+//	
 
 	public Object stkPush(StkPushDto stk) { 
 		 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -445,7 +439,7 @@ public class PaymentService {
 
 		try {
 			String responseJson = responseMono.block();
-			
+			  log.error("response"+responseJson);
 			if(responseJson !=null) {
 	            
 	            // Deserialize JSON into MpesaResponse object

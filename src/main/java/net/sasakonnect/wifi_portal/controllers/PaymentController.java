@@ -34,7 +34,7 @@ public class PaymentController {
 	@PostMapping(value = "/callBack", produces = "application/json")
 	public ResponseEntity<Map<String, String>> callBackResolver(@RequestBody(required = false) String requestBody) {
 	    log.info(requestBody);
-	    this.paymentService.mpesacallBackUrl(requestBody);
+	   // this.paymentService.mpesacallBackUrl(requestBody);
 	    ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode;
 		try {
