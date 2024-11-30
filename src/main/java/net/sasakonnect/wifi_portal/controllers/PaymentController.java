@@ -36,9 +36,27 @@ public class PaymentController {
 
 
 	@PostMapping(value = "/callBack", produces = "application/json")
-	public ResponseEntity<Map<String, String>> callBackResolver(@RequestBody(required = false) String requestBody) {
-		log.info(requestBody);
+	public Object paymentValidationCallBack(@RequestBody(required = false) Object requestBody) {
+		log.info("{request}"+ requestBody);
 		// this.paymentService.mpesacallBackUrl(requestBody);
+         ObjectNode response = JsonNodeFactory.instance.objectNode();
+		response.put("ResultCode", "0");
+		response.put("ResultDesc", "Accepted");
+		return ResponseEntity.status(HttpStatus.OK).body(response);
+	}
+	
+	@PostMapping(value = "/confirm", produces = "application/json")
+	public Object paymentConfirmationCallBack(@RequestBody(required = false) Object requestBody) {
+		log.info("{request}"+ requestBody);
+		// this.paymentService.mpesacallBackUrl(requestBody);
+         ObjectNode response = JsonNodeFactory.instance.objectNode();
+		response.put("ResultCode", "0");
+		response.put("ResultDesc", "Accepted");
+		return ResponseEntity.status(HttpStatus.OK).body(response);
+	}
+	
+	@PostMapping(value = "/callbackResolver", produces = "application/json")
+	public Object validationCallBackResolver(@RequestBody(required = false) String requestBody) {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode rootNode;
 		try {
@@ -58,15 +76,6 @@ public class PaymentController {
 		response.put("status", "success");
 		response.put("message", "Callback handled successfully");
 		return ResponseEntity.ok(response);
-	}
-	
-	@PostMapping(value = "/validate", produces = "application/json")
-	public Object validationCallBackResolver(@RequestBody(required = false) Object requestBody) {
-		ObjectNode response = JsonNodeFactory.instance.objectNode();
-		
-		response.put("ResultCode", "0");
-		response.put("ResultDesc", "Accepted");
-		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 
    @PostMapping("mpesa/stkPush")
