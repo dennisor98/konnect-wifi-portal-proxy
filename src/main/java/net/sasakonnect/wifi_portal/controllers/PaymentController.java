@@ -2,6 +2,7 @@ package net.sasakonnect.wifi_portal.controllers;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +58,15 @@ public class PaymentController {
 		response.put("status", "success");
 		response.put("message", "Callback handled successfully");
 		return ResponseEntity.ok(response);
+	}
+	
+	@PostMapping(value = "/validate", produces = "application/json")
+	public Object validationCallBackResolver(@RequestBody(required = false) Object requestBody) {
+		ObjectNode response = JsonNodeFactory.instance.objectNode();
+		
+		response.put("ResultCode", "0");
+		response.put("ResultDesc", "Accepted");
+		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 
    @PostMapping("mpesa/stkPush")
