@@ -41,6 +41,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 		String authHeader = request.getHeader("Authorization");
 		String token = null;
 		String id = null;
+		Enumeration<String> headerNames = request.getHeaderNames();
+		while (headerNames.hasMoreElements()) {
+			String headerName = headerNames.nextElement();
+			String headerValue = request.getHeader(headerName);
+			log.warn("Header Name: {}, Header Value: {}", headerName, headerValue);
+		}
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			token = authHeader.substring(7);
 			if (token != null) {
@@ -60,12 +66,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 			try {
 //				Optional<User> user = this.userService.findUserWallet(id);
 				User userDetails = (User) userService.loadUserByUsername(id);
-				Enumeration<String> headerNames = request.getHeaderNames();
-				while (headerNames.hasMoreElements()) {
-					String headerName = headerNames.nextElement();
-					String headerValue = request.getHeader(headerName);
-					log.warn("Header Name: {}, Header Value: {}", headerName, headerValue);
-				}
 				if (userDetails != null && this.jwtService.validateToken(token, userDetails)) {
 
 					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
