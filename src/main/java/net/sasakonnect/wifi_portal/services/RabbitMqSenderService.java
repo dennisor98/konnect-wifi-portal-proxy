@@ -42,7 +42,7 @@ public class RabbitMqSenderService {
     }
 
 	public void updatePayment(String requestBody) {
-        rabbitTemplate.convertAndSend("transactionExchange", "transaction.callBack", requestBody);
+//        rabbitTemplate.convertAndSend("transactionExchange", "transaction.callBack", requestBody);
 
 		// TODO Auto-generated method stub
 		

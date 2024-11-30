@@ -4,9 +4,8 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,22 +24,22 @@ public class RabbitConfig {
 //        return rabbitTemplate;
 //    }
 
-    @Bean
+    @Bean(name="paymentRequestQueue")
     Queue paymentRequestQueue() {
         return new Queue("paymentRequestQueue", true);
     }
 
-    @Bean
+    @Bean(name="checkOutIdConfirmationQueue")
     Queue checkOutIdConfirmationQueue() {
         return new Queue("checkOutIdConfirmationQueue", true);
     }
 
-//    @Bean
-//    Queue transactionCallBackNotificationQueue() {
-//        return new Queue("transactionCallBackNotificationQueue", true);
-//    }
-
     @Bean
+    Queue transactionCallBackNotificationQueue() {
+        return new Queue("transactionCallBackNotificationQueue", true);
+    }
+
+    @Bean(name="failedPaymentNotificationQueue")
     Queue failedPaymentNotificationQueue() {
         return new Queue("failedPaymentNotificationQueue", true);
     }
@@ -52,28 +51,28 @@ public class RabbitConfig {
 
     @Bean
     Binding bindingCheckOutIdConfirmation(
-            Queue checkOutIdConfirmationQueue,
+    		@Qualifier("checkOutIdConfirmationQueue") Queue checkOutIdConfirmationQueue,
             TopicExchange exchange) {
         return BindingBuilder.bind(checkOutIdConfirmationQueue).to(exchange).with("transaction.confirm");
     }
 
     @Bean
     Binding bindingPaymentRequest(
-            Queue paymentRequestQueue,
+    		@Qualifier("paymentRequestQueue")    Queue paymentRequestQueue,
             TopicExchange exchange) {
         return BindingBuilder.bind(paymentRequestQueue).to(exchange).with("transaction.payment");
     }
     
-//    @Bean
-//    Binding bindingPaymentNotification(
-//            Queue transactionCallBackNotificationQueue,
-//            TopicExchange exchange) {
-//        return BindingBuilder.bind(transactionCallBackNotificationQueue).to(exchange).with("transaction.callbackNotification");
-//    }
+    @Bean
+    Binding bindingPaymentNotification(
+    		@Qualifier("transactionCallBackNotificationQueue")  Queue transactionCallBackNotificationQueue,
+            TopicExchange exchange) {
+        return BindingBuilder.bind(transactionCallBackNotificationQueue).to(exchange).with("transaction.notify");
+    }
 
     @Bean
     Binding bindingFailedPaymentNotification(
-            Queue failedPaymentNotificationQueue,
+    		@Qualifier("failedPaymentNotificationQueue")   Queue failedPaymentNotificationQueue,
             TopicExchange exchange) {
         return BindingBuilder.bind(failedPaymentNotificationQueue).to(exchange).with("transaction.failedPayment");
     }

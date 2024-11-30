@@ -1,4 +1,5 @@
 package net.sasakonnect.wifi_portal.services;
+
 import net.sasakonnect.wifi_portal.domain.Payment;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,19 +48,19 @@ import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import reactor.core.publisher.Mono;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
+
 @Service
 @Slf4j
 public class PaymentService {
-    ObjectMapper objectMapper = new ObjectMapper();
+	ObjectMapper objectMapper = new ObjectMapper();
 
 	@Autowired
 	MpesaWebClientBean mpesaClient;
 	@Autowired
-    public WebClient.Builder webClientBuilder;
+	public WebClient.Builder webClientBuilder;
 	@Autowired
 	DefaultWebClientBean webClient;
 
-	
 	@Value("${shortCode}")
 	String shortCode;
 //	
@@ -71,18 +72,18 @@ public class PaymentService {
 //	
 	@Autowired
 	AuthService authService;
-	
+
 //	@Autowired
 //	MessagingService msgService;
-	
+
 	@Autowired
 	InternetPackageRepository internetPackageRepository;
-	
+
 	@Autowired
 	PaymentRepository paymentRepository;
 	@Autowired
 	AppService appService;
-	@Autowired 
+	@Autowired
 	RabbitMqSenderService rabitMqSenderService;
 	@Autowired
 	ThreadExecuterBean threadExceutorBean;
@@ -90,116 +91,126 @@ public class PaymentService {
 	MpesaStkPush mpesaStkPush;
 	@Autowired
 	AppRepository appRepository;
-	
-	 private final RabbitTemplate rabbitTemplate;
-	    
 
-	    public PaymentService(RabbitTemplate rabbitTemplate) {
-	        this.rabbitTemplate = rabbitTemplate;
-	    }
-	
-    private Payment saveOrUpdatePayment(PaymentRequest payment,App app,String mpesaCheckoutId) {
-        // Check if a payment with the same konnectCheckoutId exists
-        Optional<Payment> existingPayment = paymentRepository.findByKonnectCheckoutId(payment.getKonnectCheckoutID());
-        
-        if (existingPayment.isPresent()) {
-            // If it exists, update the payment (you can modify the payment fields as needed)
-            Payment existing = existingPayment.get();
-            existing.setTxtId(mpesaCheckoutId);
-            existing.setIsSuccessful(false);
-            existing.setVerified(false);
-            return paymentRepository.save(existing);
-        }
-        return null;
-    }
-    private Payment saveOrUpdatePaymentMessage(String message, String konnectCheckoutId) {
-        // Check if a payment with the same konnectCheckoutId exists
-        Optional<Payment> existingPayment = paymentRepository.findByKonnectCheckoutId(konnectCheckoutId);
-        
-        if (existingPayment.isPresent()) {
-            // If it exists, update the payment (you can modify the payment fields as needed)
-            Payment existing = existingPayment.get();
-              existing.setVerified(true);
-              existing.setPaymentPayload(message);
-            return paymentRepository.save(existing);
-        }
-        return null;
-    }
+	private final RabbitTemplate rabbitTemplate;
 
-	
-	@RabbitListener(queues = "paymentRequestQueue")
-	public void handlePaymentRequest(String jsonPayload) {
-	    try {
-	        PaymentRequest paymentRequest = new ObjectMapper().readValue(jsonPayload, PaymentRequest.class);
-	        System.out.println("Received Payment Request: " + paymentRequest);
-	        
-	        this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID(), null);
-	        
-	        threadExceutorBean.addTask(new Runnable() {
-	            @Override
-	            public void run() {
-	                triggerMpesaStkPush(paymentRequest);
-	            }
-	        });
-	    } catch (JsonProcessingException e) {
-	        e.printStackTrace();
-	    }
+	public PaymentService(RabbitTemplate rabbitTemplate) {
+		this.rabbitTemplate = rabbitTemplate;
 	}
 
+	private Payment saveOrUpdatePayment(PaymentRequest payment, App app, String mpesaCheckoutId) {
+		// Check if a payment with the same konnectCheckoutId exists
+		Optional<Payment> existingPayment = paymentRepository.findByKonnectCheckoutId(payment.getKonnectCheckoutID());
+
+		if (existingPayment.isPresent()) {
+			// If it exists, update the payment (you can modify the payment fields as
+			// needed)
+			Payment existing = existingPayment.get();
+			existing.setTxtId(mpesaCheckoutId);
+			existing.setIsSuccessful(false);
+			existing.setVerified(false);
+			return paymentRepository.save(existing);
+		}
+		return null;
+	}
+
+	private Payment saveOrUpdatePaymentMessage(String message, String konnectCheckoutId) {
+		// Check if a payment with the same konnectCheckoutId exists
+		Optional<Payment> existingPayment = paymentRepository.findByKonnectCheckoutId(konnectCheckoutId);
+
+		if (existingPayment.isPresent()) {
+			// If it exists, update the payment (you can modify the payment fields as
+			// needed)
+			Payment existing = existingPayment.get();
+			existing.setVerified(true);
+			existing.setPaymentPayload(message);
+			return paymentRepository.save(existing);
+		}
+		return null;
+	}
+
+	@RabbitListener(queues = "paymentRequestQueue")
+	public void handlePaymentRequest(String jsonPayload) {
+		try {
+			PaymentRequest paymentRequest = new ObjectMapper().readValue(jsonPayload, PaymentRequest.class);
+			System.out.println("Received Payment Request: " + paymentRequest);
+
+			this.createPaymentRequest(paymentRequest.getAppKey(), paymentRequest.getKonnectCheckoutID(), null);
+
+			threadExceutorBean.addTask(new Runnable() {
+				@Override
+				public void run() {
+					triggerMpesaStkPush(paymentRequest);
+				}
+			});
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+	}
+	
+//	
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
-//	@Transactional
+	@Transactional
 	public void handleTransactionCallBackNotificationQueueRequest(String paymentRequest) {
 //	
-		log.error("payment callback"+paymentRequest);
-	
-	    threadExceutorBean.addTask(new Runnable() {
+		log.error("payment callback" + paymentRequest);
+
+		threadExceutorBean.addTask(new Runnable() {
 
 			@Override
 			public void run() {
-			    ObjectMapper mapper = new ObjectMapper();
-		        JsonNode rootNode;
+				ObjectMapper mapper = new ObjectMapper();
+				JsonNode rootNode;
 				try {
 					rootNode = mapper.readTree(paymentRequest);
-					 String checkoutRequestID = rootNode.path("Body")
-		                     .path("stkCallback")
-		                     .path("CheckoutRequestID")
-		                     .asText();
-					    System.out.println("Called Back called: " + paymentRequest);
-                      System.out.println("what happened");
+					String checkoutRequestID = rootNode.path("Body").path("stkCallback").path("CheckoutRequestID")
+							.asText();
+					System.out.println("Called Back called: " + paymentRequest);
+					System.out.println("what happened");
 					try {
-						 Optional<Payment> payment=   paymentRepository.findByTxtIdIgnoreCase(checkoutRequestID);
-						 log.error(""+payment);
-						
-						 var paymentData = new Gson().fromJson(paymentRequest,MpesaCallBackDto.class);
-						 var callback = paymentData.getBody().getStkCallback();
-						 if(payment.isPresent()) {
-							var pay= payment.get();
+						Optional<Payment> payment = paymentRepository.findByTxtIdIgnoreCase(checkoutRequestID);
+						log.error("" + payment);
+
+						var paymentData = new Gson().fromJson(paymentRequest, MpesaCallBackDto.class);
+						var callback = paymentData.getBody().getStkCallback();
+						if (payment.isPresent()) {
+							var pay = payment.get();
 //							pay.setPaymentPayload(paymentRequest);
 //							paymentRepository.save(pay)	;
 							User user = pay.getUser();
 							String userName = null;
-							if(user!=null) {
-								userName = user.getFirstname()+" "+user.getLastname();
+							if (user != null) {
+								userName = user.getFirstname() + " " + user.getLastname();
 							}
-						    System.out.println("Called Back notify merchant at : " + pay.getApp().getCallbackUrl());
-						    Map<String,Object> params =  new HashMap<>();
-							params.put("TransType","CustomerBuyGoodsOnline");
-							params.put("TransID",pay.getTxtId());
-							params.put("TransTime",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(3).getValue():null);
-							params.put("TransAmount",callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(0).getValue():null);
-							params.put("BusinessShortCode",shortCode);
-							params.put("BillRefNumber", callback.getCallbackMetadata() !=null ? callback.getCallbackMetadata().getItem().get(1).getValue():null);
-							params.put("Mobile",callback.getCallbackMetadata() !=null ? String.valueOf(callback.getCallbackMetadata().getItem().get(4).getValue()):null);
-					        params.put("name", userName);
-					        params.put("userId", user !=null ? user.getUserId() : null);
-					
-                         log.error("{body}"+new Gson().toJson(params));
-					     Mono<Object> respMono =   webClient.webClient.post()
-					                .uri(pay.getApp().getCallbackUrl())
-					                .contentType(MediaType.APPLICATION_JSON)
-					                .body(BodyInserters.fromValue(new Gson().toJson(params)))
-					                .accept(MediaType.APPLICATION_JSON)
-					                .retrieve()
+							System.out.println("Called Back notify merchant at : " + pay.getApp().getCallbackUrl());
+							Map<String, Object> params = new HashMap<>();
+							params.put("TransType", "CustomerBuyGoodsOnline");
+							params.put("TransID", pay.getTxtId());
+							params.put("TransTime",
+									callback.getCallbackMetadata() != null
+											? callback.getCallbackMetadata().getItem().get(3).getValue()
+											: null);
+							params.put("TransAmount",
+									callback.getCallbackMetadata() != null
+											? callback.getCallbackMetadata().getItem().get(0).getValue()
+											: null);
+							params.put("BusinessShortCode", shortCode);
+							params.put("BillRefNumber",
+									callback.getCallbackMetadata() != null
+											? callback.getCallbackMetadata().getItem().get(1).getValue()
+											: null);
+							params.put("Mobile",
+									callback.getCallbackMetadata() != null
+											? String.valueOf(callback.getCallbackMetadata().getItem().get(4).getValue())
+											: null);
+							params.put("name", userName);
+							params.put("userId", user != null ? user.getUserId() : null);
+
+							log.error("{body}" + new Gson().toJson(params));
+							Mono<Object> respMono = webClient.webClient.post().uri(pay.getApp().getCallbackUrl())
+									.contentType(MediaType.APPLICATION_JSON)
+									.body(BodyInserters.fromValue(new Gson().toJson(params)))
+									.accept(MediaType.APPLICATION_JSON).retrieve()
 //					                .onStatus(
 //					                    status -> !status.is2xxSuccessful(), 
 //					                    clientResponse -> clientResponse.bodyToMono(String.class)
@@ -210,8 +221,8 @@ public class PaymentService {
 //					                                        "Payment API call failed with status: " + clientResponse.statusCode()));
 //					                            })
 //					                )
-					                .bodyToMono(Object.class);
-					     respMono.block();
+									.bodyToMono(Object.class);
+							respMono.block();
 //					                .doOnTerminate(() -> {
 //					                    // Optional: Add any additional final actions after the request completes
 //					                    System.out.println("Request completed");
@@ -221,54 +232,49 @@ public class PaymentService {
 //					                    System.out.println("Response: " + response);
 //					                });
 
-										
-						 }else {
-							 log.warn("could not find transaction for checkout id"+checkoutRequestID);
-						 }
-					}catch(Exception ex) {
+						} else {
+							log.warn("could not find transaction for checkout id" + checkoutRequestID);
+						}
+					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 
-					 //this.paymentService.updatePaymentWithCheckoutId(checkoutRequestID,requestBody);
+					// this.paymentService.updatePaymentWithCheckoutId(checkoutRequestID,requestBody);
 				} catch (JsonProcessingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-		        
-				
+
 			}
-	    	
-	    });
+
+		});
 	}
-	
 
 	@RabbitListener(queues = "checkOutIdConfirmationQueue")
-	public void checkOutIDConfirmationQueue(PaymentRequest paymentRequest,Channel channel,@Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-	    threadExceutorBean.addTask(new Runnable() {
-          int count=0;
+	public void checkOutIDConfirmationQueue(PaymentRequest paymentRequest, Channel channel,
+			@Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+		threadExceutorBean.addTask(new Runnable() {
+			int count = 0;
+
 			@Override
 			public void run() {
 				try {
-					
-						   log.error("THE COUNT "+count);
-			               log.info("Start Polling this"+paymentRequest);	
-			           	Thread.sleep(20000);
-                            MpesaResponse results=getTxStatusByCheckoutRequestId(paymentRequest.getExternalCheckoutId());
-			               saveOrUpdatePaymentMessage(results.toString(),paymentRequest.getKonnectCheckoutID());
-		            		//channel.basicAck(tag, false);
-		                   log.info("Polling results"+results);		
 
-					
-					
-				
+					log.error("THE COUNT " + count);
+					log.info("Start Polling this" + paymentRequest);
+					Thread.sleep(20000);
+					MpesaResponse results = getTxStatusByCheckoutRequestId(paymentRequest.getExternalCheckoutId());
+					saveOrUpdatePaymentMessage(results.toString(), paymentRequest.getKonnectCheckoutID());
+					// channel.basicAck(tag, false);
+					log.info("Polling results" + results);
 
-				}  catch (Exception e) {
+				} catch (Exception e) {
 
 				}
-					
+
 			}
-	    	
-	    });
+
+		});
 	}
 //	public Object mpesacallBackUrl(Object request){
 //		log.error("{callBack} "+request);
@@ -278,241 +284,169 @@ public class PaymentService {
 //	}
 //	
 
-	public Object stkPush(StkPushDto stk) { 
-		 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	public Object stkPush(StkPushDto stk) {
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var phone = stk.getPhone();
 		String mobile = null;
 		String appKey = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e";
-		Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(appKey);
-		if(phone !=null){
-			if(phone.trim().length() < 9) {
+		Optional<App> appOpt = this.appRepository.findFirstByAppKeyAndAppSecret(appKey);
+		if (phone != null) {
+			if (phone.trim().length() < 9) {
 				ObjectNode node = JsonNodeFactory.instance.objectNode();
 				node.put("success", false);
-				node.put("message","Phone number must be at least 9 digits");
+				node.put("message", "Phone number must be at least 9 digits");
 
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
 			}
-			
-			mobile = phone.trim().substring(phone.length() -9);
-		}else {
-			var userphone = user.getPhone().trim();
-			mobile = userphone.substring(userphone.length() -9 );
-		}
-     
-		
-      if(appOpt.isPresent()) {
-    	  App app = appOpt.get();
-//    	  var currentApp= this.requestScopedBean.getApp();
-//		    stk.setAppKey(currentApp.getAppKey());
-//		    stk.setApp(currentApp);
-		    
-		    var payReq = PaymentRequest.builder().phoneNumber("254"+mobile).app(app).appKey(appKey).amount(1).build();
-			log.info("{payReq}"+payReq);
-		    
-		    return  this.rabitMqSenderService.sendPaymentRequest(payReq);
-//    	  DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-//		var timestamp =  LocalDateTime.now().format(format);
-//		ObjectNode req = JsonNodeFactory.instance.objectNode();
-//		var password = this.authService.getMpesaMerchantPassword(timestamp);
-//		req.put("BusinessShortCode",app.getBusinessShortCode());
-//		req.put("Password",password);
-//		req.put("Timestamp",timestamp);
-//		req.put("TransactionType","CustomerBuyGoodsOnline");
-//		req.put("Amount","1");
-//		req.put("PartyA","254"+mobile);
-//		req.put("PartyB", app.getMpesaTillNo());
-//		req.put("PhoneNumber", "254"+mobile);
-//		req.put("CallBackURL",mpesaCallBackUrl);
-//		req.put("AccountReference", "Test");
-//		req.put("TransactionDesc", "Test");	
-//			log.error(req+"{req}");
-//			Mono<String> responseMono = this.mpesaClient.webClient
-//			        .post()
-//			        .uri(MpesaEndpointsConstants.STK_PUSH)
-//			        .header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-//			        .contentType(MediaType.APPLICATION_JSON)
-//			        .body(BodyInserters.fromValue(req))
-//			        .accept(MediaType.APPLICATION_JSON)
-//			        .retrieve()  
-//			        .bodyToMono(String.class);
-//			
-//			
-//
-//		try {
-//			String responseJson = responseMono.block();
-//			if(responseJson !=null) {
-//				//    	   return responseJson;
-//				var resp = new Gson().fromJson(responseJson,PollMpesaDto.class);
-//				var payReq =  PaymentRequest.builder().amount(Integer.valueOf(this.getSubscriptionCostById(stk.getSubscriptionPlanId()))).app(app).appKey(appKey).ExternalCheckoutId(resp.getCheckoutRequestID()).KonnectCheckoutID(resp.getCheckoutRequestID()).phoneNumber("+254"+mobile).build();
-////				this.msgService.processMpesaStkPush(resp);
-//				log.error("{resp}"+resp);
-//				this.saveOrUpdatePayment(payReq,app,resp.getCheckoutRequestID());
-//				payReq.setExternalCheckoutId(resp.getCheckoutRequestID());
-//				createPaymentRequest(app.getAppKey(),resp.getCheckoutRequestID(),user);
-//				this.rabitMqSenderService.sendMpesaCheckoutRequestId(payReq);
-//				return resp;
-//			}
-//			
-//		}catch(Exception ex) {
-//			ex.printStackTrace();
-//			ObjectNode node = JsonNodeFactory.instance.objectNode();
-//			node.put("success",false);
-//			node.put("message","An error ocurred");
-//			
-//			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
-//		}
-    	  
-    	  
 
-      }
-		
+			mobile = phone.trim().substring(phone.length() - 9);
+		} else {
+			var userphone = user.getPhone().trim();
+			mobile = userphone.substring(userphone.length() - 9);
+		}
+
+		if (appOpt.isPresent()) {
+			App app = appOpt.get();
+
+		    var payReq = PaymentRequest.builder().phoneNumber("254"+mobile).app(app).appKey(appKey).amount(this.getSubscriptionCostById(stk.getSubscriptionPlanId())).build();
+			log.info("{payReq}"+payReq);
+
+			return this.rabitMqSenderService.sendPaymentRequest(payReq);
+
+		}
+
 		return null;
 	}
-	
-	private String getSubscriptionCostById(String id) {
+
+	private Integer getSubscriptionCostById(String id) {
 		Optional<InternetPackages> packageOpt = this.internetPackageRepository.findByForeignPackageId(id);
-		if(packageOpt.isPresent()) {
+		if (packageOpt.isPresent()) {
 			var pkg = packageOpt.get();
-			return String.valueOf(pkg.getCost());
+			return pkg.getCost();
 		}
-		return "0";
+		return 0;
 	}
-	
+
 	public MpesaResponse getTxStatusByCheckoutRequestId(String checkoutRequestId) {
 		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-		var timestamp =  LocalDateTime.now().format(format);
+		var timestamp = LocalDateTime.now().format(format);
 		ObjectNode body = JsonNodeFactory.instance.objectNode();
-		body.put("BusinessShortCode",shortCode);
-		body.put("Password",this.authService.getMpesaMerchantPassword(timestamp));
+		body.put("BusinessShortCode", shortCode);
+		body.put("Password", this.authService.getMpesaMerchantPassword(timestamp));
 		body.put("Timestamp", timestamp);
-		body.put("CheckoutRequestID",checkoutRequestId);
-		log.info("body"+body.toPrettyString());
-		
-		Mono<String> responseMono = this.mpesaClient.webClient
-				.post()
-				.uri(MpesaEndpointsConstants.TX_QUERY)
-				.header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(BodyInserters.fromValue(body))
-				.accept(MediaType.APPLICATION_JSON)
-				.retrieve()
+		body.put("CheckoutRequestID", checkoutRequestId);
+		log.info("body" + body.toPrettyString());
+
+		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_QUERY)
+				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+				.accept(MediaType.APPLICATION_JSON).retrieve()
 
 				.bodyToMono(String.class);
 
 		try {
 			String responseJson = responseMono.block();
-			if(responseJson !=null) {
-				return new Gson().fromJson(responseJson,MpesaResponse.class);
+			if (responseJson != null) {
+				return new Gson().fromJson(responseJson, MpesaResponse.class);
 			}
-			
-		}catch(Exception ex) {
+
+		} catch (Exception ex) {
 			ex.printStackTrace();
 			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.put("success",false);
-			node.put("message","An error ocurred");
+			node.put("success", false);
+			node.put("message", "An error ocurred");
 			return null;
-			
+
 		}
-		
 
 		return null;
 	}
-	
+
 	public Object triggerMpesaStkPush(@Valid PaymentRequest stk) {
-		var appKey=stk.getAppKey();
+		var appKey = stk.getAppKey();
 		var phone = stk.getPhoneNumber();
 		String mobile = null;
-		if(phone !=null){
-			if(phone.trim().length() < 9) {
+		if (phone != null) {
+			if (phone.trim().length() < 9) {
 				ObjectNode node = JsonNodeFactory.instance.objectNode();
 				node.put("success", false);
-				node.put("message","Phone number must be at least 9 digits");
+				node.put("message", "Phone number must be at least 9 digits");
 
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
 			}
-			
-			mobile = phone.trim().substring(phone.length() -9);
+
+			mobile = phone.trim().substring(phone.length() - 9);
 		}
-     
-		
-      
+
 		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-		var timestamp =  LocalDateTime.now().format(format);
+		var timestamp = LocalDateTime.now().format(format);
 		ObjectNode req = JsonNodeFactory.instance.objectNode();
 		var password = this.authService.getMpesaMerchantPassword(timestamp);
-		log.error("password"+password);
-		req.put("BusinessShortCode",stk.getApp().getBusinessShortCode());
-		req.put("Password",password);
-		req.put("Timestamp",timestamp);
-		req.put("TransactionType","CustomerBuyGoodsOnline");
-		req.put("Amount",stk.getAmount());
-		req.put("PartyA","254"+mobile);
+		log.error("password" + password);
+		req.put("BusinessShortCode", stk.getApp().getBusinessShortCode());
+		req.put("Password", password);
+		req.put("Timestamp", timestamp);
+		req.put("TransactionType", "CustomerBuyGoodsOnline");
+		req.put("Amount", stk.getAmount());
+		req.put("PartyA", "254" + mobile);
 		req.put("PartyB", stk.getApp().getMpesaTillNo());
-		req.put("PhoneNumber", "254"+mobile);
-		req.put("CallBackURL",mpesaCallBackUrl);
+		req.put("PhoneNumber", "254" + mobile);
+		req.put("CallBackURL", mpesaCallBackUrl);
 		req.put("AccountReference", stk.getApp().getName());
-		req.put("TransactionDesc", stk.getApp().getName()+" : ("+mobile+")");	
-			log.error(req+"{req}");
-			Mono<String> responseMono = this.mpesaClient.webClient
-			        .post()
-			        .uri(MpesaEndpointsConstants.STK_PUSH)
-			        .header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-			        .contentType(MediaType.APPLICATION_JSON)
-			        .body(BodyInserters.fromValue(req))
-			        .accept(MediaType.APPLICATION_JSON)
-			        .retrieve()  
-			        .bodyToMono(String.class);
+		req.put("TransactionDesc", stk.getApp().getName() + " : (" + mobile + ")");
+		log.error(req + "{req}");
+		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.STK_PUSH)
+				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(req))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 
 		try {
 			String responseJson = responseMono.block();
-			  log.error("response"+responseJson);
-			if(responseJson !=null) {
-	            
-	            // Deserialize JSON into MpesaResponse object
-				ObjectMapper objectMapper = new ObjectMapper();
-	            MpesaResponse response = objectMapper.readValue(responseJson, MpesaResponse.class);
-	           var currentApp= this.appService.findAppByAppKey(appKey)	;	//    	   return responseJson;
-				
-	           if(currentApp.isPresent()){
+			log.error("response" + responseJson);
+			if (responseJson != null) {
 
-	       				this.saveOrUpdatePayment(stk,currentApp.get(),response.getCheckoutRequestID());
-	       				stk.setExternalCheckoutId(response.getCheckoutRequestID());
-	    				this.rabitMqSenderService.sendMpesaCheckoutRequestId(stk);
-	       				
-	       				return new Gson().fromJson(responseJson,Map.class);
-	           }
-	           
+				// Deserialize JSON into MpesaResponse object
+				ObjectMapper objectMapper = new ObjectMapper();
+				MpesaResponse response = objectMapper.readValue(responseJson, MpesaResponse.class);
+				var currentApp = this.appService.findAppByAppKey(appKey); // return responseJson;
+
+				if (currentApp.isPresent()) {
+
+					this.saveOrUpdatePayment(stk, currentApp.get(), response.getCheckoutRequestID());
+					stk.setExternalCheckoutId(response.getCheckoutRequestID());
+					this.rabitMqSenderService.sendMpesaCheckoutRequestId(stk);
+
+					return new Gson().fromJson(responseJson, Map.class);
+				}
+
 			}
-			
-		}catch(Exception ex) {
+
+		} catch (Exception ex) {
 			ex.printStackTrace();
 			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.put("success",false);
-			node.put("message","An error ocurred");
-			
+			node.put("success", false);
+			node.put("message", "An error ocurred");
+
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
 		}
 
 		return null;
 	}
-	private Payment createPaymentRequest(String appKey,String konnectTransactionId,User user) {
-         var currentApp= this.appService.findAppByAppKey(appKey)	;	//    	   return responseJson;
-			
-         if(currentApp.isPresent()){
-      	   var pay=Payment.builder().app(currentApp.get())
-						
-						.konnectCheckoutId(konnectTransactionId) 
-						.txtId(konnectTransactionId)
-						.user(user)
-     				.isSuccessful(false)
-     				.verified(false).build()			;
-     				return this.paymentRepository.save(pay);
-     				
-     			
-     				
-         }
-         return null;
+
+	private Payment createPaymentRequest(String appKey, String konnectTransactionId, User user) {
+		var currentApp = this.appService.findAppByAppKey(appKey); // return responseJson;
+
+		if (currentApp.isPresent()) {
+			var pay = Payment.builder().app(currentApp.get())
+
+					.konnectCheckoutId(konnectTransactionId).txtId(konnectTransactionId).user(user).isSuccessful(false)
+					.verified(false).build();
+			return this.paymentRepository.save(pay);
+
+		}
+		return null;
 	}
+
 //	public Object triggerMpesaStkPush(@Valid PaymentRequest stk, App currentApp) {
 //		var phone = stk.getPhoneNumber();
 //		String mobile = null;
@@ -593,6 +527,6 @@ public class PaymentService {
 	public void updatePaymentWithCheckoutId(String checkoutRequestID, String requestBody) {
 		this.rabitMqSenderService.updatePayment(requestBody);
 		// TODO Auto-generated method stub
-		
+
 	}
 }
