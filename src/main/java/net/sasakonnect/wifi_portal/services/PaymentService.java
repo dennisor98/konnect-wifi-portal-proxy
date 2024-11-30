@@ -307,8 +307,9 @@ public class PaymentService {
 
 		if (appOpt.isPresent()) {
 			App app = appOpt.get();
+//			this.getSubscriptionCostById(stk.getSubscriptionPlanId())
 
-		    var payReq = PaymentRequest.builder().phoneNumber("254"+mobile).app(app).appKey(appKey).amount(this.getSubscriptionCostById(stk.getSubscriptionPlanId())).build();
+		    var payReq = PaymentRequest.builder().phoneNumber("254"+mobile).app(app).appKey(appKey).amount(1).build();
 			log.info("{payReq}"+payReq);
 
 			return this.rabitMqSenderService.sendPaymentRequest(payReq);
