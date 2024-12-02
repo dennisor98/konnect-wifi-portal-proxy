@@ -3,6 +3,7 @@ package net.sasakonnect.wifi_portal.config;
 
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.enums.JwtType;
+import net.sasakonnect.wifi_portal.repository.UserRepository;
 import net.sasakonnect.wifi_portal.services.JwtService;
 import net.sasakonnect.wifi_portal.services.UserService;
 
@@ -34,6 +36,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 	UserService userService;
 	@Autowired
 	JwtService jwtService;
+	@Autowired
+	UserRepository userRepository;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -47,6 +51,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 			String headerValue = request.getHeader(headerName);
 			log.warn("Header Name: {}, Header Value: {}", headerName, headerValue);
 		}
+		
+	  String device_header = request.getHeader("user-agent");
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			token = authHeader.substring(7);
 			if (token != null) {
@@ -64,10 +70,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 		System.out.println("userId"+id);
 		if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 			try {
-//				Optional<User> user = this.userService.findUserWallet(id);
 				User userDetails = (User) userService.loadUserByUsername(id);
 				if (userDetails != null && this.jwtService.validateToken(token, userDetails)) {
-
+					userDetails.setDevId(device_header);
+					this.userRepository.save(userDetails);
 					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
 							null, null);
 					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
