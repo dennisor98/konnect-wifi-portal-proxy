@@ -68,6 +68,9 @@ public class User extends BasePortalDomain implements Serializable,UserDetails{
 	    
 	    @Column(nullable = true)
 	    private String userId;
+	    
+	    @Column(nullable=true)
+	    private String devId;
 
 	    @Column(nullable = true, columnDefinition = "boolean default false")
 	    private boolean isMuted;

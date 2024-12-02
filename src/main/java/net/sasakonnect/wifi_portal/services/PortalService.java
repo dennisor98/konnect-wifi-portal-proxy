@@ -14,12 +14,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
@@ -167,9 +171,17 @@ public class PortalService {
 	   
 	   var params = new HashMap<>();
 	   params.put("phone", "+254"+phone);
+	   ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 	   
+	    String devId = null;
+	    if(attrs !=null) {
+		    HttpServletRequest request = attrs.getRequest();
+
+	    	devId = request.getHeader("user-agent");
+	    }
 	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.SEND_OTP)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+				.header("user-agent",devId)
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 	   String responseJson = responseMono.block();
 	   if(responseJson !=null) {
@@ -179,6 +191,14 @@ public class PortalService {
 	   return null;
    }
    public Object reSendOtp(SendOtpDto login) {
+	   ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+	   
+	    String devId = null;
+	    if(attrs !=null) {
+		    HttpServletRequest request = attrs.getRequest();
+
+	    	devId = request.getHeader("user-agent");
+	    }
 	   var phone = login.getPhone().trim();
 	   if(phone.length() < 9) {
 		   var map = new HashMap<>();
@@ -193,6 +213,7 @@ public class PortalService {
 	   
 	   Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.RE_SEND_OTP)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+				.header("user-agent",devId)
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 	   String responseJson = responseMono.block();
 	   if(responseJson !=null) {
