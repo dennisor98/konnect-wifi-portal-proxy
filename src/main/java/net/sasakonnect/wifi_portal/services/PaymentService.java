@@ -520,7 +520,8 @@ public class PaymentService {
 				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-		responseMono.block();
+		String json =  responseMono.block();
+		System.out.println("{json}"+json);
 		
 	}
 	
