@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
 import net.sasakonnect.wifi_portal.beans.AdvancedUniqueKeyGenerator;
 
@@ -34,6 +35,11 @@ public class RabbitMqSenderService {
     	    e.printStackTrace();
     	}
         return payment_checkoutId;
+    }
+    
+    public void requestPaymentStatus(MpesaPaymentValidationDto data) {
+    	
+    	
     }
     
     public void sendMpesaCheckoutRequestId(PaymentRequest paymentRequest) {

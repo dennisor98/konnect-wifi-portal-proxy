@@ -14,6 +14,7 @@ import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
 import net.sasakonnect.wifi_portal.annotations.PaymentSdkFilter;
 import net.sasakonnect.wifi_portal.beans.AppRequestBean;
+import net.sasakonnect.wifi_portal.beans.PackagePricesBean;
 import net.sasakonnect.wifi_portal.services.PaymentService;
 import net.sasakonnect.wifi_portal.services.RabbitMqSenderService;
 import io.swagger.annotations.ApiOperation;
@@ -26,6 +27,9 @@ public class PaymentSdkController {
     private AppRequestBean requestScopedBean;
 	@Autowired
 	PaymentService paymentService;
+	
+	@Autowired
+	PackagePricesBean packageBean;
 	
 	@Autowired 
 	RabbitMqSenderService rabitMqSenderService;
@@ -51,9 +55,10 @@ public class PaymentSdkController {
 		        PaymentRequest stk) {
 		 
 		    var currentApp= this.requestScopedBean.getApp();
-		    stk.setAppKey(currentApp.getAppKey());
-		    stk.setApp(currentApp);
-			return  this.rabitMqSenderService.sendPaymentRequest(stk);
+//		    stk.setAppKey(currentApp.getAppKey());
+//		    stk.setApp(currentApp);
+		    return packageBean.packagePrices;
+//			return  this.rabitMqSenderService.sendPaymentRequest(stk);
 
 		   // return this.paymentService.triggerMpesaStkPush(stk,currentApp);
 		    
