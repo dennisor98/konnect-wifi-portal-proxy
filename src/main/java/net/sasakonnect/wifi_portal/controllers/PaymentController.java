@@ -16,11 +16,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
+import net.sasakonnect.wifi_portal.services.AuthService;
 //import net.sasakonnect.wifi_portal.services.MessagingService;
 //import net.sasakonnect.wifi_portal.services.MessagingService;
 import net.sasakonnect.wifi_portal.services.PaymentService;
+import net.sasakonnect.wifi_portal.services.RabbitMqSenderService;
 
 @CustomController
 @RequestMapping("payment")
@@ -30,29 +33,29 @@ public class PaymentController {
 
 	@Autowired
 	PaymentService paymentService;
+	@Autowired
+	AuthService authService;
+	@Autowired
+	RabbitMqSenderService rabitMqSenderService;
 
 	//	@Autowired
 	//	MessagingService messageService;
 
 
 	@PostMapping(value = "/callBack", produces = "application/json")
-	public Object paymentValidationCallBack(@RequestBody(required = false) Object requestBody) {
-		log.info("{request}"+ requestBody);
-		// this.paymentService.mpesacallBackUrl(requestBody);
-         ObjectNode response = JsonNodeFactory.instance.objectNode();
-		response.put("ResultCode", "0");
-		response.put("ResultDesc", "Accepted");
-		return ResponseEntity.status(HttpStatus.OK).body(response);
+	public Object paymentValidationCallBack(@RequestBody(required = false) MpesaPaymentValidationDto requestBody) {
+		return this.paymentService.validatePayment(requestBody);
 	}
 	
 	@PostMapping(value = "/confirm", produces = "application/json")
-	public Object paymentConfirmationCallBack(@RequestBody(required = false) Object requestBody) {
+	public Object paymentConfirmationCallBack(@RequestBody(required = false) MpesaPaymentValidationDto requestBody) {
 		log.info("{request}"+ requestBody);
 		// this.paymentService.mpesacallBackUrl(requestBody);
          ObjectNode response = JsonNodeFactory.instance.objectNode();
 		response.put("ResultCode", "0");
 		response.put("ResultDesc", "Accepted");
-		return ResponseEntity.status(HttpStatus.OK).body(response);
+		this.rabitMqSenderService.requestPaymentStatus(requestBody);
+		return ResponseEntity.status(HttpStatus.OK);
 	}
 	
 	@PostMapping(value = "/callbackResolver", produces = "application/json")
@@ -83,18 +86,18 @@ public class PaymentController {
 		return this.paymentService.stkPush(stk);
 	}
 
-}
+
 //   
 //   @PostMapping("mpesa/confirmTransaction")
 //   public Object queryMpesaByChecoutRequestId(@Valid @RequestBody() PollMpesaDto stk) {
 //	   return this.paymentService.getTxStatusByCheckoutRequestId(stk.getCheckoutRequestID());
 //   }
 //   
-//   @PostMapping("mpesa/init")
-//   public Object mpesaInit() {
-//	   return this.messageService.processMpesaStkPush("Mpesa Messaging");
-//   }
-//}
+   @PostMapping("/result")
+   public void mpesaInit(@Valid @RequestBody() Object result) throws Exception {
+	  log.info("{result}"+result);
+   }
+}
 
 
 //{
