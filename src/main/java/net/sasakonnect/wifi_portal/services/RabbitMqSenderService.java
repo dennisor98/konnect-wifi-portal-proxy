@@ -38,8 +38,7 @@ public class RabbitMqSenderService {
     }
     
     public void requestPaymentStatus(MpesaPaymentValidationDto data) {
-    	
-    	
+    	this.rabbitTemplate.convertAndSend("transactionExchange","transaction.status",data);
     }
     
     public void sendMpesaCheckoutRequestId(PaymentRequest paymentRequest) {

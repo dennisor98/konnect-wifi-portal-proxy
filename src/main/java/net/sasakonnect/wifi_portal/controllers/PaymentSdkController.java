@@ -55,10 +55,9 @@ public class PaymentSdkController {
 		        PaymentRequest stk) {
 		 
 		    var currentApp= this.requestScopedBean.getApp();
-//		    stk.setAppKey(currentApp.getAppKey());
-//		    stk.setApp(currentApp);
-		    return packageBean.packagePrices;
-//			return  this.rabitMqSenderService.sendPaymentRequest(stk);
+		    stk.setAppKey(currentApp.getAppKey());
+		    stk.setApp(currentApp);
+			return  this.rabitMqSenderService.sendPaymentRequest(stk);
 
 		   // return this.paymentService.triggerMpesaStkPush(stk,currentApp);
 		    

@@ -34,7 +34,11 @@ public class Payment extends BasePortalDomain {
 	    private String konnectCheckoutId;
 	    
 	    @Column(nullable = false)
-	    private Boolean verified; // Map BIT(1) to Boolean
+	    private Boolean verified; 
+	    
+	    @Column(nullable = true)
+	    private String mobileNumber; 
+	    
 	    
 	    @Column(name = "is_sucessful", nullable = false)
 	    private Boolean isSuccessful; // Map BIT(1) to Boolean
