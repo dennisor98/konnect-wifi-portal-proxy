@@ -17,7 +17,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
+import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
+import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
 import net.sasakonnect.wifi_portal.services.AuthService;
 //import net.sasakonnect.wifi_portal.services.MessagingService;
@@ -94,16 +96,14 @@ public class PaymentController {
 //   }
 //   
    @PostMapping("/result")
-   public void mpesaInit(@Valid @RequestBody() Object result) throws Exception {
+   public void mpesaInit(@Valid @RequestBody() MpesaResultDto result) throws Exception {
 	  log.info("{result}"+result);
+	   this.paymentService.processMpesaStatusResult(result);
+   }
+   
+   @PostMapping("/toolkitReq")
+   public Object requestToolkitPayment(ToolkitPayDto payReq) {
+	   return this.paymentService.createPaymentRequest(payReq);
    }
 }
 
-
-//{
-//	  "MerchantRequestID": "94fc-460e-a970-797968bf6a851260555",
-//	  "CheckoutRequestID": "ws_CO_13112024132317657769156995",
-//	  "ResponseCode": "0",
-//	  "ResponseDescription": "Success. Request accepted for processing",
-//	  "CustomerMessage": "Success. Request accepted for processing"
-//	}

@@ -36,10 +36,13 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaCallBackDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
+import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
+import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.MpesaResponse;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
+import net.sasakonnect.wifi_portal.beans.AdvancedUniqueKeyGenerator;
 import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.MpesaWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PackagePricesBean;
@@ -354,7 +357,7 @@ public class PaymentService {
 		return null;
 	}
 
-	private Integer getSubscriptionCostById(String id) {
+	public Integer getSubscriptionCostById(String id) {
 		Optional<InternetPackages> packageOpt = this.internetPackageRepository.findByForeignPackageId(id);
 		if (packageOpt.isPresent()) {
 			var pkg = packageOpt.get();
@@ -527,23 +530,7 @@ public class PaymentService {
          return null;
 	}
 	
-	
-	public Object getTransactionStatusByTxId() {
-		ObjectNode params = JsonNodeFactory.instance.objectNode();
-		params.put("Initiator", "Ahadi");
-		params.put("SecurityCredential","");
-		params.put("Command ID","");
-		params.put("Transaction ID","");
-		params.put("OriginatorConversationID","");
-		params.put("PartyA", "");
-		params.put("IdentifierType", "");
-		params.put("ResultURL","");
-		params.put("QueueTimeOutURL","");
-		params.put("Remarks","OK");
-		params.put("Occasion","OK");
-		
-		return null;
-	}
+
 
 	
 	public Object validatePayment(MpesaPaymentValidationDto data) {
@@ -554,17 +541,20 @@ public class PaymentService {
 
 	    List<String> packages = this.packageBean.packagePrices;
 
-	    if (packages.contains(transAmount)) {
+//	    if (packages.contains(transAmount)) {
 	        ObjectNode response = JsonNodeFactory.instance.objectNode();
 	        response.put("ResultCode", "0");
 	        response.put("ResultDesc", "Accepted");
 	        return ResponseEntity.status(HttpStatus.OK).body(response);
-	    }
+//	    }
+	    
+	    
+	    
 
-	    ObjectNode response = JsonNodeFactory.instance.objectNode();
-	    response.put("ResultCode", "C2B00013");
-	    response.put("ResultDesc", "Rejected");
-	    return ResponseEntity.status(HttpStatus.OK).body(response);
+//	    ObjectNode response = JsonNodeFactory.instance.objectNode();
+//	    response.put("ResultCode", "C2B00013");
+//	    response.put("ResultDesc", "Rejected");
+//	    return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 
 	
@@ -592,11 +582,42 @@ public class PaymentService {
 	}
 	
 	
+	public Object createPaymentRequest(ToolkitPayDto req) {
+		App app = null;
+		if(req.getAppKey() !=null) {
+			Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(req.getAppKey());
+			if(appOpt.isEmpty()) {
+				app = appOpt.get();
+			}
+		}
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(req.getMobileNumber()).build();
+		this.paymentRepository.save(payment);
+		return payment_checkoutId;
+	}
+	
+	public Optional<Payment> getPaymentByMobileNumber(String mobileNumber) {
+		return	this.paymentRepository.findByMobileNumber(mobileNumber);
+	}
+
 	
 
 	public void updatePaymentWithCheckoutId(String checkoutRequestID, String requestBody) {
 		this.rabitMqSenderService.updatePayment(requestBody);
 		// TODO Auto-generated method stub
 
+	}
+	
+	public void processMpesaStatusResult(MpesaResultDto result) {
+		var res = result.getResult();
+		if(res !=null && res.getResultCode() == 0 ) {
+			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(res.getReferenceData().getReferenceItem().getKey());
+			if(paymentOpt.isPresent()) {
+				var payment = paymentOpt.get();
+				this.rabitMqSenderService.requestPaymentStatus(null);
+			}
+
+		}
 	}
 }
