@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.sasakonnect.wifi_portal.RequestDto.MerchantTransactionNotificationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
 import net.sasakonnect.wifi_portal.beans.AdvancedUniqueKeyGenerator;
@@ -46,6 +47,10 @@ public class RabbitMqSenderService {
         return ;
     }
 
+    
+    public void sendTransactionNotificationToMerchant(MerchantTransactionNotificationDto data) {
+    	rabbitTemplate.convertAndSend("transactionExchange","transaction.merchantNotify",data);
+    }
 	public void updatePayment(String requestBody) {
 //        rabbitTemplate.convertAndSend("transactionExchange", "transaction.callBack", requestBody);
 

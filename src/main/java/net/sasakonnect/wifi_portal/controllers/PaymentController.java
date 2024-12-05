@@ -102,17 +102,17 @@ public class PaymentController {
 	  try {
 		  var payment = new Gson().fromJson(result,MpesaResultDto.class);
 		  log.info("{result}"+payment);
+		   this.paymentService.processMpesaStatusResult(payment);
 	  }catch(Exception ex) {
 		  log.error("failed to serialize");
 		  ex.printStackTrace();
 	  }
 	  
-//	   this.paymentService.processMpesaStatusResult(result);
    }
    
    @PostMapping("/toolkitReq")
-   public Object requestToolkitPayment(ToolkitPayDto payReq) {
-	   return this.paymentService.createPaymentRequest(payReq);
+   public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq) {
+	   return this.paymentService.createMerchantPaymentRequest(payReq);
    }
 }
 

@@ -8,6 +8,6 @@ import net.sasakonnect.wifi_portal.domain.User;
 
 public interface UserRepository extends JpaRepository<User,String>{
   Optional<User> findByPhone(String phone);
-  
   Optional<User> findById(String id);
+  Optional<User> findByUserId(String userId);
 }
