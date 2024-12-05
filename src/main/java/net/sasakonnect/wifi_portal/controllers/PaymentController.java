@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.Gson;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -96,9 +97,17 @@ public class PaymentController {
 //   }
 //   
    @PostMapping("/result")
-   public void mpesaInit(@Valid @RequestBody() MpesaResultDto result) throws Exception {
+   public void mpesaInit(@Valid @RequestBody() String result) throws Exception {
 	  log.info("{result}"+result);
-	   this.paymentService.processMpesaStatusResult(result);
+	  try {
+		  var payment = new Gson().fromJson(result,MpesaResultDto.class);
+		  log.info("{result}"+payment);
+	  }catch(Exception ex) {
+		  log.error("failed to serialize");
+		  ex.printStackTrace();
+	  }
+	  
+//	   this.paymentService.processMpesaStatusResult(result);
    }
    
    @PostMapping("/toolkitReq")
