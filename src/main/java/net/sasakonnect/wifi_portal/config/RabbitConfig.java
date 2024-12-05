@@ -48,7 +48,14 @@ public class RabbitConfig {
     Queue transactionStatusNotificationQueue() {
         return new Queue("transactionStatusQueue", true);
     }
+    
+    @Bean(name="transactionConfirmedNotificationQueue")
+    Queue transactionConfirmedNotificationQueue() {
+        return new Queue("transactionConfirmedNotificationQueue", true);
+    }
 
+    
+    
     @Bean
     TopicExchange exchange() {
         return new TopicExchange("transactionExchange");
@@ -60,6 +67,13 @@ public class RabbitConfig {
     		@Qualifier("checkOutIdConfirmationQueue") Queue checkOutIdConfirmationQueue,
             TopicExchange exchange) {
         return BindingBuilder.bind(checkOutIdConfirmationQueue).to(exchange).with("transaction.confirm");
+    }
+    
+    @Bean
+    Binding bindingTransactionConfirmedNotificationQueue(
+    		@Qualifier("transactionConfirmedNotificationQueue") Queue transactionConfirmedNotificationQueue,
+            TopicExchange exchange) {
+        return BindingBuilder.bind(transactionConfirmedNotificationQueue).to(exchange).with("transaction.merchantNotify");
     }
     
     @Bean

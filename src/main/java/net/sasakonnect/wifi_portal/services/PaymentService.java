@@ -31,6 +31,7 @@ import com.rabbitmq.client.Channel;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.MerchantTransactionNotificationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaCallBackDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
@@ -51,6 +52,7 @@ import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.repository.AppRepository;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
 import net.sasakonnect.wifi_portal.repository.PaymentRepository;
+import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -69,18 +71,18 @@ public class PaymentService {
 
 	@Value("${shortCode}")
 	String shortCode;
-//	
-//	@Value("${consumerSecret}")
-//	String password;
-//	
+	//	
+	//	@Value("${consumerSecret}")
+	//	String password;
+	//	
 	@Value("${mpesaCallBackUrl}")
 	String mpesaCallBackUrl;
-//	
+	//	
 	@Autowired
 	AuthService authService;
 
-//	@Autowired
-//	MessagingService msgService;
+	//	@Autowired
+	//	MessagingService msgService;
 
 	@Autowired
 	InternetPackageRepository internetPackageRepository;
@@ -105,6 +107,8 @@ public class PaymentService {
 	String mpesaPassword;
 	@Value("${mpesa.business.shortcode}")
 	String businessShortCode;
+	@Autowired
+	UserRepository userRepository;
 
 	private final RabbitTemplate rabbitTemplate;
 
@@ -161,12 +165,12 @@ public class PaymentService {
 			e.printStackTrace();
 		}
 	}
-	
-//	
+
+	//	
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
 	@Transactional
 	public void handleTransactionCallBackNotificationQueueRequest(String paymentRequest) {
-//	
+		//	
 		log.error("payment callback" + paymentRequest);
 
 		threadExceutorBean.addTask(new Runnable() {
@@ -189,8 +193,6 @@ public class PaymentService {
 						var callback = paymentData.getBody().getStkCallback();
 						if (payment.isPresent()) {
 							var pay = payment.get();
-//							pay.setPaymentPayload(paymentRequest);
-//							paymentRepository.save(pay)	;
 							User user = pay.getUser();
 							String userName = null;
 							if (user != null) {
@@ -202,20 +204,20 @@ public class PaymentService {
 							params.put("TransID", pay.getTxtId());
 							params.put("TransTime",
 									callback.getCallbackMetadata() != null
-											? callback.getCallbackMetadata().getItem().get(3).getValue()
+									? callback.getCallbackMetadata().getItem().get(3).getValue()
 											: null);
 							params.put("TransAmount",
 									callback.getCallbackMetadata() != null
-											? callback.getCallbackMetadata().getItem().get(0).getValue()
+									? callback.getCallbackMetadata().getItem().get(0).getValue()
 											: null);
 							params.put("BusinessShortCode", shortCode);
 							params.put("BillRefNumber",
 									callback.getCallbackMetadata() != null
-											? callback.getCallbackMetadata().getItem().get(1).getValue()
+									? callback.getCallbackMetadata().getItem().get(1).getValue()
 											: null);
 							params.put("Mobile",
 									callback.getCallbackMetadata() != null
-											? String.valueOf(callback.getCallbackMetadata().getItem().get(4).getValue())
+									? String.valueOf(callback.getCallbackMetadata().getItem().get(4).getValue())
 											: null);
 							params.put("name", userName);
 							params.put("userId", user != null ? user.getUserId() : null);
@@ -225,26 +227,16 @@ public class PaymentService {
 									.contentType(MediaType.APPLICATION_JSON)
 									.body(BodyInserters.fromValue(new Gson().toJson(params)))
 									.accept(MediaType.APPLICATION_JSON).retrieve()
-//					                .onStatus(
-//					                    status -> !status.is2xxSuccessful(), 
-//					                    clientResponse -> clientResponse.bodyToMono(String.class)
-//					                            .flatMap(responseBody -> {
-//					                                // Custom logic when status is NOT 2xx
-//					                                System.out.println("Error response body: " + responseBody);
-//					                                return Mono.error(new RuntimeException(
-//					                                        "Payment API call failed with status: " + clientResponse.statusCode()));
-//					                            })
-//					                )
 									.bodyToMono(Object.class);
 							respMono.block();
-//					                .doOnTerminate(() -> {
-//					                    // Optional: Add any additional final actions after the request completes
-//					                    System.out.println("Request completed");
-//					                })
-//					                .subscribe(response -> {
-//					                    // Handle the response if status is 2xx
-//					                    System.out.println("Response: " + response);
-//					                });
+							//					                .doOnTerminate(() -> {
+							//					                    // Optional: Add any additional final actions after the request completes
+							//					                    System.out.println("Request completed");
+							//					                })
+							//					                .subscribe(response -> {
+							//					                    // Handle the response if status is 2xx
+							//					                    System.out.println("Response: " + response);
+							//					                });
 
 						} else {
 							log.warn("could not find transaction for checkout id" + checkoutRequestID);
@@ -263,6 +255,30 @@ public class PaymentService {
 
 		});
 	}
+	
+	
+	@RabbitListener(queues = "transactionConfirmedNotificationQueue")
+	public void handleTransactionConfirmationNotification(MerchantTransactionNotificationDto payment) {
+	     ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+	     resp.put("TransType",payment.getTransType());
+	     resp.put("TransID", payment.getTransId());
+	     resp.put("TransTime",payment.getTransTime());
+	     resp.put("BusinessShortCode",payment.getBusinessShortCode());
+	     resp.put("BillRefNumber",payment.getBillRefNumber());
+	     resp.put("Mobile",payment.getMobile());
+	     resp.put("name",payment.getName());
+	     resp.put("userId",payment.getUserId());
+	     resp.put("KonnectTransID",payment.getKonnectTransId());
+	     
+		Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
+				.contentType(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromValue(resp))
+				.accept(MediaType.APPLICATION_JSON).retrieve()
+				.bodyToMono(Object.class);
+		respMono.block();		
+	}
+
+
 
 	@RabbitListener(queues = "checkOutIdConfirmationQueue")
 	public void checkOutIDConfirmationQueue(PaymentRequest paymentRequest, Channel channel,
@@ -290,15 +306,15 @@ public class PaymentService {
 
 		});
 	}
-//	public Object mpesacallBackUrl(Object request){
-//		log.error("{callBack} "+request);
-//        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
-//
-//		return ResponseEntity.status(HttpStatus.OK);
-//	}
-//	
-	
-	
+	//	public Object mpesacallBackUrl(Object request){
+	//		log.error("{callBack} "+request);
+	//        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
+	//
+	//		return ResponseEntity.status(HttpStatus.OK);
+	//	}
+	//	
+
+
 
 	public Object stkPush(StkPushDto stk) {
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -323,9 +339,9 @@ public class PaymentService {
 
 		if (appOpt.isPresent()) {
 			App app = appOpt.get();
-//			this.getSubscriptionCostById(stk.getSubscriptionPlanId())
+			//			this.getSubscriptionCostById(stk.getSubscriptionPlanId())
 
-		    var payReq = PaymentRequest.builder().phoneNumber("254"+mobile).app(app).appKey(appKey).amount(1).build();
+			var payReq = PaymentRequest.builder().phoneNumber("254"+mobile).app(app).appKey(appKey).amount(1).build();
 			log.info("{payReq}"+payReq);
 
 			return this.rabitMqSenderService.sendPaymentRequest(payReq);
@@ -462,35 +478,35 @@ public class PaymentService {
 		}
 		return null;
 	}
-	
 
 
-	
+
+
 	public Object validatePayment(MpesaPaymentValidationDto data) {
-	    String transAmount = data.getTransAmount();
-	    if (transAmount.contains(".")) {
-	        transAmount = transAmount.split("\\.")[0];
-	    }
+		String transAmount = data.getTransAmount();
+		if (transAmount.contains(".")) {
+			transAmount = transAmount.split("\\.")[0];
+		}
 
-	    List<String> packages = this.packageBean.packagePrices;
+		List<String> packages = this.packageBean.packagePrices;
 
-//	    if (packages.contains(transAmount)) {
-	        ObjectNode response = JsonNodeFactory.instance.objectNode();
-	        response.put("ResultCode", "0");
-	        response.put("ResultDesc", "Accepted");
-	        return ResponseEntity.status(HttpStatus.OK).body(response);
-//	    }
-	    
-	    
-	    
+		//	    if (packages.contains(transAmount)) {
+		ObjectNode response = JsonNodeFactory.instance.objectNode();
+		response.put("ResultCode", "0");
+		response.put("ResultDesc", "Accepted");
+		return ResponseEntity.status(HttpStatus.OK).body(response);
+		//	    }
 
-//	    ObjectNode response = JsonNodeFactory.instance.objectNode();
-//	    response.put("ResultCode", "C2B00013");
-//	    response.put("ResultDesc", "Rejected");
-//	    return ResponseEntity.status(HttpStatus.OK).body(response);
+
+
+
+		//	    ObjectNode response = JsonNodeFactory.instance.objectNode();
+		//	    response.put("ResultCode", "C2B00013");
+		//	    response.put("ResultDesc", "Rejected");
+		//	    return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 
-	
+
 	@RabbitListener(queues = "transactionStatusQueue")
 	public void getTxStatusByTxId(MpesaPaymentValidationDto data) throws Exception {
 		ObjectNode params = JsonNodeFactory.instance.objectNode();
@@ -500,21 +516,44 @@ public class PaymentService {
 		params.put("TransactionID",data.getTransID());
 		params.put("PartyA",businessShortCode);
 		params.put("IdentifierType","4");
-		params.put("ResultURL","https://abf0-105-29-165-234.ngrok-free.app/konnect-wifi/payment/result");
-		params.put("QueueTimeOutURL","https://abf0-105-29-165-234.ngrok-free.app/konnect-wifi/payment/result");
+		params.put("ResultURL","https://0a0f-105-29-165-234.ngrok-free.app/konnect-wifi/payment/result");
+		params.put("QueueTimeOutURL","https://0a0f-105-29-165-234.ngrok-free.app/konnect-wifi/payment/result");
 		params.put("Remarks","OK");
 		params.put("Occasion","OK");
-		
+
 		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_STATUS)
 				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 		String json =  responseMono.block();
 		System.out.println("{json}"+json);
-		
+
 	}
 	
-	
+	public Object createMerchantPaymentRequest(ToolkitPayDto req) {
+		App app = null;
+		if(req.getAppKey() !=null) {
+			Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(req.getAppKey());
+			if(appOpt.isEmpty()) {
+				app = appOpt.get();
+			}
+		}
+		Optional<User> userOpt = this.userRepository.findByUserId(req.getUserId());
+		if(userOpt.isEmpty()) {
+			ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+			resp.put("success", false);
+			resp.put("message","Invalid userId");
+			
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+		}
+		User user = userOpt.get();
+		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).isSuccessful(false).verified(false).mobileNumber(req.getMobileNumber()).build();
+		this.paymentRepository.save(payment);
+		return payment_checkoutId;
+	}
+
+
 	public Object createPaymentRequest(ToolkitPayDto req) {
 		App app = null;
 		if(req.getAppKey() !=null) {
@@ -529,25 +568,26 @@ public class PaymentService {
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
-	
+
 	public Optional<Payment> getPaymentByMobileNumber(String mobileNumber) {
 		return	this.paymentRepository.findByMobileNumber(mobileNumber);
 	}
 
-	
+
 
 	public void updatePaymentWithCheckoutId(String checkoutRequestID, String requestBody) {
 		this.rabitMqSenderService.updatePayment(requestBody);
 		// TODO Auto-generated method stub
 
 	}
-	
+
 	public void processMpesaStatusResult(MpesaResultDto result) {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
 			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(res.getReferenceData().getReferenceItem().getKey());
 			if(paymentOpt.isPresent()) {
 				var payment = paymentOpt.get();
+//				MerchantTransactionNotificationDto.builder().
 				this.rabitMqSenderService.requestPaymentStatus(null);
 			}
 
