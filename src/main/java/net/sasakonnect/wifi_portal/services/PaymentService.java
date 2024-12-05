@@ -380,7 +380,6 @@ public class PaymentService {
 				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
 				.accept(MediaType.APPLICATION_JSON).retrieve()
-
 				.bodyToMono(String.class);
 
 		try {
@@ -567,7 +566,7 @@ public class PaymentService {
 		params.put("TransactionID",data.getTransID());
 		params.put("PartyA",businessShortCode);
 		params.put("IdentifierType","4");
-		params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
+		params.put("ResultURL","https://1712-105-29-165-234.ngrok-free.app/konnect-wifi/payment/result");
 		params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
 		params.put("Remarks","OK");
 		params.put("Occasion","OK");
