@@ -229,14 +229,7 @@ public class PaymentService {
 									.accept(MediaType.APPLICATION_JSON).retrieve()
 									.bodyToMono(Object.class);
 							respMono.block();
-							//					                .doOnTerminate(() -> {
-							//					                    // Optional: Add any additional final actions after the request completes
-							//					                    System.out.println("Request completed");
-							//					                })
-							//					                .subscribe(response -> {
-							//					                    // Handle the response if status is 2xx
-							//					                    System.out.println("Response: " + response);
-							//					                });
+						
 
 						} else {
 							log.warn("could not find transaction for checkout id" + checkoutRequestID);
@@ -259,7 +252,8 @@ public class PaymentService {
 	
 	@RabbitListener(queues = "transactionConfirmedNotificationQueue")
 	public void handleTransactionConfirmationNotification(MerchantTransactionNotificationDto payment) {
-	     ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+	    System.out.println(payment);
+		ObjectNode resp =  JsonNodeFactory.instance.objectNode();
 	     resp.put("TransType",payment.getTransType());
 	     resp.put("TransID", payment.getTransId());
 	     resp.put("TransTime",payment.getTransTime());
@@ -269,13 +263,21 @@ public class PaymentService {
 	     resp.put("name",payment.getName());
 	     resp.put("userId",payment.getUserId());
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
-	     
-		Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(BodyInserters.fromValue(resp))
-				.accept(MediaType.APPLICATION_JSON).retrieve()
-				.bodyToMono(Object.class);
-		respMono.block();		
+	     log.error(payment+"{}");
+	     threadExceutorBean.addTask(new Runnable() {
+
+			@Override
+			public void run() {
+				Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
+						.contentType(MediaType.APPLICATION_JSON)
+						.body(BodyInserters.fromValue(resp.toPrettyString()))
+						.accept(MediaType.APPLICATION_JSON).retrieve()
+						.bodyToMono(Object.class);
+				respMono.block();	
+			}
+	    	 
+	     });
+	
 	}
 
 
@@ -490,20 +492,16 @@ public class PaymentService {
 
 		List<String> packages = this.packageBean.packagePrices;
 
-		//	    if (packages.contains(transAmount)) {
+		if (packages.contains(transAmount)) {
 		ObjectNode response = JsonNodeFactory.instance.objectNode();
 		response.put("ResultCode", "0");
 		response.put("ResultDesc", "Accepted");
 		return ResponseEntity.status(HttpStatus.OK).body(response);
-		//	    }
-
-
-
-
-		//	    ObjectNode response = JsonNodeFactory.instance.objectNode();
-		//	    response.put("ResultCode", "C2B00013");
-		//	    response.put("ResultDesc", "Rejected");
-		//	    return ResponseEntity.status(HttpStatus.OK).body(response);
+		}
+		ObjectNode response = JsonNodeFactory.instance.objectNode();
+		response.put("ResultCode", "C2B00013");
+		response.put("ResultDesc", "Rejected");
+		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 
 
@@ -534,7 +532,7 @@ public class PaymentService {
 		App app = null;
 		if(req.getAppKey() !=null) {
 			Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(req.getAppKey());
-			if(appOpt.isEmpty()) {
+			if(appOpt.isPresent()) {
 				app = appOpt.get();
 			}
 		}
@@ -546,9 +544,11 @@ public class PaymentService {
 			
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
 		}
+		
+		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
 		User user = userOpt.get();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).isSuccessful(false).verified(false).mobileNumber(req.getMobileNumber()).build();
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).isSuccessful(false).verified(false).mobileNumber(mobile).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -556,21 +556,20 @@ public class PaymentService {
 
 	public Object createPaymentRequest(ToolkitPayDto req) {
 		App app = null;
-		if(req.getAppKey() !=null) {
-			Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(req.getAppKey());
-			if(appOpt.isEmpty()) {
-				app = appOpt.get();
-			}
+		var appKey = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e";
+		Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(appKey);
+		if(appOpt.isPresent()) {
+			app = appOpt.get();
 		}
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(req.getMobileNumber()).build();
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(req.getMobileNumber()).isSuccessful(false).verified(false).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
 
 	public Optional<Payment> getPaymentByMobileNumber(String mobileNumber) {
-		return	this.paymentRepository.findByMobileNumber(mobileNumber);
+		return	this.paymentRepository.findxByMobileNumber(mobileNumber.trim());
 	}
 
 
@@ -580,15 +579,44 @@ public class PaymentService {
 		// TODO Auto-generated method stub
 
 	}
+    
+	public  String getValueByKey(String key,MpesaResultDto dto) {
+        if (dto == null || dto.getResult() == null || dto.getResult().getResultParameters() == null) {
+            return null; // Handle null cases safely
+        }
 
+        List<MpesaResultDto.ResultParameterDto> parameters = dto.getResult().getResultParameters().getResultParameter();
+
+        if (parameters == null) {
+            return null; // Handle null parameters safely
+        }
+
+        // Using Java Streams to find the first occurrence of "DebitPartyName"
+        return parameters.stream()
+                .filter(param -> key.equals(param.getKey()))
+                .map(MpesaResultDto.ResultParameterDto::getValue)
+                .findFirst()
+                .orElse(null); // Return null if not found
+    }
 	public void processMpesaStatusResult(MpesaResultDto result) {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
-			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(res.getReferenceData().getReferenceItem().getKey());
+			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(this.getValueByKey("DebitPartyName", result).split("-")[0]);
+			log.error("{payment}"+paymentOpt);
 			if(paymentOpt.isPresent()) {
 				var payment = paymentOpt.get();
-//				MerchantTransactionNotificationDto.builder().
-				this.rabitMqSenderService.requestPaymentStatus(null);
+				payment.setVerified(true);
+				payment.setIsSuccessful(true);
+				this.paymentRepository.save(payment);
+				log.error("{payment}"+payment);
+				var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result))
+				.businessShortCode(this.getValueByKey("CreditPartyName", result).split("-")[0]).mobile(this.getValueByKey("DebitPartyName", result).split("-")[0])
+				.konnectTransId(payment.getKonnectCheckoutId()).name(this.getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(this.getValueByKey("Amount", result))
+				.app(payment.getApp())
+				.transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getUser().getUserId()).transType(this.getValueByKey("ReasonType", result))
+				.build();
+				log.error(merchantNotification+"{}");
+				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 			}
 
 		}

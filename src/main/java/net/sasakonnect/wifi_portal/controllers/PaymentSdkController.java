@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
+import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
 import net.sasakonnect.wifi_portal.annotations.PaymentSdkFilter;
 import net.sasakonnect.wifi_portal.beans.AppRequestBean;
@@ -62,5 +63,13 @@ public class PaymentSdkController {
 		   // return this.paymentService.triggerMpesaStkPush(stk,currentApp);
 		    
 		}
+	 
+	 
+	 @ApiOperation(value = "Request for direct till payment", notes = "This endpoint creates and queues for validation of direct cash payment to till")
+	 @PaymentSdkFilter
+	 @PostMapping("mpesa/toolkitPay")
+	   public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq) {
+		   return this.paymentService.createMerchantPaymentRequest(payReq);
+	   }
 
 }
