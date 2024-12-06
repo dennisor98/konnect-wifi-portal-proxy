@@ -110,7 +110,7 @@ public class PaymentController {
 	  
    }
    
-   @PostMapping("/toolkitReq")
+   @PostMapping("/toolkitPay")
    public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq) {
 	   return this.paymentService.createMerchantPaymentRequest(payReq);
    }
