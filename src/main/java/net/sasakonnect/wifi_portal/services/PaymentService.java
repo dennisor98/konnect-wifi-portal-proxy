@@ -372,7 +372,7 @@ public class PaymentService {
 	}
 	
 	public String getPackageIdByCost(String cost) {
-		Optional<InternetPackages> packageOpt = this.internetPackageRepository.findByCost(businessShortCode);
+		Optional<InternetPackages> packageOpt = this.internetPackageRepository.findByCost(Integer.valueOf(cost));
 		if(packageOpt.isPresent()) {
 			var iPackage = packageOpt.get();
 			return iPackage.getForeignPackageId();
