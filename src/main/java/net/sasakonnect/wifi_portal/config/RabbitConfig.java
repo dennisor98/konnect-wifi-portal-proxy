@@ -39,10 +39,21 @@ public class RabbitConfig {
         return new Queue("transactionCallBackNotificationQueue", true);
     }
 
-    @Bean(name="failedPaymentNotificationQueue")
-    Queue failedPaymentNotificationQueue() {
-        return new Queue("failedPaymentNotificationQueue", true);
+    @Bean
+    Queue failedPaymentNotificationQueue0() {
+        return new Queue("failedPaymentNotificationQueue0", true);
     }
+    
+    @Bean
+    Queue failedPaymentNotificationQueue1() {
+        return new Queue("failedPaymentNotificationQueue1", true);
+    }
+    
+    @Bean
+    Queue failedPaymentNotificationQueue2() {
+        return new Queue("failedPaymentNotificationQueue2", true);
+    }
+    
     
     @Bean(name="transactionStatusQueue")
     Queue transactionStatusNotificationQueue() {
@@ -98,9 +109,25 @@ public class RabbitConfig {
     }
 
     @Bean
-    Binding bindingFailedPaymentNotification(
-    		@Qualifier("failedPaymentNotificationQueue")   Queue failedPaymentNotificationQueue,
+    Binding bindingFailedPaymentNotification0(
+    		@Qualifier("failedPaymentNotificationQueue0")   Queue failedPaymentNotificationQueue0,
             TopicExchange exchange) {
-        return BindingBuilder.bind(failedPaymentNotificationQueue).to(exchange).with("transaction.failedPayment");
+        return BindingBuilder.bind(failedPaymentNotificationQueue0).to(exchange).with("transaction.failedPayment0");
     }
+    
+    @Bean
+    Binding bindingFailedPaymentNotification1(
+    		@Qualifier("failedPaymentNotificationQueue1")   Queue failedPaymentNotificationQueue1,
+            TopicExchange exchange) {
+        return BindingBuilder.bind(failedPaymentNotificationQueue1).to(exchange).with("transaction.failedPayment1");
+    }
+    
+    @Bean
+    Binding bindingFailedPaymentNotification2(
+    		@Qualifier("failedPaymentNotificationQueue2")   Queue failedPaymentNotificationQueue2,
+            TopicExchange exchange) {
+        return BindingBuilder.bind(failedPaymentNotificationQueue2).to(exchange).with("transaction.failedPayment2");
+    }
+    
+    
 }

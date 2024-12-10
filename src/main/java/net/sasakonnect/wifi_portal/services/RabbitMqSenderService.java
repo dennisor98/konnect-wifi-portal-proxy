@@ -42,6 +42,11 @@ public class RabbitMqSenderService {
     	this.rabbitTemplate.convertAndSend("transactionExchange","transaction.status",data);
     }
     
+    public void addToFailedPaymentNotificationQueue(MerchantTransactionNotificationDto data,String queueNumber) {
+    	this.rabbitTemplate.convertAndSend("transactionExchange","transaction.failedPayment"+queueNumber,data);
+    }
+    
+
     public void sendMpesaCheckoutRequestId(PaymentRequest paymentRequest) {
         rabbitTemplate.convertAndSend("transactionExchange", "transaction.confirm", paymentRequest);
         return ;
