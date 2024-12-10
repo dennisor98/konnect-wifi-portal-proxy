@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -113,6 +116,8 @@ public class PaymentService {
 	String businessShortCode;
 	@Autowired
 	UserRepository userRepository;
+	@Autowired
+	RabbitMqSenderService rabbitSendService;
 
 	private final RabbitTemplate rabbitTemplate;
 
@@ -280,16 +285,151 @@ public class PaymentService {
 
 			@Override
 			public void run() {
-				Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
+				Mono<Void> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 						.contentType(MediaType.APPLICATION_JSON)
 						.body(BodyInserters.fromValue(resp.toPrettyString()))
-						.accept(MediaType.APPLICATION_JSON).retrieve()
-						.bodyToMono(Object.class);
+						.accept(MediaType.APPLICATION_JSON)
+						.exchangeToMono(clientResponse -> {
+                            HttpStatus statusCode = (HttpStatus) clientResponse.statusCode();
+                            if(statusCode.value() !=200) {
+                            	rabbitSendService.addToFailedPaymentNotificationQueue(payment,"0");
+                            }
+                            return clientResponse.bodyToMono(Void.class);
+                        });
 				respMono.block();	
 			}
 	    	 
 	     });
 	
+	}
+
+	@RabbitListener(queues = "failedPaymentNotificationQueue0")
+	public void handleFailedPaymentNotification0(MerchantTransactionNotificationDto payment) {
+		threadExceutorBean.addTask(new Runnable() {
+
+			@Override
+			public void run() {
+				ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+				executor.schedule(() -> {
+					try {
+						String transAmount = payment.getTransAmount();
+						ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+						resp.put("TransType",payment.getTransType());
+						resp.put("TransID", payment.getTransId());
+						resp.put("TransAmount",transAmount);
+						resp.put("TransTime",payment.getTransTime());
+						resp.put("BusinessShortCode",payment.getBusinessShortCode());
+						resp.put("packageId",getPackageIdByCost(transAmount));
+						resp.put("BillRefNumber",payment.getBillRefNumber());
+						resp.put("Mobile",payment.getMobile());
+						resp.put("name",payment.getName());
+						resp.put("userId",payment.getUserId());
+						resp.put("KonnectTransID",payment.getKonnectTransId());
+						Mono<Void> responseMono = webClient.webClient.post()
+	                            .uri(payment.getApp().getCallbackUrl())
+	                            .contentType(MediaType.APPLICATION_JSON)
+	                            .body(BodyInserters.fromValue(resp.toPrettyString()))
+	                            .accept(MediaType.APPLICATION_JSON)
+	                            .exchangeToMono(clientResponse -> {
+	                                HttpStatus statusCode = (HttpStatus) clientResponse.statusCode();
+	                                if(statusCode.value() !=200) {
+	                                	rabbitSendService.addToFailedPaymentNotificationQueue(payment,"1");
+	                                }
+	                                return clientResponse.bodyToMono(Void.class);
+	                            });
+						responseMono.block();	
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						executor.shutdown();
+					}
+				}, 5, TimeUnit.SECONDS);
+			}
+
+		});
+	}
+	
+	@RabbitListener(queues = "failedPaymentNotificationQueue1")
+	public void handleFailedPaymentNotification1(MerchantTransactionNotificationDto payment) {
+		threadExceutorBean.addTask(new Runnable() {
+			@Override
+			public void run() {
+				ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+				executor.schedule(() -> {
+					try {
+						String transAmount = payment.getTransAmount();
+						ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+						resp.put("TransType",payment.getTransType());
+						resp.put("TransID", payment.getTransId());
+						resp.put("TransAmount",transAmount);
+						resp.put("TransTime",payment.getTransTime());
+						resp.put("BusinessShortCode",payment.getBusinessShortCode());
+						resp.put("packageId",getPackageIdByCost(transAmount));
+						resp.put("BillRefNumber",payment.getBillRefNumber());
+						resp.put("Mobile",payment.getMobile());
+						resp.put("name",payment.getName());
+						resp.put("userId",payment.getUserId());
+						resp.put("KonnectTransID",payment.getKonnectTransId());
+						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
+								.contentType(MediaType.APPLICATION_JSON)
+								.body(BodyInserters.fromValue(resp.toPrettyString()))
+								.accept(MediaType.APPLICATION_JSON)
+								.exchangeToMono(clientResponse -> {
+	                                HttpStatus statusCode = (HttpStatus) clientResponse.statusCode();
+	                                if(statusCode.value() !=200) {
+	                                	rabbitSendService.addToFailedPaymentNotificationQueue(payment,"2");
+	                                }
+	                                return clientResponse.bodyToMono(Void.class);
+	                            });
+						respMono.block();	
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						executor.shutdown();
+					}
+				}, 10, TimeUnit.SECONDS);
+			}
+
+		});
+	}
+	
+	@RabbitListener(queues = "failedPaymentNotificationQueue2")
+	public void handleFailedPaymentNotification2(MerchantTransactionNotificationDto payment) {
+		threadExceutorBean.addTask(new Runnable() {
+
+			@Override
+			public void run() {
+				ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+				executor.schedule(() -> {
+					try {
+						String transAmount = payment.getTransAmount();
+						ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+						resp.put("TransType",payment.getTransType());
+						resp.put("TransID", payment.getTransId());
+						resp.put("TransAmount",transAmount);
+						resp.put("TransTime",payment.getTransTime());
+						resp.put("BusinessShortCode",payment.getBusinessShortCode());
+						resp.put("packageId",getPackageIdByCost(transAmount));
+						resp.put("BillRefNumber",payment.getBillRefNumber());
+						resp.put("Mobile",payment.getMobile());
+						resp.put("name",payment.getName());
+						resp.put("userId",payment.getUserId());
+						resp.put("KonnectTransID",payment.getKonnectTransId());
+						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
+								.contentType(MediaType.APPLICATION_JSON)
+								.body(BodyInserters.fromValue(resp.toPrettyString()))
+								.accept(MediaType.APPLICATION_JSON).retrieve()
+								.bodyToMono(Object.class);
+						respMono.block();	
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						executor.shutdown();
+					}
+				}, 15, TimeUnit.SECONDS);
+			}
+
+		});
 	}
 
 
