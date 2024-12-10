@@ -8,5 +8,5 @@ import net.sasakonnect.wifi_portal.domain.InternetPackages;
 
 public interface InternetPackageRepository extends JpaRepository<InternetPackages,String> {
    Optional<InternetPackages> findByForeignPackageId(String id);
-   Optional<InternetPackages> findByCost(String cost);
+   Optional<InternetPackages> findByCost(Integer cost);
 }
