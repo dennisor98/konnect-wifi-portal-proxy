@@ -41,7 +41,10 @@ public class Payment extends BasePortalDomain {
 	    
 	    
 	    @Column(name = "is_sucessful", nullable = false)
-	    private Boolean isSuccessful; // Map BIT(1) to Boolean
+	    private Boolean isSuccessful; 
+	    
+	    @Column()
+	    private String idUser;
 	    
 	    @Lob
 	    @Column(name = "payment_verification_payload")

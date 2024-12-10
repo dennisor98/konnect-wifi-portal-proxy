@@ -68,7 +68,17 @@ public class PaymentSdkController {
 	 @ApiOperation(value = "Request for direct till payment", notes = "This endpoint creates and queues for validation of direct cash payment to till")
 	 @PaymentSdkFilter
 	 @PostMapping("mpesa/toolkitPay")
-	   public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq) {
+	 public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq, @RequestHeader(value = "App-Key") 
+	 @Parameter(description = "The App Key used for authentication", 
+	 required = true, 
+	 example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
+	 String appKey,
+
+	 @RequestHeader(value = "App-Secret") 
+	 @Parameter(description = "The App Secret used for authentication", 
+	 required = true, 
+	 example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
+	 String appSecret) {
 		   return this.paymentService.createMerchantPaymentRequest(payReq);
 	   }
 

@@ -31,6 +31,7 @@ import com.rabbitmq.client.Channel;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.AppToolKitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.MerchantTransactionNotificationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaCallBackDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
@@ -252,18 +253,26 @@ public class PaymentService {
 	
 	@RabbitListener(queues = "transactionConfirmedNotificationQueue")
 	public void handleTransactionConfirmationNotification(MerchantTransactionNotificationDto payment) {
+		String transAmount = payment.getTransAmount();
+		if (transAmount.contains(".")) {
+			transAmount = transAmount.split("\\.")[0];
+		}
 	    System.out.println(payment);
 		ObjectNode resp =  JsonNodeFactory.instance.objectNode();
 	     resp.put("TransType",payment.getTransType());
 	     resp.put("TransID", payment.getTransId());
+	     resp.put("TransAmount",transAmount);
 	     resp.put("TransTime",payment.getTransTime());
 	     resp.put("BusinessShortCode",payment.getBusinessShortCode());
+	     resp.put("packageId",this.getPackageIdByCost(transAmount));
 	     resp.put("BillRefNumber",payment.getBillRefNumber());
 	     resp.put("Mobile",payment.getMobile());
 	     resp.put("name",payment.getName());
 	     resp.put("userId",payment.getUserId());
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
+	     
 	     log.error(payment+"{}");
+	     log.error(resp+"{body}");
 	     threadExceutorBean.addTask(new Runnable() {
 
 			@Override
@@ -360,6 +369,15 @@ public class PaymentService {
 			return pkg.getCost();
 		}
 		return 0;
+	}
+	
+	public String getPackageIdByCost(String cost) {
+		Optional<InternetPackages> packageOpt = this.internetPackageRepository.findByCost(businessShortCode);
+		if(packageOpt.isPresent()) {
+			var iPackage = packageOpt.get();
+			return iPackage.getForeignPackageId();
+		}
+		return null;
 	}
 
 	public MpesaResponse getTxStatusByCheckoutRequestId(String checkoutRequestId) {
@@ -548,13 +566,13 @@ public class PaymentService {
 		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
 		User user = userOpt.get();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).isSuccessful(false).verified(false).mobileNumber(mobile).build();
+		var payment = Payment.builder().app(app).idUser(req.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).isSuccessful(false).verified(false).mobileNumber(mobile).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
 
 
-	public Object createPaymentRequest(ToolkitPayDto req) {
+	public Object createPaymentRequest(AppToolKitPayDto req) {
 		App app = null;
 		var appKey = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e";
 		Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(appKey);
@@ -563,7 +581,7 @@ public class PaymentService {
 		}
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(req.getMobileNumber()).isSuccessful(false).verified(false).build();
+		var payment = Payment.builder().app(app).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(req.getMobileNumber()).isSuccessful(false).verified(false).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -576,22 +594,19 @@ public class PaymentService {
 
 	public void updatePaymentWithCheckoutId(String checkoutRequestID, String requestBody) {
 		this.rabitMqSenderService.updatePayment(requestBody);
-		// TODO Auto-generated method stub
-
 	}
     
 	public  String getValueByKey(String key,MpesaResultDto dto) {
         if (dto == null || dto.getResult() == null || dto.getResult().getResultParameters() == null) {
-            return null; // Handle null cases safely
+            return null; 
         }
 
         List<MpesaResultDto.ResultParameterDto> parameters = dto.getResult().getResultParameters().getResultParameter();
 
         if (parameters == null) {
-            return null; // Handle null parameters safely
+            return null; 
         }
 
-        // Using Java Streams to find the first occurrence of "DebitPartyName"
         return parameters.stream()
                 .filter(param -> key.equals(param.getKey()))
                 .map(MpesaResultDto.ResultParameterDto::getValue)
@@ -613,7 +628,7 @@ public class PaymentService {
 				.businessShortCode(this.getValueByKey("CreditPartyName", result).split("-")[0]).mobile(this.getValueByKey("DebitPartyName", result).split("-")[0])
 				.konnectTransId(payment.getKonnectCheckoutId()).name(this.getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(this.getValueByKey("Amount", result))
 				.app(payment.getApp())
-				.transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getUser().getUserId()).transType(this.getValueByKey("ReasonType", result))
+				.transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(this.getValueByKey("ReasonType", result))
 				.build();
 				log.error(merchantNotification+"{}");
 				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);

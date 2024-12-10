@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.AppToolKitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
@@ -111,8 +112,8 @@ public class PaymentController {
    }
    
    @PostMapping("/toolkitPay")
-   public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq) {
-	   return this.paymentService.createMerchantPaymentRequest(payReq);
+   public Object requestToolkitPayment(@Valid @RequestBody AppToolKitPayDto payReq) {
+	   return this.paymentService.createPaymentRequest(payReq);
    }
 }
 
