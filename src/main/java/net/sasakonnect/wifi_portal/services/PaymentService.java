@@ -695,16 +695,8 @@ public class PaymentService {
 			}
 		}
 		Optional<User> userOpt = this.userRepository.findByUserId(req.getUserId());
-		if(userOpt.isEmpty()) {
-			ObjectNode resp =  JsonNodeFactory.instance.objectNode();
-			resp.put("success", false);
-			resp.put("message","Invalid userId");
-			
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
-		}
-		
 		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
-		User user = userOpt.get();
+		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
 		var payment = Payment.builder().app(app).idUser(req.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).isSuccessful(false).verified(false).mobileNumber(mobile).build();
 		this.paymentRepository.save(payment);
