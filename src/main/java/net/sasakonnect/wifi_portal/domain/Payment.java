@@ -39,6 +39,8 @@ public class Payment extends BasePortalDomain {
 	    @Column(nullable = true)
 	    private String mobileNumber; 
 	    
+	    @Column(nullable = true)
+	    private String deviceMac; 
 	    
 	    @Column(name = "is_sucessful", nullable = false)
 	    private Boolean isSuccessful; 

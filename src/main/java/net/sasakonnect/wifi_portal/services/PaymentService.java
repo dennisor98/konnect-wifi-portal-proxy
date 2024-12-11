@@ -226,8 +226,9 @@ public class PaymentService {
 									? String.valueOf(callback.getCallbackMetadata().getItem().get(4).getValue())
 											: null);
 							params.put("name", userName);
-							params.put("userId", user != null ? user.getUserId() : null);
-
+							params.put("userId",pay.getIdUser());
+							params.put("KonnectTransID",pay.getKonnectCheckoutId());
+							params.put("ResultCode",Integer.valueOf(callback.getResultCode()));
 							log.error("{body}" + new Gson().toJson(params));
 							Mono<Object> respMono = webClient.webClient.post().uri(pay.getApp().getCallbackUrl())
 									.contentType(MediaType.APPLICATION_JSON)
@@ -275,7 +276,7 @@ public class PaymentService {
 	     resp.put("name",payment.getName());
 	     resp.put("userId",payment.getUserId());
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
-	     
+	     resp.put("ResultCode","0");
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
 	     threadExceutorBean.addTask(new Runnable() {
@@ -322,6 +323,7 @@ public class PaymentService {
 						resp.put("name",payment.getName());
 						resp.put("userId",payment.getUserId());
 						resp.put("KonnectTransID",payment.getKonnectTransId());
+						resp.put("ResultCode","0");
 						Mono<Void> responseMono = webClient.webClient.post()
 	                            .uri(payment.getApp().getCallbackUrl())
 	                            .contentType(MediaType.APPLICATION_JSON)
@@ -367,6 +369,7 @@ public class PaymentService {
 						resp.put("name",payment.getName());
 						resp.put("userId",payment.getUserId());
 						resp.put("KonnectTransID",payment.getKonnectTransId());
+						resp.put("ResultCode","0");
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -412,6 +415,7 @@ public class PaymentService {
 						resp.put("name",payment.getName());
 						resp.put("userId",payment.getUserId());
 						resp.put("KonnectTransID",payment.getKonnectTransId());
+						resp.put("ResultCode","0");
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -711,9 +715,10 @@ public class PaymentService {
 		if(appOpt.isPresent()) {
 			app = appOpt.get();
 		}
+		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(req.getMobileNumber()).isSuccessful(false).verified(false).build();
+		var payment = Payment.builder().app(app).deviceMac(req.getStaMac().trim()).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(mobile).isSuccessful(false).verified(false).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -759,8 +764,7 @@ public class PaymentService {
 				var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result))
 				.businessShortCode(this.getValueByKey("CreditPartyName", result).split("-")[0]).mobile(this.getValueByKey("DebitPartyName", result).split("-")[0])
 				.konnectTransId(payment.getKonnectCheckoutId()).name(this.getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(this.getValueByKey("Amount", result))
-				.app(payment.getApp())
-				.transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(this.getValueByKey("ReasonType", result))
+				.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(this.getValueByKey("ReasonType", result))
 				.build();
 				log.error(merchantNotification+"{}");
 				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
