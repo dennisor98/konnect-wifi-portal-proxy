@@ -84,6 +84,9 @@ public class PaymentService {
 	//	
 	@Value("${mpesaCallBackUrl}")
 	String mpesaCallBackUrl;
+	
+	@Value("${wifi.app.key}")
+	String wifiAppKey;
 	//	
 	@Autowired
 	AuthService authService;
@@ -802,8 +805,9 @@ public class PaymentService {
 
 	public Object createPaymentRequest(AppToolKitPayDto req) {
 		App app = null;
-		var appKey = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e";
-		Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(appKey);
+		
+//		var appKey = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e";
+		Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(wifiAppKey);
 		if(appOpt.isPresent()) {
 			app = appOpt.get();
 		}
