@@ -109,8 +109,8 @@ public class PaymentService {
 	UserRepository userRepository;
 	@Autowired
 	RabbitMqSenderService rabbitSendService;
-	@Autowired
-	RedisService redisService;
+//	@Autowired
+//	RedisService redisService;
 	private final RabbitTemplate rabbitTemplate;
 
 	public PaymentService(RabbitTemplate rabbitTemplate) {
@@ -639,7 +639,7 @@ public class PaymentService {
 			return this.paymentRepository.save(pay);
 
 		}
-		this.redisService.addTransactionIten(konnectTransactionId);
+//		this.redisService.addTransactionIten(konnectTransactionId);
 		return null;
 	}
 
