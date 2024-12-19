@@ -116,8 +116,8 @@ public class PaymentService {
 	UserRepository userRepository;
 	@Autowired
 	RabbitMqSenderService rabbitSendService;
-	@Autowired
-	RedisService redisService;
+//	@Autowired
+//	RedisService redisService;
 	private final RabbitTemplate rabbitTemplate;
 
 	public PaymentService(RabbitTemplate rabbitTemplate) {
