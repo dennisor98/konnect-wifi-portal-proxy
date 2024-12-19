@@ -17,6 +17,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -35,6 +37,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AppToolKitPayDto;
@@ -75,19 +78,12 @@ public class PaymentService {
 	public WebClient.Builder webClientBuilder;
 	@Autowired
 	DefaultWebClientBean webClient;
-
 	@Value("${shortCode}")
 	String shortCode;
-	//	
-	//	@Value("${consumerSecret}")
-	//	String password;
-	//	
 	@Value("${mpesaCallBackUrl}")
 	String mpesaCallBackUrl;
-	
 	@Value("${wifi.app.key}")
 	String wifiAppKey;
-	//	
 	@Autowired
 	AuthService authService;
 	
@@ -96,7 +92,6 @@ public class PaymentService {
 	
 	@Autowired
 	InternetPackageRepository internetPackageRepository;
-
 	@Autowired
 	PaymentRepository paymentRepository;
 	@Autowired
@@ -121,7 +116,8 @@ public class PaymentService {
 	UserRepository userRepository;
 	@Autowired
 	RabbitMqSenderService rabbitSendService;
-
+	@Autowired
+	RedisService redisService;
 	private final RabbitTemplate rabbitTemplate;
 
 	public PaymentService(RabbitTemplate rabbitTemplate) {
@@ -178,7 +174,7 @@ public class PaymentService {
 		}
 	}
 
-	//	
+	
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
 	@Transactional
 	public void handleTransactionCallBackNotificationQueueRequest(String paymentRequest) {
@@ -283,6 +279,7 @@ public class PaymentService {
 	     resp.put("userId",payment.getUserId());
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
 	     resp.put("ResultCode","0");
+	     resp.put("staMac",payment.getDeviceMac());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
 	     threadExceutorBean.addTask(new Runnable() {
@@ -330,6 +327,7 @@ public class PaymentService {
 						resp.put("userId",payment.getUserId());
 						resp.put("KonnectTransID",payment.getKonnectTransId());
 						resp.put("ResultCode","0");
+						resp.put("staMac",payment.getDeviceMac());
 						Mono<Void> responseMono = webClient.webClient.post()
 	                            .uri(payment.getApp().getCallbackUrl())
 	                            .contentType(MediaType.APPLICATION_JSON)
@@ -376,6 +374,7 @@ public class PaymentService {
 						resp.put("userId",payment.getUserId());
 						resp.put("KonnectTransID",payment.getKonnectTransId());
 						resp.put("ResultCode","0");
+						resp.put("staMac",payment.getDeviceMac());
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -422,6 +421,7 @@ public class PaymentService {
 						resp.put("userId",payment.getUserId());
 						resp.put("KonnectTransID",payment.getKonnectTransId());
 						resp.put("ResultCode","0");
+						resp.put("staMac",payment.getDeviceMac());
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
