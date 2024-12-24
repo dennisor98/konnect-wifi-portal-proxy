@@ -25,61 +25,62 @@ import io.swagger.annotations.ApiParam;
 @RestController
 public class PaymentSdkController {
 	@Autowired
-    private AppRequestBean requestScopedBean;
+	private AppRequestBean requestScopedBean;
 	@Autowired
 	PaymentService paymentService;
-	
+
 	@Autowired
 	PackagePricesBean packageBean;
-	
+
 	@Autowired 
 	RabbitMqSenderService rabitMqSenderService;
-	 @PostMapping("mpesa/stkPush")
-	 @ApiOperation(value = "Initialize M-Pesa STK Push", notes = "This endpoint initializes the M-Pesa STK push request")
-	 @PaymentSdkFilter
-	 public Object mpesaStkPushInit(
-		        @RequestHeader(value = "App-Key") 
-		        @Parameter(description = "The App Key used for authentication", 
-		                   required = true, 
-		                   example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
-		        String appKey,
+	@PostMapping("mpesa/stkPush")
+	@ApiOperation(value = "Initialize M-Pesa STK Push", notes = "This endpoint initializes the M-Pesa STK push request")
+	@PaymentSdkFilter
+	public Object mpesaStkPushInit(
+			@RequestHeader(value = "App-Key") 
+			@Parameter(description = "The App Key used for authentication", 
+			required = true, 
+			example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
+			String appKey,
 
-		        @RequestHeader(value = "App-Secret") 
-		        @Parameter(description = "The App Secret used for authentication", 
-		                   required = true, 
-		                   example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
-		        String appSecret,
+			@RequestHeader(value = "App-Secret") 
+			@Parameter(description = "The App Secret used for authentication", 
+			required = true, 
+			example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
+			String appSecret,
 
-		        @Valid @RequestBody 
-		        @Parameter(description = "STK Push DTO containing request details", 
-		                   required = true) 
-		        PaymentRequest stk) {
-		 
-		    var currentApp= this.requestScopedBean.getApp();
-		    stk.setAppKey(currentApp.getAppKey());
-		    stk.setApp(currentApp);
-			return  this.rabitMqSenderService.sendPaymentRequest(stk);
+			@Valid @RequestBody 
+			@Parameter(description = "STK Push DTO containing request details", 
+			required = true) 
+			PaymentRequest stk) {
 
-		   // return this.paymentService.triggerMpesaStkPush(stk,currentApp);
-		    
-		}
-	 
-	 
-	 @ApiOperation(value = "Request for direct till payment", notes = "This endpoint creates and queues for validation of direct cash payment to till")
-	 @PaymentSdkFilter
-	 @PostMapping("mpesa/toolkitPay")
-	 public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq, @RequestHeader(value = "App-Key") 
-	 @Parameter(description = "The App Key used for authentication", 
-	 required = true, 
-	 example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
-	 String appKey,
+		var currentApp= this.requestScopedBean.getApp();
+		stk.setAppKey(currentApp.getAppKey());
+		stk.setApp(currentApp);
+		return  this.rabitMqSenderService.sendPaymentRequest(stk);
 
-	 @RequestHeader(value = "App-Secret") 
-	 @Parameter(description = "The App Secret used for authentication", 
-	 required = true, 
-	 example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
-	 String appSecret) {
-		   return this.paymentService.createMerchantPaymentRequest(payReq);
-	   }
+		// return this.paymentService.triggerMpesaStkPush(stk,currentApp);
+
+	}
+
+
+	@ApiOperation(value = "Request for direct till payment", notes = "This endpoint creates and queues for validation of direct cash payment to till")
+	@PaymentSdkFilter
+	@PostMapping("mpesa/toolkitPay")
+	public Object requestToolkitPayment(@Valid @RequestBody ToolkitPayDto payReq,
+			@RequestHeader(value = "App-Key") 
+	@Parameter(description = "The App Key used for authentication", 
+	required = true, 
+	example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
+	String appKey,
+
+	@RequestHeader(value = "App-Secret") 
+	@Parameter(description = "The App Secret used for authentication", 
+	required = true, 
+	example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
+	String appSecret) {
+		return this.paymentService.createMerchantPaymentRequest(payReq);
+	}
 
 }
