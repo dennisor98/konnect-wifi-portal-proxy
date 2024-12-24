@@ -112,8 +112,8 @@ public class WebSecurityConfig {
 				.requestMatchers("/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/confirmOTPV2","/payment/callBack","/payment/confirm","/payment/callbackResolver","/payment/result")
 				.permitAll()
 				.requestMatchers("/sdk/**").permitAll()
-
-				.requestMatchers(HttpMethod.OPTIONS, "/**")
+                .requestMatchers("/utility/**").permitAll()		
+                .requestMatchers(HttpMethod.OPTIONS, "/**")
 				.permitAll() // Permit OPTIONS requests
 				.anyRequest().authenticated()
 		);
