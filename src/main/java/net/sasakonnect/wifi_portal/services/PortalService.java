@@ -429,9 +429,9 @@ public class PortalService {
 		return null;
 	}
 
-	public Object getUserSubscriptionsByUserId(String userId) {
-		Optional<User> userOpt =  this.userRepository.findByUserId(userId);
-		if(userOpt.isEmpty()) {
+	public Object getUserSubscriptionsByUserId(String phone) {
+		Optional<User> userOpt =  this.userRepository.findByPhone(phone);
+				if(userOpt.isEmpty()) {
 			ObjectNode res =  JsonNodeFactory.instance.objectNode();
 			res.put("success",false);
 			res.put("message","Invalid userId");
@@ -441,8 +441,8 @@ public class PortalService {
 		}
 		var user = userOpt.get();
 		var data =  JsonNodeFactory.instance.objectNode();
-		data.put("id",userId);
-		data.put("konnecter",userId);
+		data.put("id",user.getUserId());
+		data.put("konnecter",user.getUserId());
 		data.put("token",user.getToken()); 
 				   log.error("{body}"+data);
 		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
