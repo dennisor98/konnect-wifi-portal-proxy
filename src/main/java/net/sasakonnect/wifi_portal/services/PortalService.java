@@ -431,10 +431,10 @@ public class PortalService {
 
 	public Object getUserSubscriptionsByUserId(String phone) {
 		Optional<User> userOpt =  this.userRepository.findByPhone(phone);
-				if(userOpt.isEmpty()) {
+		if(userOpt.isEmpty()) {
 			ObjectNode res =  JsonNodeFactory.instance.objectNode();
 			res.put("success",false);
-			res.put("message","Invalid userId");
+			res.put("message","Invalid phone");
 
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
 
