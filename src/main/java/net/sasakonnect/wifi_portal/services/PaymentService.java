@@ -756,7 +756,7 @@ public class PaymentService {
 	public void processMpesaStatusResult(MpesaResultDto result) {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
-			String mobile = this.getValueByKey("DebitPartyName", result).split("-")[0];
+			String mobile = this.getValueByKey("DebitPartyName", result).split("-")[0].trim();
 			String sanitizedMobile = "254"+mobile.substring(mobile.length() - 9);
 			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(sanitizedMobile);
 			log.error("{payment}"+paymentOpt);
