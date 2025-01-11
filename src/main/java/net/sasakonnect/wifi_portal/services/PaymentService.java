@@ -735,26 +735,30 @@ public class PaymentService {
 	}
     
 	public  String getValueByKey(String key,MpesaResultDto dto) {
-        if (dto == null || dto.getResult() == null || dto.getResult().getResultParameters() == null) {
-            return null; 
-        }
+		if (dto == null || dto.getResult() == null || dto.getResult().getResultParameters() == null) {
+			return null; 
+		}
 
-        List<MpesaResultDto.ResultParameterDto> parameters = dto.getResult().getResultParameters().getResultParameter();
+		List<MpesaResultDto.ResultParameterDto> parameters = dto.getResult().getResultParameters().getResultParameter();
 
-        if (parameters == null) {
-            return null; 
-        }
+		if (parameters == null) {
+			return null; 
+		}
 
-        return parameters.stream()
-                .filter(param -> key.equals(param.getKey()))
-                .map(MpesaResultDto.ResultParameterDto::getValue)
-                .findFirst()
-                .orElse(null); // Return null if not found
-    }
+		return parameters.stream()
+				.filter(param -> key.equals(param.getKey()))
+				.map(MpesaResultDto.ResultParameterDto::getValue)
+				.findFirst()
+				.orElse(null); // Return null if not found
+	}
+	
+	
 	public void processMpesaStatusResult(MpesaResultDto result) {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
-			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(this.getValueByKey("DebitPartyName", result).split("-")[0]);
+			String mobile = this.getValueByKey("DebitPartyName", result).split("-")[0];
+			String sanitizedMobile = "254"+mobile.substring(mobile.length() - 9);
+			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(sanitizedMobile);
 			log.error("{payment}"+paymentOpt);
 			if(paymentOpt.isPresent()) {
 				var payment = paymentOpt.get();
