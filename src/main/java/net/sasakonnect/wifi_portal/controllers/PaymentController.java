@@ -4,6 +4,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AppToolKitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
+import net.sasakonnect.wifi_portal.RequestDto.PollTxStatusDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
@@ -28,6 +30,7 @@ import net.sasakonnect.wifi_portal.services.AuthService;
 //import net.sasakonnect.wifi_portal.services.MessagingService;
 import net.sasakonnect.wifi_portal.services.PaymentService;
 import net.sasakonnect.wifi_portal.services.RabbitMqSenderService;
+import net.sasakonnect.wifi_portal.services.RedisService;
 
 @CustomController
 @RequestMapping("payment")
@@ -41,6 +44,8 @@ public class PaymentController {
 	AuthService authService;
 	@Autowired
 	RabbitMqSenderService rabitMqSenderService;
+	@Autowired
+	RedisService redisService;
 
 	//	@Autowired
 	//	MessagingService messageService;
@@ -91,11 +96,11 @@ public class PaymentController {
 	}
 
 
-//   
-//   @PostMapping("mpesa/confirmTransaction")
-//   public Object queryMpesaByChecoutRequestId(@Valid @RequestBody() PollMpesaDto stk) {
-//	   return this.paymentService.getTxStatusByCheckoutRequestId(stk.getCheckoutRequestID());
-//   }
+   
+   @GetMapping("mpesa/confirmTransaction")
+   public void queryMpesaByChecoutRequestId() {
+	    this.redisService.addTransactionIten("hello");
+   }
 //   
    @PostMapping("/result")
    public void mpesaInit(@Valid @RequestBody() String result) throws Exception {
@@ -115,5 +120,12 @@ public class PaymentController {
    public Object requestToolkitPayment(@Valid @RequestBody AppToolKitPayDto payReq) {
 	   return this.paymentService.createPaymentRequest(payReq);
    }
+   
+   @PostMapping("/pollPaymentStatusByTxId")
+   public Object pollPaymentStatus(@Valid @RequestBody PollTxStatusDto payReq) {
+	   return this.paymentService.getPaymentStatusByTxId(payReq);
+   }
+   
+   
 }
 
