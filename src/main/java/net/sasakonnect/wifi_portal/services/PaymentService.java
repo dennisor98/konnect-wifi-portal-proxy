@@ -43,6 +43,7 @@ import net.sasakonnect.wifi_portal.RequestDto.MpesaCallBackDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
+import net.sasakonnect.wifi_portal.RequestDto.PollTxStatusDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.MpesaResponse;
@@ -776,5 +777,22 @@ public class PaymentService {
 			}
 
 		}
+	}
+	
+	public Object getPaymentStatusByTxId(PollTxStatusDto req) {
+		Optional<Payment> paymentOpt =  this.paymentRepository.findByKonnectCheckoutId(req.getTxId());
+		if(paymentOpt.isEmpty()) {
+			ObjectNode res  = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Invalid txId");
+
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		}
+
+		var payment =  paymentOpt.get();
+		ObjectNode res  = JsonNodeFactory.instance.objectNode();
+		res.put("success",true);
+		res.put("isSuccessful",payment.getIsSuccessful());
+		return ResponseEntity.status(HttpStatus.OK).body(res);
 	}
 }
