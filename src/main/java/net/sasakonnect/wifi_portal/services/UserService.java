@@ -507,22 +507,34 @@ public class UserService  implements UserDetailsService{
 	   
 	   
 	   public Object createRefreshToken() {
-			log.warn("principal " + SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-			User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-			var token = this.jwtService.generateToken(user);
-			var refresh = this.jwtService.generateRefreshToken(user);
+		   log.warn("principal " + SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+		   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		   var token = this.jwtService.generateToken(user);
+		   var refresh = this.jwtService.generateRefreshToken(user);
 
-			Map<String, Object> map = new HashMap<String, Object>();
-			Map<String, Object> payload = new HashMap<String, Object>();
-			payload.put("token", token);
-			payload.put("refreshToken", refresh);
+		   Map<String, Object> map = new HashMap<String, Object>();
+		   Map<String, Object> payload = new HashMap<String, Object>();
+		   payload.put("token", token);
+		   payload.put("refreshToken", refresh);
 
-			map.put("payload", payload);
+		   map.put("payload", payload);
 
-			map.put("success", true);
-			return ResponseEntity.status(HttpStatus.OK).body(map);
-		}
+		   map.put("success", true);
+		   return ResponseEntity.status(HttpStatus.OK).body(map);
+	   }
 
+	   
+	   public Object getAuthenticatedUserProfile() {
+		   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		   ObjectNode res = JsonNodeFactory.instance.objectNode();
+           Map<String,Object> map =  new HashMap<>();
+		   res.put("id",user.getId());
+		   res.put("email", user.getEmail());
+		   res.put("firstname", user.getFirstname());
+		   res.put("lastname", user.getLastname());
+		   map.put("user",res);
+		   return ResponseEntity.status(HttpStatus.OK).body(map);
+	   }
 
 	   
 			   		

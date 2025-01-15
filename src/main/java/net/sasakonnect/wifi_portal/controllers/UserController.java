@@ -1,6 +1,7 @@
 package net.sasakonnect.wifi_portal.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,5 +21,11 @@ public class UserController {
 	@PostMapping("/profile")
 	public Object uploadProfileImage(@Valid @RequestBody() ProfileUploadDto profile) {
 		return this.userService.uploadProfileImage(profile);
+	}
+	
+	
+	@GetMapping("/profile")
+	public Object getuserprofile() {
+		return this.userService.getAuthenticatedUserProfile();
 	}
 }
