@@ -20,6 +20,7 @@ import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
 import net.sasakonnect.wifi_portal.RequestDto.VerifyOtpDto;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
+import net.sasakonnect.wifi_portal.annotations.RefreshMiddleware;
 import net.sasakonnect.wifi_portal.services.PortalService;
 import net.sasakonnect.wifi_portal.services.UserService;
 
@@ -140,6 +141,13 @@ public class PortalController extends BasePortalController{
    @PostMapping("connectTv")
    public Object connectTv(@Valid @RequestBody ConnectTvDto input) {
 	   return this.portalService.initiateTvConnection(input);
+   }
+   
+   @PostMapping("/user/refresh/token")
+   @RefreshMiddleware()
+   public Object createRefreshToken() {
+	   
+	   return this.userService.createRefreshToken();
    }
    
    

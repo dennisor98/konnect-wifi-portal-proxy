@@ -1,8 +1,8 @@
 package net.sasakonnect.wifi_portal.config;
 import java.util.Arrays;
+
 import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +14,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,16 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.headers.Header;
-import io.swagger.v3.oas.models.info.Contact;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.media.StringSchema;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
-import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.parameters.HeaderParameter;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.services.UserService;
 
@@ -109,7 +98,7 @@ public class WebSecurityConfig {
 				// Swagger resources like JS and CSS
 				"/webjars/**").permitAll()
                 
-				.requestMatchers("/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/confirmOTPV2","/payment/callBack","/payment/confirm","/payment/callbackResolver","/payment/result","/payment/mpesa/confirmTransaction")
+				.requestMatchers("/portal/user/refresh/token","/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/confirmOTPV2","/payment/callBack","/payment/confirm","/payment/callbackResolver","/payment/result","/payment/mpesa/confirmTransaction")
 				.permitAll()
 				.requestMatchers("/sdk/**").permitAll()
                 .requestMatchers("/utility/**").permitAll()		
@@ -149,7 +138,7 @@ public class WebSecurityConfig {
 //	}
 
 	@Bean
-	public WebMvcConfigurer corsConfigurer() {
+	 WebMvcConfigurer corsConfigurer() {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
@@ -159,12 +148,20 @@ public class WebSecurityConfig {
 		};
 	}
 
+
+	
 	@Bean
 	GlobalOpenApiCustomizer globalOpenApiConstomizer() {
 		Object example_token = "bearertoken";
 		return openApi -> {
 			openApi.getPaths().forEach((path, pathItem) -> {
 				pathItem.readOperations().forEach(operation -> {
+					if ("/portal/user/refresh/token".equals(path)) {
+						operation.addParametersItem(
+								new HeaderParameter().name("refresh-token-header")
+										.allowEmptyValue(false).example("ej....").required(false));
+						return;
+					}
 				});
 			});
 		};

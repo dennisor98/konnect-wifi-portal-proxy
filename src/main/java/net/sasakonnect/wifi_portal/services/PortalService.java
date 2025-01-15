@@ -650,7 +650,9 @@ public class PortalService {
 		return null;
 	}
 
-
+public Object refreshAuthToken() {
+	return null;
+}
 
 
 }
