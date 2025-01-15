@@ -71,15 +71,16 @@ public class UserService  implements UserDetailsService{
 		return null;
 	}
 
+	public Optional<User> findUserById(String id){
+		return  this.userRepository.findById(id);
+	}
 
 	public Optional<Role> getUserRoleByUserId(String string) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 
 	public boolean findPermissionByRoleName(Optional<Role> role, Object permission) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -504,6 +505,23 @@ public class UserService  implements UserDetailsService{
 	        }
 	    }
 	   
+	   
+	   public Object createRefreshToken() {
+			log.warn("principal " + SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+			User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			var token = this.jwtService.generateToken(user);
+			var refresh = this.jwtService.generateRefreshToken(user);
+
+			Map<String, Object> map = new HashMap<String, Object>();
+			Map<String, Object> payload = new HashMap<String, Object>();
+			payload.put("token", token);
+			payload.put("refreshToken", refresh);
+
+			map.put("payload", payload);
+
+			map.put("success", true);
+			return ResponseEntity.status(HttpStatus.OK).body(map);
+		}
 
 
 	   
