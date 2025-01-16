@@ -20,7 +20,7 @@ public class ToolkitPayDto {
    String firstname;
    
    Integer amount;
-   
+   @JsonDeserialize(using = AuthAttemptDeserializer.class)
    AuthAttemptDto authAttempt;  
 //   @JsonDeserialize(using = AuthAttemptDeserializer.class)
 //   AuthAttemptDto authAttemptObject;
