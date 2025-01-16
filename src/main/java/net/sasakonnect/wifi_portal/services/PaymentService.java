@@ -701,13 +701,21 @@ public class PaymentService {
 			}
 		}
 		Optional<User> userOpt = this.userRepository.findByUserId(req.getUserId());
-		String phone = req.getMobileNumber().substring(req.getMobileNumber().length()-9);
+		String phoneStr =  req.getMobileNumber();
+		if(phoneStr.length() < 9) {
+			Map<String,Object> map = new HashMap<>();
+			map.put("success",false);
+			map.put("message","Phone number must be at least 9 digits");
+			
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+		}
+		String phone = phoneStr.substring(phoneStr.length()-9);
 		String mobile = "254"+phone;
 		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
 		log.error("payload",req.getAuthAttempt());
 		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).
-				      mobileNumber(mobile).deviceMac(req.getAuthAttemptObject() !=null ? req.getAuthAttemptObject().getStaMac() : null).build();
+				      mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}

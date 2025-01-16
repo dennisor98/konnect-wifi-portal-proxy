@@ -21,9 +21,9 @@ public class ToolkitPayDto {
    
    Integer amount;
    
-   String authAttempt;  
-   @JsonDeserialize(using = AuthAttemptDeserializer.class)
-   AuthAttemptDto authAttemptObject;
+   AuthAttemptDto authAttempt;  
+//   @JsonDeserialize(using = AuthAttemptDeserializer.class)
+//   AuthAttemptDto authAttemptObject;
    
    String packageId;
    
