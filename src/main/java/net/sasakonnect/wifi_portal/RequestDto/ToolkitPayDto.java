@@ -12,4 +12,10 @@ public class ToolkitPayDto {
    
    String userId;
    
+   String firstname;
+   
+   Integer amount;
+   
+   String authAttempt;
+   
 }
