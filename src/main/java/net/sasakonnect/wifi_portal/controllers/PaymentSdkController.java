@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
@@ -25,6 +26,7 @@ import io.swagger.annotations.ApiParam;
 @RequestMapping("sdk")
 @Tag(name="Sdk")
 @RestController
+@Slf4j
 public class PaymentSdkController {
 	@Autowired
 	private AppRequestBean requestScopedBean;
@@ -82,6 +84,7 @@ public class PaymentSdkController {
 	required = true, 
 	example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
 	String appSecret) {
+		log.error("{payload}",payReq);
 		return this.paymentService.createMerchantPaymentRequest(payReq);
 	}
 	
