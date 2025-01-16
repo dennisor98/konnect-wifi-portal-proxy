@@ -800,7 +800,9 @@ public class PaymentService {
 		String mobile = "254"+phone;
 		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).mobileNumber(mobile).deviceMac(req.getAuthAttemptObject().getStaMac()).build();
+		log.warn("payload",req.getAuthAttempt());
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).
+				      mobileNumber(mobile).deviceMac(req.getAuthAttemptObject() !=null ? req.getAuthAttemptObject().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
