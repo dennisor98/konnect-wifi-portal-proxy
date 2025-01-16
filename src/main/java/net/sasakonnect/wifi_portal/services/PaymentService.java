@@ -796,10 +796,11 @@ public class PaymentService {
 			}
 		}
 		Optional<User> userOpt = this.userRepository.findByUserId(req.getUserId());
-		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
+		String phone = req.getMobileNumber().substring(req.getMobileNumber().length()-9);
+		String mobile = "254"+phone;
 		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).idUser(req.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).isSuccessful(false).verified(false).mobileNumber(mobile).build();
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).mobileNumber(mobile).deviceMac(req.getAuthAttemptObject().getStaMac()).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
