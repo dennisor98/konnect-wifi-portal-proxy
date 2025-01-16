@@ -692,7 +692,7 @@ public class PaymentService {
 	}
 	
 	public Object createMerchantPaymentRequest(ToolkitPayDto req) {
-		log.warn("payload",req);
+		log.error("payload",req);
 		App app = null;
 		if(req.getAppKey() !=null) {
 			Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(req.getAppKey());
@@ -705,7 +705,7 @@ public class PaymentService {
 		String mobile = "254"+phone;
 		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		log.warn("payload",req.getAuthAttempt());
+		log.error("payload",req.getAuthAttempt());
 		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).
 				      mobileNumber(mobile).deviceMac(req.getAuthAttemptObject() !=null ? req.getAuthAttemptObject().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
