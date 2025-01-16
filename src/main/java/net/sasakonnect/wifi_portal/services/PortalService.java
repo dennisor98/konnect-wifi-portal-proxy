@@ -230,7 +230,7 @@ public class PortalService {
 		var authAttempt = deviceDto.getAuthAttempt();
 		Map<String,Object> auth = new HashMap<>();
 		Map<String,String> params = new HashMap<>();
-		auth.put("pagetype",authAttempt.getPageType());
+		auth.put("pagetype",authAttempt.getPagetype());
 		auth.put("vlan",authAttempt.getVlan());
 		auth.put("staMac",authAttempt.getStaMac());
 		auth.put("staIp",authAttempt.getStaIp());
