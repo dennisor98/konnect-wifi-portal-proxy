@@ -715,7 +715,7 @@ public class PaymentService {
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
 		log.error("payload",req.getAuthAttempt());
 		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).
-				      mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
+				      amount(req.getAmount()).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -777,6 +777,10 @@ public class PaymentService {
 				var payment = paymentOpt.get();
 				payment.setVerified(true);
 				payment.setIsSuccessful(true);
+				payment.setPaymentPayload(String.valueOf(result));
+				payment.setPaymentVerificationPayload(String.valueOf(result));
+				payment.setAmount(Integer.valueOf(this.getValueByKey("Amount", result)));
+				payment.setTxtId(this.getValueByKey("ReceiptNo", result));
 				this.paymentRepository.save(payment);
 				log.error("{payment}"+payment);
 				var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result))
@@ -793,18 +797,24 @@ public class PaymentService {
 	
 	public Object getPaymentStatusByTxId(PollTxStatusDto req) {
 		Optional<Payment> paymentOpt =  this.paymentRepository.findByKonnectCheckoutId(req.getTxId());
+		ObjectNode res  = JsonNodeFactory.instance.objectNode();
+		Map<String,Object> payload  = new HashMap<>();
 		if(paymentOpt.isEmpty()) {
-			ObjectNode res  = JsonNodeFactory.instance.objectNode();
 			res.put("success",false);
 			res.put("message","Invalid txId");
-
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+            payload.put("result", res);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(payload);
 		}
 
 		var payment =  paymentOpt.get();
-		ObjectNode res  = JsonNodeFactory.instance.objectNode();
+		
 		res.put("success",true);
 		res.put("isSuccessful",payment.getIsSuccessful());
-		return ResponseEntity.status(HttpStatus.OK).body(res);
+		res.put("transactionCode",payment.getTxtId());
+		res.put("amount",payment.getAmount());
+		res.put("mobileNumber",payment.getMobileNumber());
+		res.put("userId", payment.getIdUser());
+		payload.put("result",res);
+		return ResponseEntity.status(HttpStatus.OK).body(payload);
 	}
 }
