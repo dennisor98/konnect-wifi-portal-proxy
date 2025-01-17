@@ -33,6 +33,9 @@ public class Payment extends BasePortalDomain {
 	    @Column(name = "konnect_checkout_id", length = 255,nullable = false)
 	    private String konnectCheckoutId;
 	    
+	    @Column(nullable = true)
+	    private Integer amount;
+	    
 	    @Column(nullable = false)
 	    private Boolean verified; 
 	    
