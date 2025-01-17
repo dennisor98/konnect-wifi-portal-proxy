@@ -715,7 +715,7 @@ public class PaymentService {
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
 		log.error("payload",req.getAuthAttempt());
 		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).
-				      amount(req.getAmount()).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
+				      amount(String.valueOf(req.getAmount())).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
