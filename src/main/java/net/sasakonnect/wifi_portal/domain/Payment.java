@@ -34,7 +34,7 @@ public class Payment extends BasePortalDomain {
 	    private String konnectCheckoutId;
 	    
 	    @Column(nullable = true)
-	    private Integer amount;
+	    private String amount;
 	    
 	    @Column(nullable = false)
 	    private Boolean verified; 
