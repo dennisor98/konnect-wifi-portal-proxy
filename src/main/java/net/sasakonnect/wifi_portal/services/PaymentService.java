@@ -874,7 +874,7 @@ public class PaymentService {
 				payment.setIsSuccessful(true);
 				payment.setPaymentPayload(String.valueOf(result));
 				payment.setPaymentVerificationPayload(String.valueOf(result));
-				payment.setAmount(Integer.valueOf(this.getValueByKey("Amount", result)));
+				payment.setAmount(this.getValueByKey("Amount", result));
 				payment.setTxtId(this.getValueByKey("ReceiptNo", result));
 				this.paymentRepository.save(payment);
 				log.error("{payment}"+payment);
