@@ -101,6 +101,7 @@ public class WebSecurityConfig {
 				.requestMatchers("/portal/user/refresh/token","/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/confirmOTPV2","/payment/callBack","/payment/confirm","/payment/callbackResolver","/payment/result","/payment/mpesa/confirmTransaction")
 				.permitAll()
 				.requestMatchers("/sdk/**").permitAll()
+				.requestMatchers("/notification/**").permitAll()
 				.requestMatchers("/views/**").permitAll()
                 .requestMatchers("/utility/**").permitAll()		
                 .requestMatchers(HttpMethod.OPTIONS, "/**")

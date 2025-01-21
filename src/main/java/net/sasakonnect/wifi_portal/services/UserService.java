@@ -185,8 +185,8 @@ public class UserService  implements UserDetailsService{
 		            	 user.put("createdAt", payload.getCreatedAt());
 		                 user.put("deleatedAt", payload.getDeleatedAt());
 		                 user.put("updatedAt", payload.getUpdatedAt());
-		                 user.put("id", payload.getUser_id());
-		                 user.put("email", payload.getEmail());
+		                 user.put("id",u.getId());
+		                 user.put("email",u.getEmail());
 		                 user.put("firstname", payload.getFirstname());
 		                 user.put("lastname", payload.getLastname());
 		                 user.put("is_active", payload.getIs_active());
@@ -259,7 +259,7 @@ public class UserService  implements UserDetailsService{
 	        	map.put("createdAt", payload.getCreatedAt());
 	        	map.put("deleatedAt", payload.getDeletedAt());
 	        	map.put("updatedAt", payload.getUpdatedAt());
-	        	map.put("id", payload.getUserId());
+	        	map.put("id", payload.getId());
 	        	map.put("email", payload.getEmail());
 	        	map.put("firstname", payload.getFirstname());
 	        	map.put("lastname", payload.getLastname());
@@ -317,7 +317,7 @@ public class UserService  implements UserDetailsService{
 			            	 user.put("createdAt", payload.getCreatedAt());
 			                 user.put("deleatedAt", payload.getDeleatedAt());
 			                 user.put("updatedAt", payload.getUpdatedAt());
-			                 user.put("id", payload.getUser_id());
+			                 user.put("id",u.getId());
 			                 user.put("email", payload.getEmail());
 			                 user.put("firstname", payload.getFirstname());
 			                 user.put("lastname", payload.getLastname());
