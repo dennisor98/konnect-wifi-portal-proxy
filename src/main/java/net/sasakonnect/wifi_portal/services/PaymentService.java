@@ -802,12 +802,12 @@ public class PaymentService {
 		if(paymentOpt.isEmpty()) {
 			res.put("success",false);
 			res.put("message","Invalid txId");
-            payload.put("result", res);
+			payload.put("result", res);
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(payload);
 		}
 
 		var payment =  paymentOpt.get();
-		
+
 		res.put("success",true);
 		res.put("isSuccessful",payment.getIsSuccessful());
 		res.put("transactionCode",payment.getTxtId());
@@ -816,5 +816,34 @@ public class PaymentService {
 		res.put("userId", payment.getIdUser());
 		payload.put("result",res);
 		return ResponseEntity.status(HttpStatus.OK).body(payload);
+	}
+	
+	public Object getTxStatusResult() {
+		//process the transaction result
+		return null;
+	}
+	
+	
+//	@RabbitListener()
+	public Object  getPaymentDetailsByMpesaCode(String mpesaCode) throws Exception {
+		ObjectNode params = JsonNodeFactory.instance.objectNode();
+		params.put("Initiator",initiator);
+		params.put("SecurityCredential",this.authService.generateSecurityCredential(mpesaPassword));
+		params.put("CommandID","TransactionStatusQuery");
+		params.put("TransactionID",mpesaCode);
+		params.put("PartyA",businessShortCode);
+		params.put("IdentifierType","4");
+		params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
+		params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
+		params.put("Remarks","OK");
+		params.put("Occasion","OK");
+
+		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_STATUS)
+				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		String json =  responseMono.block();
+		System.out.println("{json}"+json);
+		return null;
 	}
 }

@@ -6,13 +6,15 @@ import lombok.Data;
 
 @Data
 public class NotificationReqDto {
-   List<String> phoneNumber;
+   List<String> receiverId;
    
    @NotNull
    String message;
    
    @NotNull
    String title;
+   
+   String caption;
    
    @NotNull
    Boolean isPublic;

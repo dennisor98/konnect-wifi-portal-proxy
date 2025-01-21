@@ -16,22 +16,27 @@ import net.sasakonnect.wifi_portal.repository.NotificationRepository;
 public class NotificationService {
 	@Autowired
 	NotificationRepository notificationRepository;
+	@Autowired
+	FirebaseService firebaseService;
      public Object createNotification(NotificationReqDto notifictaionReq) {
     	 ObjectNode res = JsonNodeFactory.instance.objectNode();
     	 if(notifictaionReq.getIsPublic()) {
+    		 this.firebaseService.sendMessage(notifictaionReq);
     		 //send to public firebase topic
     		var ntf =  Notification.builder().isPublic(notifictaionReq.getIsPublic()).message(notifictaionReq.getMessage()).messageType(notifictaionReq.getMessageType())
     				   .receiver(null).title(notifictaionReq.getTitle()).build();
     		this.notificationRepository.save(ntf);
     		
     	 }
-    	 if(notifictaionReq.getPhoneNumber().isEmpty()) {
+    	 if(notifictaionReq.getReceiverId().isEmpty()) {
     		 
     		 res.put("success", false);
     		 res.put("message","private messages must have recipient contacts");
     		 
     		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     	 }
+		 this.firebaseService.sendMessage(notifictaionReq);
+
     	 //send batch messages to individual topics
     	 
     	 return null;
