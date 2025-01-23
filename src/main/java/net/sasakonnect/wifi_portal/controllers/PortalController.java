@@ -1,11 +1,13 @@
 package net.sasakonnect.wifi_portal.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
@@ -141,6 +143,11 @@ public class PortalController extends BasePortalController{
    @PostMapping("connectTv")
    public Object connectTv(@Valid @RequestBody ConnectTvDto input) {
 	   return this.portalService.initiateTvConnection(input);
+   }
+   
+   @GetMapping("host/cridentials")
+   public Object getHostCridentials(HttpServletRequest request) {
+	   return request.getHeader("Host");
    }
    
    @PostMapping("/user/refresh/token")

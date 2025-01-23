@@ -23,8 +23,11 @@ public class Payment extends BasePortalDomain {
 	    @JoinColumn(name = "user_id", nullable = true) // Foreign key column
 	    private User user;
 	    
+	    @Column(nullable = true)
+	    private String source;
+	    
 	    @Lob
-	    @Column(name = "payment_payload", nullable = true, columnDefinition = "LONGTEXT")
+	    @Column(name = "payment_payload", nullable = true)
 	    private String paymentPayload;
 	    
 	    @Column(name = "txt_id", length = 255,nullable = true)
