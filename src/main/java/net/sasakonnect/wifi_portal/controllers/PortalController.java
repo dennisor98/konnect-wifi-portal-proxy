@@ -147,7 +147,7 @@ public class PortalController extends BasePortalController{
    
    @GetMapping("host/cridentials")
    public Object getHostCridentials(HttpServletRequest request) {
-	   return request.getHeader("Host");
+	   return request.getRemoteAddr();
    }
    
    @PostMapping("/user/refresh/token")
