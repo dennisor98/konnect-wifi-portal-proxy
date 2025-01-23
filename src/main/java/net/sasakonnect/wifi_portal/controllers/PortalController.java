@@ -1,5 +1,7 @@
 package net.sasakonnect.wifi_portal.controllers;
 
+import java.net.InetSocketAddress;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -147,14 +149,11 @@ public class PortalController extends BasePortalController{
    
    @GetMapping("host/cridentials")
    public Object getHostCridentials(HttpServletRequest request) {
-	   String clientIp = request.getHeader("X-Forwarded-For");
-       if (clientIp == null || clientIp.isEmpty()) {
-           clientIp = request.getHeader("X-Real-IP");
-       }
-       if (clientIp == null || clientIp.isEmpty()) {
-           clientIp = request.getRemoteAddr(); // Fallback to remote address
-       }
-       return "Public IP: " + clientIp;
+	   String remoteAddress = request.getRemoteHost();
+	    if (remoteAddress != null) {
+	        return remoteAddress;
+	    }
+	    return null;
    }
    
    @PostMapping("/user/refresh/token")
