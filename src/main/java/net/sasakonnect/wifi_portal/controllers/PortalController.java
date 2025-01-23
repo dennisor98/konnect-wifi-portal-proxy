@@ -147,7 +147,14 @@ public class PortalController extends BasePortalController{
    
    @GetMapping("host/cridentials")
    public Object getHostCridentials(HttpServletRequest request) {
-	   return request.getRemoteAddr();
+	   String clientIp = request.getHeader("X-Forwarded-For");
+       if (clientIp == null || clientIp.isEmpty()) {
+           clientIp = request.getHeader("X-Real-IP");
+       }
+       if (clientIp == null || clientIp.isEmpty()) {
+           clientIp = request.getRemoteAddr(); // Fallback to remote address
+       }
+       return "Public IP: " + clientIp;
    }
    
    @PostMapping("/user/refresh/token")
