@@ -649,5 +649,10 @@ public class PortalService {
 
 		return null;
 	}
+	
+	public Object getClientHostCridentials() {
+		return null;
+	}
+	 
 
 }

@@ -274,6 +274,7 @@ public class PaymentService {
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
 	     resp.put("ResultCode","0");
 	     resp.put("staMac",payment.getDeviceMac());
+	     resp.put("initiator",payment.getPlatform());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
 	     threadExceutorBean.addTask(new Runnable() {
@@ -322,6 +323,7 @@ public class PaymentService {
 						resp.put("KonnectTransID",payment.getKonnectTransId());
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
+						resp.put("initiator",payment.getPlatform());
 						Mono<Void> responseMono = webClient.webClient.post()
 	                            .uri(payment.getApp().getCallbackUrl())
 	                            .contentType(MediaType.APPLICATION_JSON)
@@ -369,6 +371,7 @@ public class PaymentService {
 						resp.put("KonnectTransID",payment.getKonnectTransId());
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
+						resp.put("initiator",payment.getPlatform());
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -416,6 +419,7 @@ public class PaymentService {
 						resp.put("KonnectTransID",payment.getKonnectTransId());
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
+						resp.put("initiator",payment.getPlatform());
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -714,8 +718,8 @@ public class PaymentService {
 		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
 		log.error("payload",req.getAuthAttempt());
-		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).
-				      amount(String.valueOf(req.getAmount())).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).source(app.getName())
+				      .amount(String.valueOf(req.getAmount())).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -732,7 +736,7 @@ public class PaymentService {
 		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).deviceMac(req.getStaMac().trim()).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(mobile).isSuccessful(false).verified(false).build();
+		var payment = Payment.builder().app(app).deviceMac(req.getStaMac().trim()).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(mobile).isSuccessful(false).verified(false).source("super-app").build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -784,7 +788,7 @@ public class PaymentService {
 				this.paymentRepository.save(payment);
 				log.error("{payment}"+payment);
 				var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result))
-				.businessShortCode(this.getValueByKey("CreditPartyName", result).split("-")[0]).mobile(this.getValueByKey("DebitPartyName", result).split("-")[0])
+				.businessShortCode(this.getValueByKey("CreditPartyName", result).split("-")[0]).mobile(this.getValueByKey("DebitPartyName", result).split("-")[0]).platform(payment.getSource())
 				.konnectTransId(payment.getKonnectCheckoutId()).name(this.getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(this.getValueByKey("Amount", result))
 				.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(this.getValueByKey("ReasonType", result))
 				.build();

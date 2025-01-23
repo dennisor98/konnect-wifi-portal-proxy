@@ -98,7 +98,7 @@ public class WebSecurityConfig {
 				// Swagger resources like JS and CSS
 				"/webjars/**").permitAll()
 				.requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-				.requestMatchers("/portal/user/refresh/token","/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/confirmOTPV2","/payment/callBack","/payment/confirm","/payment/callbackResolver","/payment/result","/payment/mpesa/confirmTransaction")
+				.requestMatchers("/portal/user/refresh/token","/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/host/cridentials","/portal/confirmOTPV2","/payment/callBack","/payment/confirm","/payment/callbackResolver","/payment/result","/payment/mpesa/confirmTransaction")
 				.permitAll()
 				.requestMatchers("/sdk/**").permitAll()
 				.requestMatchers("/notification/**").permitAll()

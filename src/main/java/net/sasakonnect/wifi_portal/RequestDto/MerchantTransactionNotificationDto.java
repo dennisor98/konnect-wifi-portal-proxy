@@ -25,5 +25,6 @@ String transType;
    String userId;
    String konnectTransId;
    String deviceMac;
+   String platform;
    App app;
 }
