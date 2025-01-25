@@ -16,33 +16,43 @@ import net.sasakonnect.wifi_portal.RequestDto.NotificationReqDto;
 @Slf4j
 public class FirebaseService {
 	public void sendMessage(NotificationReqDto notification) {
-		   StringBuilder conditionBuilder = new StringBuilder();
-           if (notification.getReceiverId().size() > 0) {
-               notification.getReceiverId().stream()
-                   .forEach(topic -> conditionBuilder.append("'").append(topic).append("' in topics || "));
-               
-               if (conditionBuilder.length() > 0) {
-                   conditionBuilder.setLength(conditionBuilder.length() - 4);
-               }
-           }
-           String condition = conditionBuilder.toString();
-          var ntf = Notification.builder().setBody("Hello").setTitle("Greetings").build();
-		 Message message = Message.builder()
-		     .putData("title",notification.getTitle())
-		     .putData("message",notification.getMessage())
-		     .putData("caption",notification.getCaption())
-		     .setNotification(ntf)
-		     .setCondition(condition)
-		     .build();
+	    StringBuilder conditionBuilder = new StringBuilder();
 
-		 String response;
-//		 log.error("{message}"+messag);
-		try {
-			response = FirebaseMessaging.getInstance().send(message);
-			 System.out.println("Successfully sent message to firebase: " + response);
-		} catch (FirebaseMessagingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	 }
+	    // Build the condition string
+	    if (notification.getReceiverId() != null && !notification.getReceiverId().isEmpty()) {
+	        notification.getReceiverId().forEach(topic -> 
+	            conditionBuilder.append("'").append(topic).append("' in topics || ")
+	        );
+
+	        // Remove the last " || " if it exists
+	        if (conditionBuilder.length() > 0) {
+	            conditionBuilder.setLength(conditionBuilder.length() - 4);
+	        }
+	    }
+
+	    String condition = conditionBuilder.toString();
+	    log.info("Condition: {}", condition);
+
+	    // Build the notification
+	    var ntf = Notification.builder()
+	            .setBody(notification.getMessage())
+	            .setTitle(notification.getTitle())
+	            .build();
+
+	    Message message = Message.builder()
+	            .putData("title", notification.getTitle())
+	            .putData("message", notification.getMessage())
+	            .putData("caption", notification.getCaption())
+	            .setNotification(ntf)
+	            .setCondition(condition)
+	            .build();
+
+	    try {
+	        String response = FirebaseMessaging.getInstance().send(message);
+	        log.info("Successfully sent message to Firebase: {}", response);
+	    } catch (FirebaseMessagingException e) {
+	        log.error("Error sending message to Firebase: {}", e.getMessage(), e);
+	    }
+	}
+
 }

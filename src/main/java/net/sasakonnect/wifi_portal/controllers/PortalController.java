@@ -147,14 +147,6 @@ public class PortalController extends BasePortalController{
 	   return this.portalService.initiateTvConnection(input);
    }
    
-   @GetMapping("host/cridentials")
-   public Object getHostCridentials(HttpServletRequest request) {
-	   String remoteAddress = request.getRemoteHost();
-	    if (remoteAddress != null) {
-	        return remoteAddress;
-	    }
-	    return null;
-   }
    
    @PostMapping("/user/refresh/token")
    @RefreshMiddleware()

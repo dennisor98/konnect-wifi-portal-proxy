@@ -20,14 +20,14 @@ public class NotificationService {
 	FirebaseService firebaseService;
      public Object createNotification(NotificationReqDto notifictaionReq) {
     	 ObjectNode res = JsonNodeFactory.instance.objectNode();
-    	 if(notifictaionReq.getIsPublic()) {
-    		 this.firebaseService.sendMessage(notifictaionReq);
-    		 //send to public firebase topic
-    		var ntf =  Notification.builder().isPublic(notifictaionReq.getIsPublic()).message(notifictaionReq.getMessage()).messageType(notifictaionReq.getMessageType())
-    				   .receiver(null).title(notifictaionReq.getTitle()).build();
-    		this.notificationRepository.save(ntf);
-    		
-    	 }
+//    	 if(notifictaionReq.getIsPublic()) {
+//    		 this.firebaseService.sendMessage(notifictaionReq);
+//    		 //send to public firebase topic
+//    		var ntf =  Notification.builder().isPublic(notifictaionReq.getIsPublic()).message(notifictaionReq.getMessage()).messageType(notifictaionReq.getMessageType())
+//    				   .receiver(null).title(notifictaionReq.getTitle()).build();
+//    		this.notificationRepository.save(ntf);
+//    		
+//    	 }
     	 if(notifictaionReq.getReceiverId().isEmpty()) {
     		 
     		 res.put("success", false);
