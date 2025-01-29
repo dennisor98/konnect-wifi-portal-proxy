@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.sasakonnect.wifi_portal.domain.App;
+import net.sasakonnect.wifi_portal.domain.User;
 
 @Data
 @Builder
@@ -21,11 +22,15 @@ public class PaymentRequest implements Serializable  {
 	private long amount;
 	private String phoneNumber;
 
-    private String appKey;
+	private String appKey;
 
-    private String KonnectCheckoutID;
+	private String KonnectCheckoutID;
 
-    private String ExternalCheckoutId;
+	private String ExternalCheckoutId;
 
-   private App app;
+	private App app;
+
+	private User user;
+	
+	private String staMac;
 }

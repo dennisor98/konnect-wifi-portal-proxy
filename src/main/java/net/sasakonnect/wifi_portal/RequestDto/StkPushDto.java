@@ -9,4 +9,5 @@ public class StkPushDto {
 	@NotNull(message = "subscriptionPlanId is required")
 	String subscriptionPlanId;	
 	String phone;
+	String staMac;
 }
