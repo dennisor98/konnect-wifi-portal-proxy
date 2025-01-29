@@ -127,7 +127,7 @@ public class JwtService {
 			System.out.println(username);
 			System.out.println(userDetails.getUsername());
 			User user = (User) userDetails;
-			return (username.equals(user.getId()) && !isTokenExpired(token));
+			return (username.equals(user.getId()));
 		} catch (MalformedJwtException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -143,7 +143,7 @@ public class JwtService {
 			final String username = extractUsername(token, jwt);
 
 			User user = userDetails;
-			return (username.equals(user.getId()) && !isTokenExpired(token));
+			return (username.equals(user.getId()));
 		} catch (MalformedJwtException e) {
 			e.printStackTrace();
 		}

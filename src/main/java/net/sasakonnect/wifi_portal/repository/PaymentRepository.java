@@ -17,6 +17,8 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     @Query("SELECT p FROM Payment p JOIN FETCH p.app JOIN FETCH p.user WHERE p.txtId = :txtId")
     Optional<Payment> findByTxtIdIgnoreCase(@Param("txtId") String txtId);
     
+    Optional<Payment> findByTxtId(String checkoutId);
+    
     @Query("SELECT p FROM Payment p JOIN FETCH p.app WHERE p.mobileNumber = :mobileNumber AND p.verified = false AND DATE(p.createdAt) = CURRENT_DATE ORDER BY p.createdAt DESC LIMIT 1")
     Optional<Payment> findxByMobileNumber(@Param("mobileNumber") String mobileNumber);
 

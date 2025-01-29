@@ -7,12 +7,14 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.MerchantTransactionNotificationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
 import net.sasakonnect.wifi_portal.beans.AdvancedUniqueKeyGenerator;
 
 @Service
+@Slf4j
 public class RabbitMqSenderService {
 
     private final RabbitTemplate rabbitTemplate;
@@ -55,6 +57,11 @@ public class RabbitMqSenderService {
     
     public void sendTransactionNotificationToMerchant(MerchantTransactionNotificationDto data) {
     	rabbitTemplate.convertAndSend("transactionExchange","transaction.merchantNotify",data);
+    }
+    
+    public void sendTransactionNotificationCallBackToMerchant(MerchantTransactionNotificationDto data) {
+    	log.error("rabbit data"+data);
+    	rabbitTemplate.convertAndSend("transactionExchange","transaction.notify",data);
     }
 	public void updatePayment(String requestBody) {
 //        rabbitTemplate.convertAndSend("transactionExchange", "transaction.callBack", requestBody);

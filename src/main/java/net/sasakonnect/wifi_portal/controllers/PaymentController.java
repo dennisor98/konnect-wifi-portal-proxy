@@ -1,6 +1,8 @@
 package net.sasakonnect.wifi_portal.controllers;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +26,10 @@ import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollTxStatusDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
+import net.sasakonnect.wifi_portal.ResponseDto.StkCallbackResponseDTO;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
+import net.sasakonnect.wifi_portal.domain.Payment;
+import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import net.sasakonnect.wifi_portal.services.AuthService;
 //import net.sasakonnect.wifi_portal.services.MessagingService;
 //import net.sasakonnect.wifi_portal.services.MessagingService;
@@ -46,6 +51,8 @@ public class PaymentController {
 	RabbitMqSenderService rabitMqSenderService;
 	@Autowired
 	RedisService redisService;
+	@Autowired
+	PaymentRepository paymentRepository;
 
 	//	@Autowired
 	//	MessagingService messageService;
@@ -69,21 +76,14 @@ public class PaymentController {
 	
 	@PostMapping(value = "/callbackResolver", produces = "application/json")
 	public Object validationCallBackResolver(@RequestBody(required = false) String requestBody) {
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode rootNode;
-		try {
-			rootNode = mapper.readTree(requestBody);
-			String checkoutRequestID = rootNode.path("Body")
-					.path("stkCallback")
-					.path("CheckoutRequestID")
-					.asText();
-			this.paymentService.updatePaymentWithCheckoutId(checkoutRequestID,requestBody);
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		log.error("{stkCallBack}"+requestBody);
 
-
+		var callBackPayLoad = new Gson().fromJson(requestBody,StkCallbackResponseDTO.class);
+		log.error("{gson}"+callBackPayLoad);
+		var stkCall = callBackPayLoad.getBody().getStkCallback();
+		String checkoutReqId = stkCall.getCheckoutRequestID();
+		this.paymentService.updatePaymentWithCheckoutId(checkoutReqId,requestBody);
+		this.paymentService.processMpesaCallBack(callBackPayLoad);
 		Map<String, String> response = new HashMap<>();
 		response.put("status", "success");
 		response.put("message", "Callback handled successfully");

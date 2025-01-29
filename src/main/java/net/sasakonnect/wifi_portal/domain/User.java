@@ -6,6 +6,8 @@ import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -43,7 +45,7 @@ public class User extends BasePortalDomain implements Serializable,UserDetails{
 
 	    @Column(length = 15, unique = true, nullable = true)
 	    private String phone;
-	    
+	    @JsonIgnore()
 	    @OneToOne()
 	    @JoinColumn(name="profile_image",nullable=true)
 	    private UserImage profileImage;
@@ -75,17 +77,36 @@ public class User extends BasePortalDomain implements Serializable,UserDetails{
 	    @Column(nullable = true, columnDefinition = "boolean default false")
 	    private boolean isMuted;
 
+	    
+	    @JsonIgnore()
 		@Override
 		public Collection<? extends GrantedAuthority> getAuthorities() {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
+		@JsonIgnore()
 		@Override
 		public String getUsername() {
 			// TODO Auto-generated method stub
 			return null;
 		}
+		@JsonIgnore
+		@Override
+		public boolean isAccountNonExpired() { return true; }
+
+		@JsonIgnore
+		@Override
+		public boolean isAccountNonLocked() { return true; }
+
+		@JsonIgnore
+		@Override
+		public boolean isCredentialsNonExpired() { return true; }
+
+		@JsonIgnore
+		@Override
+		public boolean isEnabled() { return this.isActive; }
+
 
 
 }
