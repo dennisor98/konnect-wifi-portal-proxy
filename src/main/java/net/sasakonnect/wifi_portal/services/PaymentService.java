@@ -171,88 +171,7 @@ public class PaymentService {
 	}
 
 	
-//	@RabbitListener(queues = "transactionCallBackNotificationQueue")
-//	@Transactional
-//	public void handleTransactionCallBackNotificationQueueRequest(String paymentRequest) {
-//		//	
-//		log.error("payment callback" + paymentRequest);
-//
-//		threadExceutorBean.addTask(new Runnable() {
-//
-//			@Override
-//			public void run() {
-//				ObjectMapper mapper = new ObjectMapper();
-//				JsonNode rootNode;
-//				try {
-//					rootNode = mapper.readTree(paymentRequest);
-//					String checkoutRequestID = rootNode.path("Body").path("stkCallback").path("CheckoutRequestID")
-//							.asText();
-//					System.out.println("Called Back called: " + paymentRequest);
-//					System.out.println("what happened");
-//					try {
-//						Optional<Payment> payment = paymentRepository.findByTxtIdIgnoreCase(checkoutRequestID);
-//						log.error("" + payment);
-//
-//						var paymentData = new Gson().fromJson(paymentRequest, MpesaCallBackDto.class);
-//						var callback = paymentData.getBody().getStkCallback();
-//						if (payment.isPresent()) {
-//							var pay = payment.get();
-//							User user = pay.getUser();
-//							String userName = null;
-//							if (user != null) {
-//								userName = user.getFirstname() + " " + user.getLastname();
-//							}
-//							System.out.println("Called Back notify merchant at : " + pay.getApp().getCallbackUrl());
-//							Map<String, Object> params = new HashMap<>();
-//							params.put("TransType", "CustomerBuyGoodsOnline");
-//							params.put("TransID", pay.getTxtId());
-//							params.put("TransTime",
-//									callback.getCallbackMetadata() != null
-//									? callback.getCallbackMetadata().getItem().get(3).getValue()
-//											: null);
-//							params.put("TransAmount",
-//									callback.getCallbackMetadata() != null
-//									? callback.getCallbackMetadata().getItem().get(0).getValue()
-//											: null);
-//							params.put("BusinessShortCode", shortCode);
-//							params.put("BillRefNumber",
-//									callback.getCallbackMetadata() != null
-//									? callback.getCallbackMetadata().getItem().get(1).getValue()
-//											: null);
-//							params.put("Mobile",
-//									callback.getCallbackMetadata() != null
-//									? String.valueOf(callback.getCallbackMetadata().getItem().get(4).getValue())
-//											: null);
-//							params.put("name", userName);
-//							params.put("userId",pay.getIdUser());
-//							params.put("KonnectTransID",pay.getKonnectCheckoutId());
-//							params.put("ResultCode",Integer.valueOf(callback.getResultCode()));
-//							log.error("{body}" + new Gson().toJson(params));
-//							Mono<Object> respMono = webClient.webClient.post().uri(pay.getApp().getCallbackUrl())
-//									.contentType(MediaType.APPLICATION_JSON)
-//									.body(BodyInserters.fromValue(new Gson().toJson(params)))
-//									.accept(MediaType.APPLICATION_JSON).retrieve()
-//									.bodyToMono(Object.class);
-//							respMono.block();
-//						
-//
-//						} else {
-//							log.warn("could not find transaction for checkout id" + checkoutRequestID);
-//						}
-//					} catch (Exception ex) {
-//						ex.printStackTrace();
-//					}
-//
-//					// this.paymentService.updatePaymentWithCheckoutId(checkoutRequestID,requestBody);
-//				} catch (JsonProcessingException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//
-//			}
-//
-//		});
-//	}
+
 	
 	
 	@RabbitListener(queues = "transactionConfirmedNotificationQueue")
@@ -279,6 +198,12 @@ public class PaymentService {
 	     resp.put("initiator",payment.getPlatform());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
+	     threadExceutorBean.addTask(new Runnable()  {
+			 @Override
+			public void run(){
+				 notifyKonnectWater(payment);
+			 }
+		 });
 	     threadExceutorBean.addTask(new Runnable() {
 
 			@Override
@@ -326,42 +251,48 @@ public class PaymentService {
 	     resp.put("initiator",payment.getPlatform());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
+	     threadExceutorBean.addTask(new Runnable()  {
+			 @Override
+			public void run(){
+				 notifyKonnectWater(payment);
+			 }
+		 });
+        
 	     threadExceutorBean.addTask(new Runnable() {
 
-			@Override
-			public void run() {
-			    log.error("Executing task...");
+	    	 @Override
+	    	 public void run() {
+	    		 log.error("Executing task...");
+	    		 try {
+	    			 Mono<?> respMono = webClient.webClient.post()
+	    					 .uri(payment.getApp().getCallbackUrl())
+	    					 .contentType(MediaType.APPLICATION_JSON)
+	    					 .body(BodyInserters.fromValue(resp.toPrettyString()))
+	    					 .accept(MediaType.APPLICATION_JSON)
+	    					 .exchangeToMono(clientResponse -> {
+	    						 HttpStatusCode statusCode = clientResponse.statusCode();
 
-			    try {
-			        Mono<?> respMono = webClient.webClient.post()
-			            .uri(payment.getApp().getCallbackUrl())
-			            .contentType(MediaType.APPLICATION_JSON)
-			            .body(BodyInserters.fromValue(resp.toPrettyString()))
-			            .accept(MediaType.APPLICATION_JSON)
-			            .exchangeToMono(clientResponse -> {
-			            	HttpStatusCode statusCode = clientResponse.statusCode();
-			                
-			                if (statusCode.value() != 200) {
-			                    log.error("Request failed with status: {}", statusCode);
-			                    rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
-			                }
+	    						 if (statusCode.value() != 200) {
+	    							 log.error("Request failed with status: {}", statusCode);
+	    							 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
+	    						 }
 
-			                return clientResponse.bodyToMono(String.class);
-			            })
-			            .doOnError(error -> {
-			                log.error("Error occurred while making request: {}", error.getMessage(), error);
-			                rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
-			            });
+	    						 return clientResponse.bodyToMono(String.class);
+	    					 })
+	    					 .doOnError(error -> {
+	    						 log.error("Error occurred while making request: {}", error.getMessage(), error);
+	    						 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
+	    					 });
 
-			        // Block to get the response (optional, consider reactive approach instead)
-			        var response = respMono.block();
-			        log.error("Response: {}", response);
-			    } catch (Exception e) {
-			        log.error("Unexpected error during request execution: {}", e.getMessage(), e);
-			        rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
-			    }
-			}});
-	     
+	    			 // Block to get the response (optional, consider reactive approach instead)
+	    			 var response = respMono.block();
+	    			 log.error("Response: {}", response);
+	    		 } catch (Exception e) {
+	    			 log.error("Unexpected error during request execution: {}", e.getMessage(), e);
+	    			 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
+	    		 }
+	    	 }});
+
 	}
 
 	@RabbitListener(queues = "failedPaymentNotificationQueue0")
@@ -711,7 +642,7 @@ public class PaymentService {
 		if (currentApp.isPresent()) {
 			var pay = Payment.builder().app(currentApp.get())
 
-					.konnectCheckoutId(payment.getKonnectCheckoutID()).txtId(payment.getKonnectCheckoutID()).deviceMac(payment.getStaMac()).user(payment.getUser()).isSuccessful(false)
+					.konnectCheckoutId(payment.getKonnectCheckoutID()).txtId(payment.getKonnectCheckoutID()).deviceMac(payment.getStaMac()).user(payment.getUser()).idUser(payment.getUser() !=null ? payment.getUser().getUserId() : null).amount(String.valueOf(payment.getAmount())).isSuccessful(false)
 					.verified(false).build();
 			return this.paymentRepository.save(pay);
 
@@ -867,7 +798,6 @@ public class PaymentService {
 			String mobile = this.getValueByKey("DebitPartyName", result).split("-")[0].trim();
 			String sanitizedMobile = "254"+mobile.substring(mobile.length() - 9);
 			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(sanitizedMobile);
-			log.error("{payment}"+paymentOpt);
 			if(paymentOpt.isPresent()) {
 				var payment = paymentOpt.get();
 				payment.setVerified(true);
@@ -935,6 +865,7 @@ public class PaymentService {
 	}
 	
 	
+	
 //	@RabbitListener()
 	public Object  getPaymentDetailsByMpesaCode(String mpesaCode) throws Exception {
 		ObjectNode params = JsonNodeFactory.instance.objectNode();
@@ -957,4 +888,25 @@ public class PaymentService {
 		System.out.println("{json}"+json);
 		return null;
 	}
+	
+	
+	public void notifyKonnectWater(MerchantTransactionNotificationDto notification) {
+		Optional<App> appOpt =  this.appRepository.findByName("Konnect Water");
+		Map<String,Object> map = new HashMap<>();
+		map.put("phoneNumber",notification.getMobile());
+		map.put("fullName",notification.getName());
+		map.put("amount",notification.getTransAmount());
+		map.put("packageId",getPackageIdByCost(notification.getTransAmount()));
+		map.put("completedAt",notification.getTransTime());
+		map.put("transID",notification.getTransId());
+		if(appOpt.isPresent()) {
+			var app = appOpt.get();
+			Mono<String> responseMono = this.mpesaClient.webClient.post().uri(app.getCallbackUrl())
+					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(map))
+					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+			String json =  responseMono.block();
+			System.out.println("{json}"+json);
+		}
+	}
+
 }

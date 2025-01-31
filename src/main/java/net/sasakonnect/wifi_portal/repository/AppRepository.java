@@ -17,7 +17,7 @@ public interface AppRepository extends JpaRepository<App, String> {
 	@Query(value = "SELECT * FROM app a WHERE a.app_key = :appKey  LIMIT 1", nativeQuery = true)
 	Optional<App> findFirstByAppKeyAndAppSecret(@Param("appKey") String appKey);
 
-	
+	Optional<App> findByName(String name);
 	
 	
 }

@@ -17,4 +17,10 @@ public class AppService {
 	public Optional<App> findAppByAppKey(String appKey) {
 		return this.appRepository.findFirstByAppKeyAndAppSecret(appKey);
 	}
+	
+	
+	public Optional<App> findAppByName(String appName){
+		return this.appRepository.findByName(appName);
+	}
+	
 }

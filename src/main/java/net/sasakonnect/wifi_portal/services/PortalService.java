@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -104,7 +105,6 @@ public class PortalService {
 
 
 	public Object getInternetPackages() {
-		User u = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Map<String,Object> map = new HashMap<>();
 		Mono<PackageResponseDto> responseMono = this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_PACKAGES)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(map)))
@@ -120,9 +120,30 @@ public class PortalService {
 			//		   if(resp.getStatus() ==  HttpStatus.OK) {
 			//			   
 			//		   }
-			return ResponseEntity.status(HttpStatus.OK).body(res);
+//			return ResponseEntity.status(HttpStatus.OK).body(res);
 		}
-		return null;
+		List<InternetPackages> packagesList = this.packageRepository.findAll(Sort.by(Sort.Direction.ASC,"cost"));
+		var packages = packagesList.stream()
+		            .map(p->{
+		            	Map<String,Object> pkgs = new HashMap<>();
+		            	pkgs.put("createdAt",String.valueOf(p.getCreatedAt()));
+		            	pkgs.put("updated_at",String.valueOf(p.getUpdatedAt()));
+		            	pkgs.put("deletedAt",String.valueOf(false));
+		            	pkgs.put("id",p.getForeignPackageId());
+		            	pkgs.put("name",p.getName());
+		            	pkgs.put("description",p.getDescription());
+		            	pkgs.put("cost", p.getCost());
+		            	pkgs.put("active", p.getActive());
+		            	pkgs.put("noOfUsers", p.getNoOfUsers());
+		            	pkgs.put("zone", p.getZone());
+		            	pkgs.put("promotionText", p.getPromotionText());
+		            	pkgs.put("onPromotion",p.getOnPromotion());
+		            	return pkgs;
+		            }).collect(Collectors.toList());
+		
+		Map<String,Object> res =  new HashMap<>();
+		res.put("payload",packages);
+		return ResponseEntity.status(HttpStatus.OK).body(res);
 
 	}
 
@@ -142,14 +163,17 @@ public class PortalService {
 							.zone(d.getZone())
 							.build();
 					return this.packageRepository.save(pkg);
-				} else {
+				} 
+//				return null;
+				else {
 					log.error("exec else");
 					var ipg = packageOpt.get();
-					ipg.setActive(d.getActive());
-					ipg.setCost(d.getCost());
-					ipg.setName(d.getName());
-					ipg.setNoOfUsers(d.getNoOfUsers());
-					ipg.setZone(d.getZone());
+					ipg.setDescription(d.getDescription());
+//					ipg.setActive(d.getActive());
+////					ipg.setCost(d.getCost());
+////					ipg.setName(d.getName());
+//					ipg.setNoOfUsers(d.getNoOfUsers());
+//					ipg.setZone(d.getZone());
 					return this.packageRepository.save(ipg);
 				}
 			})
