@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -198,12 +199,7 @@ public class PaymentService {
 	     resp.put("initiator",payment.getPlatform());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
-	     threadExceutorBean.addTask(new Runnable()  {
-			 @Override
-			public void run(){
-				 notifyKonnectWater(payment);
-			 }
-		 });
+	     
 	     threadExceutorBean.addTask(new Runnable() {
 
 			@Override
@@ -220,6 +216,9 @@ public class PaymentService {
                             return clientResponse.bodyToMono(Void.class);
                         });
 				respMono.block();	
+				
+			     notifyKonnectWater(payment);
+
 			}
 	    	 
 	     });
@@ -814,6 +813,7 @@ public class PaymentService {
 				.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(this.getValueByKey("ReasonType", result))
 				.build();
 				log.error(merchantNotification+"{}");
+
 				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 			}
 
@@ -891,20 +891,40 @@ public class PaymentService {
 	
 	
 	public void notifyKonnectWater(MerchantTransactionNotificationDto notification) {
-		Map<String,Object> map = new HashMap<>();
-		map.put("phoneNumber",notification.getMobile());
-		map.put("fullName",notification.getName());
-		map.put("amount",notification.getTransAmount());
-		map.put("packageId",getPackageIdByCost(notification.getTransAmount()));
-		map.put("completedAt",notification.getTransTime());
-		map.put("transID",notification.getTransId());
-		String url = "https://gw.sasakonnect.net/konnect-water/api/v1/pkgpurchase-callback";
-			Mono<String> responseMono = this.mpesaClient.webClient.post().uri(url)
-					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(map))
-					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-			String json =  responseMono.block();
-			System.out.println("{json}"+json);
-		
-	}
+		String transAmount = notification.getTransAmount();
+		if (transAmount.contains(".")) {
+			transAmount = transAmount.split("\\.")[0];
+		}
+	    Map<String, Object> map = new HashMap<>();
+	    map.put("phoneNumber", notification.getMobile());
+	    map.put("fullName", notification.getName());
+	    map.put("amount", notification.getTransAmount());
+	    map.put("packageId",transAmount);
+	    map.put("completedAt", notification.getTransTime());
+	    map.put("transID", notification.getTransId());
 
+	    String url = "https://gw.sasakonnect.net/konnect-water/api/v1/pkgpurchase-callback";
+
+	    log.error("Sending request to URL: {}", url);
+	    log.error("Request Payload: {}", map);
+	    try {
+	        Mono<String> responseMono = this.webClient.webClient.post()
+	                .uri(url)
+	                .contentType(MediaType.APPLICATION_JSON)
+	                .bodyValue(map)
+	                .accept(MediaType.APPLICATION_JSON)
+	                .retrieve()
+	                .bodyToMono(String.class)
+	                .doOnSuccess(response -> log.info("Response: {}", response))
+	                .doOnError(error -> log.error("Request failed", error));
+
+	        String jsonResponse = responseMono.block();
+	        log.info("Final Response: {}", jsonResponse);
+	    } catch (WebClientResponseException ex) {
+	        log.error("HTTP Status: {} | Response: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+	    } catch (Exception ex) {
+	        log.error("Unexpected error", ex);
+	    }
+
+	}
 }
