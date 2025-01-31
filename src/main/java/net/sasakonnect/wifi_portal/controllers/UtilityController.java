@@ -26,42 +26,43 @@ public class UtilityController {
 	@PostMapping("userSubs")
 	@ApiOperation(value = "Request to get user subscriptions", notes = "This endpoint gets user subriptions to packages including the respective devices added to the packages")
 	@PaymentSdkFilter
-   public Object getUserSubscriptions(
-		   @RequestHeader(value = "App-Key") 
-		   @Parameter(description = "The App Key used for authentication", 
-			 required = true, 
-			 example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
-			 String appKey,
+	public Object getUserSubscriptions(
+			@RequestHeader(value = "App-Key") 
+			@Parameter(description = "The App Key used for authentication", 
+			required = true, 
+			example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
+			String appKey,
 
-			 @RequestHeader(value = "App-Secret") 
-			 @Parameter(description = "The App Secret used for authentication", 
-			 required = true, 
-			 example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
-			 String appSecret,
-			 
-		    @RequestParam(name="mobileNumber",required = true) String phone
-		   ) {
-	   return this.portalService.getUserSubscriptionsByUserId(phone);
+			@RequestHeader(value = "App-Secret") 
+			@Parameter(description = "The App Secret used for authentication", 
+			required = true, 
+			example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
+			String appSecret,
+
+			@RequestParam(name="mobileNumber",required = true) String phone
+			) {
+		return this.portalService.getUserSubscriptionsByUserId(phone);
 	}
 	
-//	@PostMapping("userSubs")
-//	@ApiOperation(value = "Request to get user subscriptions", notes = "This endpoint gets user subriptions to packages including the respective devices added to the packages")
-//	@PaymentSdkFilter
-//   public Object sendMessage(
-//		   @RequestHeader(value = "App-Key") 
-//		   @Parameter(description = "The App Key used for authentication", 
-//			 required = true, 
-//			 example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
-//			 String appKey,
-//
-//			 @RequestHeader(value = "App-Secret") 
-//			 @Parameter(description = "The App Secret used for authentication", 
-//			 required = true, 
-//			 example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
-//			 String appSecret,
-//			  
-//		    @Valid @RequestBody() NotificationReqDto req
-//		   ) {
-//	   return this.portalService.getUserSubscriptionsByUserId("");
-//	}
+	@PostMapping("subscriptionPackages")
+	@ApiOperation(value = "Request to get user subscriptions", notes = "This endpoint gets user subriptions to packages including the respective devices added to the packages")
+	@PaymentSdkFilter
+	public Object getSubscriptionPackages(
+			@RequestHeader(value = "App-Key") 
+			@Parameter(description = "The App Key used for authentication", 
+			required = true, 
+			example = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e") 
+			String appKey,
+
+			@RequestHeader(value = "App-Secret") 
+			@Parameter(description = "The App Secret used for authentication", 
+			required = true, 
+			example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
+			String appSecret
+
+			) {
+		return this.portalService.getInternetPackages();
+	}
+	
+
 }

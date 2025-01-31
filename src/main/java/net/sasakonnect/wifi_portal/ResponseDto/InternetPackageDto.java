@@ -24,4 +24,6 @@ public class InternetPackageDto {
   
   String zone;
   
+  
+  
 }

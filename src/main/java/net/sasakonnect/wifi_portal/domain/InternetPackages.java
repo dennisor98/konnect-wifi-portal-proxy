@@ -33,8 +33,17 @@ public class InternetPackages  extends BasePortalDomain{
    @Column()
    Integer noOfUsers;
    
+   @Column(nullable=true)
+   String promotionText;
+   
+   @Column(columnDefinition = "BOOLEAN DEFAULT FALSE",nullable = false)
+   Boolean onPromotion;
+   
    @Column()
    String zone;
+   
+   @Column()
+   String description;
    
    @Column()
    Boolean isNew;
