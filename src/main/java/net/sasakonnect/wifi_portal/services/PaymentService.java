@@ -970,7 +970,7 @@ public class PaymentService {
 					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 			String json =  responseMono.block();
 			System.out.println("{json}"+json);
-		}
+		
 	}
 
 }
