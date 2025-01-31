@@ -891,7 +891,6 @@ public class PaymentService {
 	
 	
 	public void notifyKonnectWater(MerchantTransactionNotificationDto notification) {
-		Optional<App> appOpt =  this.appRepository.findByName("Konnect Water");
 		Map<String,Object> map = new HashMap<>();
 		map.put("phoneNumber",notification.getMobile());
 		map.put("fullName",notification.getName());
@@ -899,9 +898,8 @@ public class PaymentService {
 		map.put("packageId",getPackageIdByCost(notification.getTransAmount()));
 		map.put("completedAt",notification.getTransTime());
 		map.put("transID",notification.getTransId());
-		if(appOpt.isPresent()) {
-			var app = appOpt.get();
-			Mono<String> responseMono = this.mpesaClient.webClient.post().uri(app.getCallbackUrl())
+		String url = "https://gw.sasakonnect.net/konnect-water/api/v1/pkgpurchase-callback";
+			Mono<String> responseMono = this.mpesaClient.webClient.post().uri(url)
 					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(map))
 					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 			String json =  responseMono.block();
