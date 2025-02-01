@@ -395,7 +395,7 @@ public class PortalService {
 		data.put("userId",user.getUserId());
 		data.put("amount","");
 		data.put("smsContent","");
-
+		data.put("initiator","super-app");
 		var body = new Gson().toJson(data);
 		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.BUY_PACKAGE_THOUGH_MPESA)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
