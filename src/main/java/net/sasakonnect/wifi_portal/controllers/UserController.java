@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import net.sasakonnect.wifi_portal.RequestDto.ProfileUploadDto;
+import net.sasakonnect.wifi_portal.RequestDto.sdk.UserLoginDto;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
 import net.sasakonnect.wifi_portal.services.UserService;
 
@@ -27,5 +28,10 @@ public class UserController {
 	@GetMapping("/profile")
 	public Object getuserprofile() {
 		return this.userService.getAuthenticatedUserProfile();
+	}
+	
+	@PostMapping("/login")
+	public Object login(@Valid @RequestBody() UserLoginDto logins) {
+		return this.userService.adminUserLogin(logins);
 	}
 }

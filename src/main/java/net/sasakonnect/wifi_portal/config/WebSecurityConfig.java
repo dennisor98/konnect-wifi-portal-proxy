@@ -98,7 +98,18 @@ public class WebSecurityConfig {
 				// Swagger resources like JS and CSS
 				"/webjars/**").permitAll()
 				.requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-				.requestMatchers("/portal/user/refresh/token","/portal/sendOTP","/portal/confirmOTP","/portal/register","/portal/host/cridentials","/portal/confirmOTPV2","/payment/callBack","/payment/confirm","/payment/callbackResolver","/payment/result","/payment/mpesa/confirmTransaction")
+				.requestMatchers(
+						"/portal/user/refresh/token",
+						"/portal/sendOTP","/portal/confirmOTP",
+						"/portal/register","/portal/host/cridentials",
+						"/portal/confirmOTPV2","/payment/callBack",
+						"/payment/confirm","/payment/callbackResolver",
+						"/payment/result",
+//						"/portal/getSubscriptionpackages",
+						"/payment/mpesa/confirmTransaction",
+						"/user/login"
+						
+						)
 				.permitAll()
 //				.requestMatchers("/payment/**")
 //				.permitAll()
@@ -148,7 +159,8 @@ public class WebSecurityConfig {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/**").allowedMethods("GET", "POST", "PUT", "DELETE").allowedOrigins("*")
+				registry.addMapping("/**").allowedMethods("GET", "POST", "PUT", "DELETE")
+				        .allowedOrigins("*")
 						.allowedHeaders("*");
 			}
 		};

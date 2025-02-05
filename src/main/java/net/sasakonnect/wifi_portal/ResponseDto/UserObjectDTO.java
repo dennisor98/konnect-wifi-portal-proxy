@@ -22,6 +22,7 @@ public class UserObjectDTO {
     private String token;
     private String last_login;
     private String pay_code;
+    private String dev_id;
     private Boolean is_muted = false;
     private Date created_at;
     private Date updated_at;
