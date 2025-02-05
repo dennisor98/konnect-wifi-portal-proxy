@@ -81,6 +81,10 @@ public class PortalService {
    
 	
 	private String getUserToken(User user) {
+		if(user.getDevId() == null) {
+			log.error("devId is NULL");
+			return user.getToken();
+		}
 		Map<String,Object> req = new HashMap<>();
 		req.put("dev_id",user.getDevId());
 		req.put("phone",user.getPhone());
@@ -91,15 +95,15 @@ public class PortalService {
 					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
 					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(GetTokenDto.class);
 			GetTokenDto responseJson = responseMono.block();
-			if(responseJson !=null) {
+			if(responseJson !=null && responseJson.getToken() !=null) {
 				return responseJson.getToken();
 			}
 		}catch(Exception ex) {
-			
+
 			ex.printStackTrace();
-			return null;
+			return user.getToken();
 		}
-		return null;
+		return user.getToken();
 	}
 	
 	public Object getDevices() {

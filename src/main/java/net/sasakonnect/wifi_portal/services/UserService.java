@@ -365,7 +365,6 @@ public class UserService  implements UserDetailsService{
 				  VerifyOtpResponseDto responseJson = responseMono.block();
 				   if(responseJson !=null) {
 		             var resp =  responseJson;
-		             log.error("{}"+responseJson.getPayload().getDev_id());
 		             if(resp.getSuccess().equalsIgnoreCase("true") && resp.getUserExists()) {
 		            	 var payload = resp.getPayload();
 		            	 Optional<User> userOpt =  this.findUserByPhone(resp.getPayload().getPhone());
@@ -491,6 +490,10 @@ public class UserService  implements UserDetailsService{
 	   
 	   
 	   private String getUserToken(User user) {
+		   if(user.getDevId() == null) {
+				log.error("devId is NULL");
+				return user.getToken();
+			}
 			Map<String,Object> req = new HashMap<>();
 			req.put("dev_id",user.getDevId());
 			req.put("phone",user.getPhone());
@@ -502,15 +505,16 @@ public class UserService  implements UserDetailsService{
 						.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(GetTokenDto.class);
 				GetTokenDto responseJson = responseMono.block();
 				log.error("res"+responseJson);
-				if(responseJson !=null) {
+				if(responseJson !=null && responseJson.getToken() !=null) {
 					return responseJson.getToken();
 				}
-			}catch(Exception ex) {
+				
+				return user.getToken();
+				}catch(Exception ex) {
 				
 				ex.printStackTrace();
-				return null;
+				return user.getToken();
 			}
-			return null;
 		}
 
 	   public Object getUserDetailsByPhone() {		
