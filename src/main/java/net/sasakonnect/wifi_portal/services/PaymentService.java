@@ -10,11 +10,15 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.http.HttpStatus;
@@ -927,4 +931,53 @@ public class PaymentService {
 	    }
 
 	}
+	
+	
+	public Object getPayments(Pageable pageable) {
+	    // Fetch the paged results
+	    Page<Payment> paymentList = this.paymentRepository.findAll(pageable);
+	    
+	    // Create a map for paging info
+	    Map<String, Object> pageInfo = new HashMap<>();
+	    pageInfo.put("totalPages", paymentList.getTotalPages());
+	    pageInfo.put("totalElements", paymentList.getTotalElements());
+	    pageInfo.put("currentPage", paymentList.getNumber());
+	    pageInfo.put("pageSize", paymentList.getSize());
+	    pageInfo.put("hasPreviousPage", paymentList.hasPrevious());
+	    pageInfo.put("hasNextPage", paymentList.hasNext());
+	    pageInfo.put("previousPage", paymentList.hasPrevious() ? paymentList.previousPageable().getPageNumber() : null);
+	    pageInfo.put("nextPage", paymentList.hasNext() ? paymentList.nextPageable().getPageNumber() : null);
+
+	    // Map each Payment to a simplified Map representation
+	    List<Map<String, Object>> payments = paymentList.stream()
+	        .map(p -> {
+	            Map<String, Object> paymentMap = new HashMap<>();
+	            paymentMap.put("createdAt", p.getCreatedAt());
+	            paymentMap.put("txId", p.getTxtId());
+	            paymentMap.put("amount", p.getAmount());
+	            paymentMap.put("initiator", p.getUser() != null 
+	                    ? p.getUser().getFirstname() + " " + p.getUser().getLastname() 
+	                    : null);
+	            paymentMap.put("completed", p.getIsSuccessful());
+	            paymentMap.put("verified", p.getVerified());
+	            paymentMap.put("source", p.getApp().getName());
+	            paymentMap.put("phone", p.getMobileNumber());
+	            return paymentMap;
+	        })
+	        .collect(Collectors.toList());
+
+	    // Build the response payload
+	    Map<String, Object> payload = new HashMap<>();
+	    payload.put("success", true);
+	    payload.put("message", "Request complete");
+	    payload.put("payments", payments);
+	    payload.put("pageInfo", pageInfo);
+
+	    // Wrap the payload in the final response map
+	    Map<String, Object> res = new HashMap<>();
+	    res.put("payload", payload);
+
+	    return ResponseEntity.status(HttpStatus.OK).body(res);
+	}
+
 }

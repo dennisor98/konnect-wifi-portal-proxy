@@ -26,6 +26,7 @@ import com.google.gson.Gson;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.asm.Advice.This;
 import net.sasakonnect.wifi_portal.RequestDto.AddDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ChangeDeviceDto;
 import net.sasakonnect.wifi_portal.RequestDto.ConnectTvDto;
@@ -35,8 +36,10 @@ import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
+import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
 import net.sasakonnect.wifi_portal.ResponseDto.InternetPackageDto;
 import net.sasakonnect.wifi_portal.ResponseDto.PackageResponseDto;
+import net.sasakonnect.wifi_portal.ResponseDto.GetTokenDto;
 import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
@@ -75,13 +78,36 @@ public class PortalService {
 	@Autowired
 
 	UserService userService;
+   
+	
+	private String getUserToken(User user) {
+		Map<String,Object> req = new HashMap<>();
+		req.put("dev_id",user.getDevId());
+		req.put("phone",user.getPhone());
 
+		var body = new Gson().toJson(req);
+		try {
+			Mono<GetTokenDto> responseMono = this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_USER_TOKEN)
+					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(GetTokenDto.class);
+			GetTokenDto responseJson = responseMono.block();
+			if(responseJson !=null) {
+				return responseJson.getToken();
+			}
+		}catch(Exception ex) {
+			
+			ex.printStackTrace();
+			return null;
+		}
+		return null;
+	}
+	
 	public Object getDevices() {
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Map<String,Object> req = new HashMap<>();
 		req.put("id",user.getUserId());
 		req.put("konnecter",user.getUserId());
-		req.put("token",user.getToken());
+		req.put("token",this.getUserToken(user));
 
 		var body = new Gson().toJson(req);
 		try {
@@ -120,27 +146,27 @@ public class PortalService {
 			//		   if(resp.getStatus() ==  HttpStatus.OK) {
 			//			   
 			//		   }
-//			return ResponseEntity.status(HttpStatus.OK).body(res);
+			//			return ResponseEntity.status(HttpStatus.OK).body(res);
 		}
 		List<InternetPackages> packagesList = this.packageRepository.findAll(Sort.by(Sort.Direction.ASC,"cost"));
 		var packages = packagesList.stream()
-		            .map(p->{
-		            	Map<String,Object> pkgs = new HashMap<>();
-		            	pkgs.put("createdAt",String.valueOf(p.getCreatedAt()));
-		            	pkgs.put("updated_at",String.valueOf(p.getUpdatedAt()));
-		            	pkgs.put("deletedAt",String.valueOf(false));
-		            	pkgs.put("id",p.getForeignPackageId());
-		            	pkgs.put("name",p.getName());
-		            	pkgs.put("description",p.getDescription());
-		            	pkgs.put("cost", p.getCost());
-		            	pkgs.put("active", p.getActive());
-		            	pkgs.put("noOfUsers", p.getNoOfUsers());
-		            	pkgs.put("zone", p.getZone());
-		            	pkgs.put("promotionText", p.getPromotionText());
-		            	pkgs.put("onPromotion",p.getOnPromotion());
-		            	return pkgs;
-		            }).collect(Collectors.toList());
-		
+				.map(p->{
+					Map<String,Object> pkgs = new HashMap<>();
+					pkgs.put("createdAt",String.valueOf(p.getCreatedAt()));
+					pkgs.put("updated_at",String.valueOf(p.getUpdatedAt()));
+					pkgs.put("deletedAt",String.valueOf(false));
+					pkgs.put("id",p.getForeignPackageId());
+					pkgs.put("name",p.getName());
+					pkgs.put("description",p.getDescription());
+					pkgs.put("cost", p.getCost());
+					pkgs.put("active", p.getActive());
+					pkgs.put("noOfUsers", p.getNoOfUsers());
+					pkgs.put("zone", p.getZone());
+					pkgs.put("promotionText", p.getPromotionText());
+					pkgs.put("onPromotion",p.getOnPromotion());
+					return pkgs;
+				}).collect(Collectors.toList());
+
 		Map<String,Object> res =  new HashMap<>();
 		res.put("payload",packages);
 		return ResponseEntity.status(HttpStatus.OK).body(res);
@@ -165,16 +191,16 @@ public class PortalService {
 					return this.packageRepository.save(pkg);
 				} 
 				return null;
-//				else {
-//					log.error("exec else");
-//					var ipg = packageOpt.get();
-//					ipg.setDescription(d.getDescription());
-////					ipg.setActive(d.getActive());
-//////					ipg.setCost(d.getCost());
-//////					ipg.setName(d.getName());
-////					ipg.setNoOfUsers(d.getNoOfUsers());
-////					ipg.setZone(d.getZone());
-//					return this.packageRepository.save(ipg);
+				//				else {
+				//					log.error("exec else");
+				//					var ipg = packageOpt.get();
+				//					ipg.setDescription(d.getDescription());
+				////					ipg.setActive(d.getActive());
+				//////					ipg.setCost(d.getCost());
+				//////					ipg.setName(d.getName());
+				////					ipg.setNoOfUsers(d.getNoOfUsers());
+				////					ipg.setZone(d.getZone());
+				//					return this.packageRepository.save(ipg);
 				//}
 			})
 			.collect(Collectors.toList());
@@ -265,7 +291,7 @@ public class PortalService {
 
 		params.put("id", deviceDto.getId());
 		params.put("code",deviceDto.getCode());
-		params.put("token",user.getToken());
+		params.put("token",this.getUserToken(user));
 		params.put("userId",user.getUserId());
 		params.put("konnecter",user.getUserId());
 		params.put("authAttempt",new Gson().toJson(auth));
@@ -286,8 +312,8 @@ public class PortalService {
 		var data =  new HashMap<>();
 		data.put("id", user.getUserId());
 		data.put("konnecter", user.getUserId());
-		data.put("token", user.getToken());
-		data.put("dev_id", devId);
+		data.put("token",this.getUserToken(user));
+		data.put("dev_id",user.getDevId());
 
 		var body = new Gson().toJson(data);
 
@@ -305,7 +331,7 @@ public class PortalService {
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var data =  new HashMap<>();
 		data.put("konnecter", user.getUserId());
-		data.put("token", user.getToken());
+		data.put("token",this.getUserToken(user));
 		data.put("oldMac",this.formatMacAddress(device.getOldMac()));
 		data.put("newMac",this.formatMacAddress(device.getNewMac()));
 
@@ -415,7 +441,7 @@ public class PortalService {
 			Map<String,Object> data =  new HashMap<>();
 			data.put("id",user.getUserId());
 			data.put("konnecter",user.getUserId());
-			data.put("token",user.getToken());
+			data.put("token",this.getUserToken(user));
 
 			var body = new Gson().toJson(data);
 
@@ -436,7 +462,7 @@ public class PortalService {
 		var data =  JsonNodeFactory.instance.objectNode();
 		data.put("id",user.getUserId());
 		data.put("konnecter",user.getUserId());
-		data.put("token",user.getToken());
+		data.put("token",this.getUserToken(user));
 
 		log.error("{body}"+data);
 
@@ -467,8 +493,8 @@ public class PortalService {
 		var data =  JsonNodeFactory.instance.objectNode();
 		data.put("id",user.getUserId());
 		data.put("konnecter",user.getUserId());
-		data.put("token",user.getToken()); 
-				   log.error("{body}"+data);
+		data.put("token",this.getUserToken(user)); 
+		log.error("{body}"+data);
 		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(data))
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
@@ -518,28 +544,6 @@ public class PortalService {
 	}
 
 
-	public Object getUserObject(String phone) {
-		var data = new HashMap<>();
-		data.put("phone", phone.trim());
-		data.put("dev_id",subsDevId);
-		try {
-			ObjectMapper mapper = new ObjectMapper(); 
-			var body =  mapper.writeValueAsString(data);
-			Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_USER_TOKEN)
-					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
-					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-			String responseJson = responseMono.block();
-			if(responseJson !=null) {
-				return new Gson().fromJson(responseJson,Map.class);
-			}
-
-		}catch(Exception ex) {
-
-		}
-
-
-		return null;
-	}
 
 
 	public Object initiateTvConnection(ConnectTvDto tvconnect) {
@@ -673,10 +677,43 @@ public class PortalService {
 
 		return null;
 	}
-	
+
 	public Object getClientHostCridentials() {
 		return null;
 	}
-	 
+
+	public Object updatePackage(UpdatePackageDto payload) {
+		log.error(devId);
+		Optional<InternetPackages> pkgOpt =  this.packageRepository.findByForeignPackageId(payload.getId());
+		if(pkgOpt.isEmpty()) {
+			ObjectNode res =  JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Invalid id");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		}
+		var pkg = pkgOpt.get();
+		pkg.setActive(payload.getActive());
+		pkg.setCost(payload.getCost());
+		pkg.setName(payload.getName());
+		pkg.setNoOfUsers(payload.getNoOfUsers());
+		pkg.setOnPromotion(payload.getOnPromotion());
+		pkg.setPromotionText(payload.getPromotionText());
+		pkg.setDescription(payload.getDescription());
+
+		try {
+
+			this.packageRepository.save(pkg);
+			ObjectNode res =  JsonNodeFactory.instance.objectNode();
+			res.put("success",true);
+			res.put("message","Package edited successfuly");
+			return ResponseEntity.status(HttpStatus.OK).body(res);
+		}catch(Exception ex) {
+			ObjectNode res =  JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","A server error ocurred");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+		}
+	}
+
 
 }

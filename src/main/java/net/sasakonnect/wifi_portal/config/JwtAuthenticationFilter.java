@@ -72,8 +72,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 			try {
 				User userDetails = (User) userService.loadUserByUsername(id);
 				if (userDetails != null && this.jwtService.validateToken(token, userDetails)) {
-					userDetails.setDevId(device_header);
-					this.userRepository.save(userDetails);
 					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
 							null, null);
 					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

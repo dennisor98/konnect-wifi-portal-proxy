@@ -1,10 +1,15 @@
 package net.sasakonnect.wifi_portal.services;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +28,8 @@ import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
 import net.sasakonnect.wifi_portal.RequestDto.ProfileUploadDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
 import net.sasakonnect.wifi_portal.RequestDto.VerifyOtpDto;
+import net.sasakonnect.wifi_portal.RequestDto.sdk.UserLoginDto;
+import net.sasakonnect.wifi_portal.ResponseDto.GetTokenDto;
 import net.sasakonnect.wifi_portal.ResponseDto.UserObjectDTO;
 import net.sasakonnect.wifi_portal.ResponseDto.VerifyOtpResponseDto;
 import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
@@ -30,9 +37,11 @@ import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.Role;
 import net.sasakonnect.wifi_portal.domain.User;
+import net.sasakonnect.wifi_portal.domain.UserRole;
 import net.sasakonnect.wifi_portal.domain.UserImage;
 import net.sasakonnect.wifi_portal.repository.UserImageRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
+import net.sasakonnect.wifi_portal.repository.UserRoleRepository;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -59,8 +68,14 @@ public class UserService  implements UserDetailsService{
 	@Autowired
 	UserRepository userRepository;
 	
+	@Autowired 
+	UserRoleRepository userRoleRepository;
+	
 	@Autowired
 	UserImageRepository imageRepository;
+	
+	@Autowired
+	PortalWebClientBean portalWebClient;
 
 
 	public User loadUserByUsername(String id) {
@@ -69,6 +84,48 @@ public class UserService  implements UserDetailsService{
 			return userOpt.get();	
 		}
 		return null;
+	}
+	
+	public Object adminUserLogin(UserLoginDto logins) {
+		String phone =  logins.getPhone();
+		if(phone.length() < 9) {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","phone should have at least 9 digits");
+			
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		}
+		String mobile = phone.substring(phone.length() -9);
+		Optional<User> userOpt =  this.userRepository.findByPhone("+254"+mobile);
+		if(userOpt.isEmpty()) {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Access denied");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+		}
+		var user = userOpt.get();
+		Optional<Role> roleOpt = this.userRoleRepository.findRoleByUser(user);
+		if(roleOpt.isEmpty()) {
+			ObjectNode res =  JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Access denied");
+			
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+			
+		}
+		Map<String,Object> resPayload = new HashMap<>();
+		Map<String,Object> res = new HashMap<>();
+		
+		Map<String,Object> userObj =  new HashMap<>();
+		userObj.put("firstName",user.getFirstname());
+		userObj.put("lastName",user.getLastname());
+		userObj.put("phone",user.getPhone());
+		res.put("success", true);
+		res.put("access_token",this.jwtService.generateAdminToken(user));
+		res.put("refresh_token",this.jwtService.generateAdminRefreshToken(user));
+		res.put("user",userObj);
+		resPayload.put("payload", res);
+	   return ResponseEntity.status(HttpStatus.OK).body(resPayload);	
 	}
 
 	public Optional<User> findUserById(String id){
@@ -230,6 +287,17 @@ public class UserService  implements UserDetailsService{
 	               
 	    }
 	    
+	    private  String generateRandomDevId() {
+	        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	        SecureRandom random = new SecureRandom();
+	        final int length = 50;
+	        StringBuilder sb = new StringBuilder(length);
+	        for (int i = 0; i < length; i++) {
+	            int index = random.nextInt(CHARACTERS.length());
+	            sb.append(CHARACTERS.charAt(index));
+	        }
+	        return sb.toString();
+	    }
 	    
 	    public Object verifyOtpV2(VerifyOtpDto getOtp) {
 	        Map<String, Object> params = new HashMap<>();
@@ -244,7 +312,7 @@ public class UserService  implements UserDetailsService{
 	         var mobile = getOtp.getPhone().trim();
 	        params.put("code",getOtp.getCode());
 	        params.put("phone", "+254"+mobile.substring(mobile.length()-9));
-	        params.put("dev_id", otpHash);
+	        params.put("dev_id",this.generateRandomDevId());
 	         
 	       
 	        
@@ -297,7 +365,7 @@ public class UserService  implements UserDetailsService{
 				  VerifyOtpResponseDto responseJson = responseMono.block();
 				   if(responseJson !=null) {
 		             var resp =  responseJson;
-		             log.error(responseJson+"{}");
+		             log.error("{}"+responseJson.getPayload().getDev_id());
 		             if(resp.getSuccess().equalsIgnoreCase("true") && resp.getUserExists()) {
 		            	 var payload = resp.getPayload();
 		            	 Optional<User> userOpt =  this.findUserByPhone(resp.getPayload().getPhone());
@@ -308,6 +376,7 @@ public class UserService  implements UserDetailsService{
 		            	 if(userOpt.isPresent()) {
 		            		 var u = userOpt.get();
 		            		 u.setToken(payload.getToken());
+		            		 u.setDevId(payload.getDev_id());
 		            		 try {
 		            			 this.userRepository.save(u);
 		            		 }catch(Exception ex) {
@@ -390,7 +459,7 @@ public class UserService  implements UserDetailsService{
 	   public void createUser(UserObjectDTO payload) {
 		   var userBuild =  User.builder().champCode(payload.getChampCode()).coupon(payload.getCoupon()).email(payload.getEmail()).firstname(payload.getFirstname()).userId(payload.getUser_id())
 				            .lastname(payload.getLastname()).giftId(payload.getGift_id()).isActive(Boolean.valueOf(payload.getIs_active())).isMuted(payload.getIs_muted()).lastLogin(payload.getLast_login())
-				            .password(payload.getPassword()).payCode(payload.getPay_code()).phone(payload.getPhone()).token(payload.getToken())
+				            .password(payload.getPassword()).payCode(payload.getPay_code()).phone(payload.getPhone()).token(payload.getToken()).devId(payload.getDev_id())
 				            .build();
 		   try {
 			   this.userRepository.save(userBuild);
@@ -421,14 +490,35 @@ public class UserService  implements UserDetailsService{
 	   
 	   
 	   
+	   private String getUserToken(User user) {
+			Map<String,Object> req = new HashMap<>();
+			req.put("dev_id",user.getDevId());
+			req.put("phone",user.getPhone());
 
+			var body = new Gson().toJson(req);
+			try {
+				Mono<GetTokenDto> responseMono = this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_USER_TOKEN)
+						.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+						.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(GetTokenDto.class);
+				GetTokenDto responseJson = responseMono.block();
+				log.error("res"+responseJson);
+				if(responseJson !=null) {
+					return responseJson.getToken();
+				}
+			}catch(Exception ex) {
+				
+				ex.printStackTrace();
+				return null;
+			}
+			return null;
+		}
 
 	   public Object getUserDetailsByPhone() {		
 		   User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		   var body =  new HashMap<>();
 		   body.put("id",user.getUserId());
 		   body.put("konnecter",user.getUserId());
-		   body.put("token",user.getToken());
+		   body.put("token",this.getUserToken(user));
 		   Mono<String> responseMono = this.webClientBean.webClient.post().uri(PortalEndpointsConstant.ACTIVE_SUBSCRIPTION_BY_USER_ID)
 				   .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(body)))
 				   .accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
@@ -537,5 +627,38 @@ public class UserService  implements UserDetailsService{
 	   }
 
 	   
+	   public Object getUsers(Pageable pageable) {
+		   Page<User> usersPage =  this.userRepository.findAll(pageable);
+		   Map<String, Object> pageInfo = new HashMap<>();
+		    pageInfo.put("totalPages", usersPage.getTotalPages());
+		    pageInfo.put("totalElements", usersPage.getTotalElements());
+		    pageInfo.put("currentPage", usersPage.getNumber());
+		    pageInfo.put("pageSize", usersPage.getSize());
+		    pageInfo.put("hasPreviousPage", usersPage.hasPrevious());
+		    pageInfo.put("hasNextPage", usersPage.hasNext());
+		    pageInfo.put("previousPage", usersPage.hasPrevious() ? usersPage.previousPageable().getPageNumber() : null);
+		    pageInfo.put("nextPage", usersPage.hasNext() ? usersPage.nextPageable().getPageNumber() : null);
+		   var users =  usersPage.stream()
+				   .map(u->{
+					  Map<String,Object> map = new HashMap<>();
+					  map.put("id", u.getId());
+					  map.put("user_id",u.getUserId());
+					  map.put("name",u.getFirstname()+" "+u.getLastname());
+					  map.put("phone",u.getPhone());
+					  map.put("email", u.getEmail());
+					  return map;
+				   }).collect(Collectors.toList());
+		   
+		   Map<String,Object> payload = new HashMap<>();
+		   payload.put("success",true);
+		   payload.put("message","Request completed");
+		   payload.put("users",users);
+		   payload.put("pageInfo",pageInfo);
+		   Map<String,Object> res = new HashMap<>();
+		   res.put("payload",payload);
+		   return ResponseEntity.status(HttpStatus.OK).body(res);
+	   }
+	   
 			   		
 }
+ 
