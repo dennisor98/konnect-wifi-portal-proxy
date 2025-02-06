@@ -195,17 +195,6 @@ public class PortalService {
 					return this.packageRepository.save(pkg);
 				} 
 				return null;
-				//				else {
-				//					log.error("exec else");
-				//					var ipg = packageOpt.get();
-				//					ipg.setDescription(d.getDescription());
-				////					ipg.setActive(d.getActive());
-				//////					ipg.setCost(d.getCost());
-				//////					ipg.setName(d.getName());
-				////					ipg.setNoOfUsers(d.getNoOfUsers());
-				////					ipg.setZone(d.getZone());
-				//					return this.packageRepository.save(ipg);
-				//}
 			})
 			.collect(Collectors.toList());
 		});
