@@ -67,7 +67,7 @@ public class WebSecurityConfig {
 
 		// Specify the allowed origins (replace "*" with your specific origin)
 		configuration.setAllowedOrigins(
-				Arrays.asList("https://gw.sasakonnect.net", "http://localhost:4200"));
+				Arrays.asList("https://mfood.sasakonnect.net", "http://localhost:3000"));
 
 		// Specify the allowed HTTP methods (e.g., GET, POST, PUT, DELETE)
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -107,9 +107,7 @@ public class WebSecurityConfig {
 						"/payment/result",
 //						"/portal/getSubscriptionpackages",
 						"/payment/mpesa/confirmTransaction",
-						"/user/login"
-						
-						)
+						"/user/login")
 				.permitAll()
 //				.requestMatchers("/payment/**")
 //				.permitAll()
