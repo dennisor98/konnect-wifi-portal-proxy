@@ -77,6 +77,11 @@ public class WebSecurityConfig {
 
 		// Allow credentials (e.g., cookies)
 		configuration.setAllowCredentials(true);
+		
+		
+		// Ensure the `Access-Control-Allow-Origin` header is sent
+	    configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin", "Authorization"));
+
 
 		// Set max age (in seconds) for preflight requests
 		configuration.setMaxAge(3600L); // 1 hour
