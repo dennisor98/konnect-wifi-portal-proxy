@@ -20,6 +20,7 @@ import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
 import net.sasakonnect.wifi_portal.RequestDto.VerifyOtpDto;
+import net.sasakonnect.wifi_portal.annotations.BackOfficeAuthFilter;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
 import net.sasakonnect.wifi_portal.annotations.RefreshMiddleware;
 import net.sasakonnect.wifi_portal.services.PortalService;
@@ -152,6 +153,7 @@ public class PortalController extends BasePortalController{
 	   return this.userService.createRefreshToken();
    }
    
+   @BackOfficeAuthFilter
    @PutMapping("/package/update")
    public Object updatePackage(@Valid @RequestBody UpdatePackageDto pkg) {
 	   return this.portalService.updatePackage(pkg);
