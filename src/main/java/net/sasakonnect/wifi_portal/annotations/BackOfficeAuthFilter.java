@@ -8,10 +8,9 @@ import java.lang.annotation.Target;
 
 import org.springframework.stereotype.Component;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.TYPE,ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Component
 public @interface BackOfficeAuthFilter {
 
 }
