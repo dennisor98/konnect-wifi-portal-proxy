@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAppDto;
+import net.sasakonnect.wifi_portal.RequestDto.UpdateAppDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
 import net.sasakonnect.wifi_portal.annotations.BackOfficeAuthFilter;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
@@ -36,7 +38,7 @@ import net.sasakonnect.wifi_portal.services.UserService;
 @RequestMapping("admin")
 @Tag(name="BackOffice")
 @Slf4j
-@BackOfficeAuthFilter
+@BackOfficeAuthFilter()
 public class AdminController {
 	@Autowired
 	PortalService portalService;
@@ -69,14 +71,27 @@ public class AdminController {
 		return this.paymentService.getPayments(PageRequest.of(pageNumber,pageSize,Sort.Direction.DESC,"updatedAt"));
 	}
 	
-	@GetMapping("/apps")
-	public Object getApps() {
-         return this.appService.getApps();
-	}
+	
 	
 	@PostMapping("/app")
 	public Object createApp(@Valid @RequestBody CreateAppDto payload) {
 		return this.appService.createApp(payload);
+	}
+	
+	@GetMapping("/apps")
+	public Object getApps() {
+         return this.appService.getApps();
+	} 
+	
+	@PutMapping("/app")
+	public Object updateApp(@Valid @RequestBody UpdateAppDto payload) {
+		return this.appService.updateApp(payload);
+	}
+	
+	@DeleteMapping("/app")
+	public Object deleteApp(@RequestParam("appId") String appId) {
+		return this.appService.deleteApp(appId);
+		
 	}
 
 	@GetMapping("/users")
@@ -86,5 +101,17 @@ public class AdminController {
 			) {
 		return this.userService.getUsers(PageRequest.of(pageNumber,pageSize));
 	}
+	
+	@GetMapping("/user/subscriptions")
+	public Object getUserSubsById(@RequestParam("phone") String phone) {
+		return this.portalService.getUserSubscriptionsByPhone(phone);
+	}
+	
+	@GetMapping("/user/role")
+	public Object getUserRoleById() {
+		return null;
+	}
+	
+	
 	
 }
