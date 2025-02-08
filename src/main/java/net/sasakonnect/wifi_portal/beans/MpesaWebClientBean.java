@@ -26,7 +26,6 @@ public class MpesaWebClientBean {
 	public void mpesaWebClientBean() {
 		this.webClient = WebClient.builder()
 				.codecs(configurer -> configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder()))
-				.filter(logRequest())
 				.baseUrl(apiUrl)
 				.build();
 	}

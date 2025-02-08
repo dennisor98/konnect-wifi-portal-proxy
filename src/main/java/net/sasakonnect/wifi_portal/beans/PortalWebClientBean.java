@@ -30,7 +30,6 @@ public class PortalWebClientBean {
 		this.webClient = WebClient.builder()
 				.codecs(configurer -> configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder()))
 				.defaultHeader("Authorization", "Basic " + authService.getBasicAuth())
-				.filter(logRequest())
 				.build();
 	}
 
