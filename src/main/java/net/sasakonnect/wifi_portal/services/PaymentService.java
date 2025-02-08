@@ -837,31 +837,21 @@ public class PaymentService {
 							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class)
 							.doOnSuccess(response -> log.info("Response",response))
-							.doOnError(error-> log.error("Request failed",error))
-							;
+							.doOnError(error-> log.error("Request failed",error));
 					String json =  responseMono.block();
 					System.out.println("{json}"+json);
 					
-				}
-				
-			});
-			
-			this.threadExceutorBean.addTask(new Runnable() {
-
-				@Override
-				public void run() {
 					var payment = Payment.builder().amount(getValueByKey("Amount",result))
-					.mobileNumber(sanitizedMobile).isSuccessful(true).verified(false)
-					.txtId(getValueByKey("ReceiptNo",result))
-					.paymentVerificationPayload(result.toString())
-					.paymentPayload(result.toString())
-					.build();
-					
+							.mobileNumber(sanitizedMobile).isSuccessful(true).verified(false)
+							.txtId(getValueByKey("ReceiptNo",result))
+							.paymentVerificationPayload(result.toString())
+							.paymentPayload(result.toString())
+							.build();
+
 					paymentRepository.save(payment);
 				}
 				
-			});
-			
+			});	
 		}
 	}
 	
