@@ -120,6 +120,10 @@ public class PaymentService {
 	String mpesaPassword;
 	@Value("${mpesa.business.shortcode}")
 	String businessShortCode;
+	@Value("${api.message.url}")
+	String messageUrl;
+	@Value("${api.message.auth}")
+	String messageAuth;
 	@Autowired
 	UserRepository userRepository;
 	@Autowired
@@ -886,7 +890,44 @@ public class PaymentService {
 
 				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 			}
+			this.threadExceutorBean.addTask(new Runnable() {
 
+				@Override
+				public void run() {
+					String message = "Dear customer, your payment has been received.We are unable to assign you package. Kindly call our customer care through 0701888666 or 0111221188";
+					Map<String,Object> params = new HashMap<>();
+					params.put("phone", sanitizedMobile);
+					params.put("message",message);
+					Mono<String> responseMono = webClient.webClient.post().uri(messageUrl)
+							.header("Authorization", "Bearer " + messageAuth)
+							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class)
+							.doOnSuccess(response -> log.info("Response",response))
+							.doOnError(error-> log.error("Request failed",error))
+							;
+					String json =  responseMono.block();
+					System.out.println("{json}"+json);
+					
+				}
+				
+			});
+			
+			this.threadExceutorBean.addTask(new Runnable() {
+
+				@Override
+				public void run() {
+					var payment = Payment.builder().amount(getValueByKey("Amount",result))
+					.mobileNumber(sanitizedMobile).isSuccessful(true).verified(false)
+					.txtId(getValueByKey("ReceiptNo",result))
+					.paymentVerificationPayload(result.toString())
+					.paymentPayload(result.toString())
+					.build();
+					
+					paymentRepository.save(payment);
+				}
+				
+			});
+			
 		}
 	}
 	

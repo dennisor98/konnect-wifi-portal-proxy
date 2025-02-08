@@ -16,7 +16,6 @@ public class DefaultWebClientBean {
 	public void defaultWebClientBean() {
 		this.webClient = WebClient.builder()
 				.codecs(configurer -> configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder()))
-				.filter(logRequest())
 				.build();
 	}
 
