@@ -2,6 +2,7 @@ package net.sasakonnect.wifi_portal.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,11 +19,11 @@ public class UserRole extends BasePortalDomain {
   @JoinColumn(name="user_id",nullable=false)
   User user;
   
-  @OneToOne()
+  @ManyToOne()
   @JoinColumn(name="role_id",nullable=false)
   Role role;
   
-  @OneToOne()
+  @ManyToOne()
   @JoinColumn(name="creator",nullable=true)
   User creator;
   

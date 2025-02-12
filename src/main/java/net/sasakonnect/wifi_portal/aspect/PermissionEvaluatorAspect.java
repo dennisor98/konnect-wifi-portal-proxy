@@ -7,6 +7,8 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.annotations.HasPermission;
 import net.sasakonnect.wifi_portal.domain.Permission;
 import net.sasakonnect.wifi_portal.domain.Role;
@@ -18,6 +20,7 @@ import net.sasakonnect.wifi_portal.repository.UserRoleRepository;
 
 @Aspect
 @Component
+@Slf4j
 public class PermissionEvaluatorAspect {
 	
 	@Autowired
@@ -31,7 +34,7 @@ public class PermissionEvaluatorAspect {
 	public void checkPermission(HasPermission requiresPermission) {
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		String requiredPermission = requiresPermission.value();
-
+        log.error(requiredPermission);
 		//find user role
 		Optional<Role> roleOpt = this.userRoleRepository.findRoleByUser(user);
 		System.out.print(user);
@@ -48,7 +51,6 @@ public class PermissionEvaluatorAspect {
 				throw new SecurityException("User does not have the required permission");
 			}
 		}
-		throw new SecurityException("Invalid permission required");
 	}
 	
 

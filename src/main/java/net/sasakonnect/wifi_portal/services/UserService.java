@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.AssignRoleDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
 import net.sasakonnect.wifi_portal.RequestDto.ProfileUploadDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
@@ -34,11 +35,13 @@ import net.sasakonnect.wifi_portal.ResponseDto.UserObjectDTO;
 import net.sasakonnect.wifi_portal.ResponseDto.VerifyOtpResponseDto;
 import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
+import net.sasakonnect.wifi_portal.beans.ThreadExecuterBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.Role;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.domain.UserRole;
 import net.sasakonnect.wifi_portal.domain.UserImage;
+import net.sasakonnect.wifi_portal.repository.RoleRepository;
 import net.sasakonnect.wifi_portal.repository.UserImageRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
 import net.sasakonnect.wifi_portal.repository.UserRoleRepository;
@@ -76,8 +79,19 @@ public class UserService  implements UserDetailsService{
 	
 	@Autowired
 	PortalWebClientBean portalWebClient;
-
-
+	
+	@Autowired
+	RoleRepository roleRepository;
+	
+	@Autowired
+	ThreadExecuterBean threadExceutorBean;
+	
+	@Value("${api.message.url}")
+	String messageUrl;
+	@Value("${api.message.auth}")
+	String messageAuth;
+	
+	
 	public User loadUserByUsername(String id) {
 		Optional<User> userOpt =  this.userRepository.findById(id);
 		if(userOpt.isPresent()) {
@@ -133,7 +147,13 @@ public class UserService  implements UserDetailsService{
 	}
 
 	public Optional<Role> getUserRoleByUserId(String string) {
-		return null;
+		Optional<User> userOpt = this.userRepository.findById(string);
+		if(userOpt.isPresent()) {
+			var user = userOpt.get();
+			return this.userRoleRepository.findRoleByUser(user);
+		}
+		
+		return Optional.empty();
 	}
 
 
@@ -661,6 +681,100 @@ public class UserService  implements UserDetailsService{
 		   Map<String,Object> res = new HashMap<>();
 		   res.put("payload",payload);
 		   return ResponseEntity.status(HttpStatus.OK).body(res);
+	   }
+	   
+	   public Object addAdminUser(AssignRoleDto roleDto) {
+		   User loggedInUser =  (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		   Optional<User> userOpt =  this.userRepository.findById(roleDto.getUserId());
+		   if(userOpt.isEmpty()) {
+			   ObjectNode res = JsonNodeFactory.instance.objectNode();
+			   res.put("success",false);
+			   res.put("message","Invalid userId");
+
+			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		   }
+
+		   Optional<Role> roleOpt = this.roleRepository.findById(roleDto.getRoleId());
+		   if(roleOpt.isEmpty()) {
+			   ObjectNode res = JsonNodeFactory.instance.objectNode();
+			   res.put("success",false);
+			   res.put("message","Invalid roleId");
+
+			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		   }
+
+		   var role =  roleOpt.get();
+
+		   Optional<Role> userHasRoleOpt =  this.getUserRoleByUserId(roleDto.getUserId());
+		   if(userHasRoleOpt.isPresent()) {
+			   var userRole = userHasRoleOpt.get();
+			   if(userRole.getId().equalsIgnoreCase(role.getId())) {
+				   ObjectNode res = JsonNodeFactory.instance.objectNode();
+				   res.put("success",false);
+				   res.put("message","User already assigned to Role");
+
+				   return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+			   }
+//			   this.userRoleRepository.delete(userRole);
+		   }
+
+		   var user =  userOpt.get();
+
+		   var userRole =  UserRole.builder().creator(loggedInUser).user(user).role(role).build();
+		   
+		   String phone = user.getPhone().trim();
+		   String sanitizedMobile = "254"+ phone.substring(phone.length() - 9);
+		   
+		   try {
+			   String password =  getRandomPassword();
+			   
+			   this.threadExceutorBean.addTask(new Runnable() {
+
+				@Override
+				public void run() {
+					String message = "Your password is "+password;
+					Map<String,Object> params = new HashMap<>();
+					params.put("phone", sanitizedMobile);
+					params.put("message",message);
+					Mono<String> responseMono = defaultClientBean.webClient.post().uri(messageUrl)
+							.header("Authorization", "Bearer " + messageAuth)
+							.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class)
+							.doOnSuccess(response -> log.info("Response",response))
+							.doOnError(error-> log.error("Request failed",error));
+					String json =  responseMono.block();
+					
+				}
+				   
+			   });
+			   
+			   
+			   var encodedPass =  new BCryptPasswordEncoder().encode(password);
+			   user.setPassword(encodedPass);
+			   this.userRoleRepository.save(userRole);
+			   ObjectNode res = JsonNodeFactory.instance.objectNode();
+			   res.put("success",true);
+			   res.put("message","User added to role");
+			   return ResponseEntity.status(HttpStatus.OK).body(res);
+		   }catch(Exception ex) {
+			   ObjectNode res = JsonNodeFactory.instance.objectNode();
+			   res.put("success",false);
+			   res.put("message","A server error ocurred");
+
+			   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+		   }
+
+
+	   }
+	   
+	   private String getRandomPassword() {
+		    String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		    SecureRandom RANDOM = new SecureRandom();
+		    StringBuilder sb = new StringBuilder(6);
+	        for (int i = 0; i < 6; i++) {
+	            sb.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
+	        }
+	        return sb.toString();
 	   }
 	   
 			   		

@@ -21,16 +21,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.sasakonnect.wifi_portal.RequestDto.AssignRoleDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAppDto;
+import net.sasakonnect.wifi_portal.RequestDto.DelRoleDto;
+import net.sasakonnect.wifi_portal.RequestDto.RoleDto;
+import net.sasakonnect.wifi_portal.RequestDto.RoleEditDto;
+import net.sasakonnect.wifi_portal.RequestDto.RolePermDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateAppDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
 import net.sasakonnect.wifi_portal.annotations.BackOfficeAuthFilter;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
+import net.sasakonnect.wifi_portal.annotations.HasPermission;
+import net.sasakonnect.wifi_portal.constants.GlobalPermissionsConstants;
 import net.sasakonnect.wifi_portal.domain.App;
 import net.sasakonnect.wifi_portal.repository.AppRepository;
 import net.sasakonnect.wifi_portal.services.AppService;
 import net.sasakonnect.wifi_portal.services.PaymentService;
 import net.sasakonnect.wifi_portal.services.PortalService;
+import net.sasakonnect.wifi_portal.services.RoleService;
 import net.sasakonnect.wifi_portal.services.UserService;
 
 
@@ -48,6 +56,8 @@ public class AdminController {
 	UserService userService;
 	@Autowired
 	AppService appService;
+	@Autowired
+	RoleService roleService;
 	
 	@PutMapping("/package/update")
 	public Object updatePackage(@Valid @RequestBody UpdatePackageDto pkg) {
@@ -94,6 +104,8 @@ public class AdminController {
 		
 	}
 
+	
+	@HasPermission(GlobalPermissionsConstants.CanGetUsers.PERMISSION)
 	@GetMapping("/users")
 	public Object getUsers(
 			@RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
@@ -102,15 +114,74 @@ public class AdminController {
 		return this.userService.getUsers(PageRequest.of(pageNumber,pageSize));
 	}
 	
+	
+	@HasPermission(GlobalPermissionsConstants.CanGetSubscriptions.PERMISSION)
 	@GetMapping("/user/subscriptions")
 	public Object getUserSubsById(@RequestParam("phone") String phone) {
 		return this.portalService.getUserSubscriptionsByPhone(phone);
 	}
 	
-	@GetMapping("/user/role")
-	public Object getUserRoleById() {
-		return null;
+	@HasPermission(GlobalPermissionsConstants.CanGetRoles.PERMISSION)
+	@GetMapping("/roles")
+	public Object getRoles() {
+		return this.roleService.getAllRoles();
 	}
+	
+	
+	@HasPermission(GlobalPermissionsConstants.CanAddUser.PERMISSION)
+	@PostMapping("/user/role")
+	public Object createUser(@Valid @RequestBody AssignRoleDto roleDto) {
+		return this.userService.addAdminUser(roleDto);
+	}
+	
+	@HasPermission(GlobalPermissionsConstants.CanAssignRole.PERMISSION)
+	@GetMapping("/user/role")
+	public Object getUserRoleById(@RequestParam("userId") String userId) {
+		return this.roleService.getUserRoleByUserId(userId);
+	}
+	
+	
+	@HasPermission(GlobalPermissionsConstants.CanAssignRole.PERMISSION)
+	@GetMapping("/permissions")
+	public Object getPermissions() {
+		
+		return this.roleService.getAllPermissions();
+	}
+	
+
+	  @PostMapping("/role")
+	  @HasPermission(GlobalPermissionsConstants.CreateRole.PERMISSION)
+	  public Object createRole(@Valid @RequestBody() RoleDto roleDto) {
+		  return this.roleService.createRole(roleDto);
+	  }
+	  
+	  @DeleteMapping("/role")
+	  @HasPermission(GlobalPermissionsConstants.DeleteRole.PERMISSION)
+	  public Object deleteRole(@Valid @RequestBody() DelRoleDto roleDto) {
+		  return this.roleService.deleteRole(roleDto);
+	  }
+	  
+	  @PutMapping("/role")
+	  @HasPermission(GlobalPermissionsConstants.CanEditRole.PERMISSION)
+	  public Object editRole(@Valid @RequestBody() RoleEditDto roleDto) {
+		  return this.roleService.editRole(roleDto);
+	  }
+	  
+	  
+	  @PostMapping("/role/permissions")
+	  @HasPermission(GlobalPermissionsConstants.CanGetRoles.PERMISSION)
+	  public Object assignPermissionsToRole(@Valid @RequestBody() RolePermDto roleDto) {
+		  return this.roleService.assignPermissionsToRole(roleDto);
+	  }
+	  
+	  
+	  
+	  @GetMapping("/role/permissions")
+	  @HasPermission(GlobalPermissionsConstants.CreateRole.PERMISSION)
+	  public Object getRolePermissions(@RequestParam(name="roleId",required=true) String roleId) {
+		  return this.roleService.getRolePermissions(roleId);
+	  }
+	  
 	
 	
 	
