@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class GlobalPermissionsConstants {
 	public static class CreateRole extends PermissionEntry {
 		public final static String PERMISSION = "can.create.role";
-		public final static String DESCRIPTION = "Allows a user to create a system role";
+		public final static String DESCRIPTION = "Create User";
 		@Override
 		public String getPERMISSION() {
 			return PERMISSION;
@@ -23,7 +23,7 @@ public class GlobalPermissionsConstants {
 	
 	public static class CanGetRoles extends PermissionEntry {
 		public final static String PERMISSION = "can.get.roles";
-		public final static String DESCRIPTION = "Can get all user roles";
+		public final static String DESCRIPTION = "View Roles";
 		@Override
 		public String getPERMISSION() {
 			return PERMISSION;
@@ -38,7 +38,22 @@ public class GlobalPermissionsConstants {
 	
 	public static class CanEditRole extends PermissionEntry {
 		public final static String PERMISSION = "can.edit.role";
-		public final static String DESCRIPTION = "Allows a user to edit a system role";
+		public final static String DESCRIPTION = "Edit System Role";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+
+	}
+	
+	public static class CanAssignRole extends PermissionEntry {
+		public final static String PERMISSION = "can.assign.role";
+		public final static String DESCRIPTION = "Assign Role";
 		@Override
 		public String getPERMISSION() {
 			return PERMISSION;
@@ -65,6 +80,82 @@ public class GlobalPermissionsConstants {
 		}
 
 	}
+	
+	public static class CanGetSubscriptions extends PermissionEntry {
+		public final static String PERMISSION = "can.get.subscriptions";
+		public final static String DESCRIPTION = "View Subscriptions";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+		
+	}
+	
+	public static class CanEditSubscriptions extends PermissionEntry {
+		public final static String PERMISSION = "can.edit.subscriptions";
+		public final static String DESCRIPTION = "Edit Subscriptions";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+		
+	}
+	
+	public static class CanDeleteSubscriptions extends PermissionEntry {
+		public final static String PERMISSION = "can.delete.subscriptions";
+		public final static String DESCRIPTION = "Delete Subscriptions";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+		
+	}
+	
+	public static class CanGetUsers extends PermissionEntry{
+		public final static String PERMISSION = "can.get.users";
+		public final static String DESCRIPTION = "View Users";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+	}
+	
+	public static class CanAddUser extends PermissionEntry{
+		public final static String PERMISSION = "can.create.user";
+		public final static String DESCRIPTION = "Add User";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+	}
+	
+	
+	
 	
 	public static Map<String, String> scan() {
 		Class<?>[] innerClasses = GlobalPermissionsConstants.class.getDeclaredClasses();

@@ -14,6 +14,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import net.sasakonnect.wifi_portal.domain.RolePermission;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.RequestDto.DelRoleDto;
@@ -25,6 +28,8 @@ import net.sasakonnect.wifi_portal.domain.Role;
 import net.sasakonnect.wifi_portal.repository.PermissionsRepository;
 import net.sasakonnect.wifi_portal.repository.RolePermissionRepository;
 import net.sasakonnect.wifi_portal.repository.RoleRepository;
+import net.sasakonnect.wifi_portal.repository.UserRepository;
+import net.sasakonnect.wifi_portal.repository.UserRoleRepository;
 
 @Service
 public class RoleService {
@@ -34,6 +39,10 @@ public class RoleService {
   RolePermissionRepository rolePermissionRepository;
   @Autowired
   PermissionsRepository permissionRepository;
+  @Autowired
+  UserRepository userRepository;
+  @Autowired
+  UserRoleRepository userRoleRepository;
 	
   public void createSuperRole() {
 	  Optional<Role> roleOpt = this.roleRepository.findByName("SUPER_ADMIN");
@@ -102,7 +111,7 @@ public class RoleService {
 			  }).collect(Collectors.toList());
 
 	  Map<String,Object> map = new HashMap<>();
-	  map.put("success",true);
+	  map.put("saddRoleuccess",true);
 	  map.put("message", "Request complete");
 	  map.put("roles",roles);
 	  return ResponseEntity.status(HttpStatus.OK).body(map);
@@ -258,7 +267,7 @@ public class RoleService {
 		  return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
 	  }
 	  var role = roleOpt.get();
-	  List<Permission> roleperm = this.rolePermissionRepository.findPermissionByRole(role);
+	  List<Permission> roleperm = this.rolePermissionRepository.findPermissionsByRole(role);
 	  
 	  var permissions =  roleperm.stream()
 			             .map(p->{
@@ -294,6 +303,30 @@ public class RoleService {
 	  map.put("message","Request complete");
 	  map.put("permissions",permissions);
 	return ResponseEntity.status(HttpStatus.OK).body(map);
+ }
+ 
+ public Object getUserRoleByUserId(String userId) {
+	 Optional<User> userOpt = this.userRepository.findById(userId);
+	 if(userOpt.isEmpty()) {
+		 ObjectNode resp = JsonNodeFactory.instance.objectNode();
+		 resp.put("success",false);
+		 resp.put("message","Invalid userId");
+		 
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+		 
+	 }
+	 var user = userOpt.get();
+	 Role role = null;
+	 Optional<Role> roleOpt = this.userRoleRepository.findRoleByUser(user);
+	 if(roleOpt.isPresent()) {
+		 role = roleOpt.get();
+	 }
+	 
+	 Map<String,Object> res =  new HashMap<>();
+	 res.put("success",true);
+	 res.put("message","Request complete");
+	 res.put("role",role);
+	 return ResponseEntity.status(HttpStatus.OK).body(res);
  }
  
  
