@@ -967,10 +967,7 @@ public class PaymentService {
 	
 	
 	public Object getPayments(Pageable pageable) {
-	    // Fetch the paged results
 	    Page<Payment> paymentList = this.paymentRepository.findAll(pageable);
-	    
-	    // Create a map for paging info
 	    Map<String, Object> pageInfo = new HashMap<>();
 	    pageInfo.put("totalPages", paymentList.getTotalPages());
 	    pageInfo.put("totalElements", paymentList.getTotalElements());
@@ -981,7 +978,6 @@ public class PaymentService {
 	    pageInfo.put("previousPage", paymentList.hasPrevious() ? paymentList.previousPageable().getPageNumber() : null);
 	    pageInfo.put("nextPage", paymentList.hasNext() ? paymentList.nextPageable().getPageNumber() : null);
 
-	    // Map each Payment to a simplified Map representation
 	    List<Map<String, Object>> payments = paymentList.stream()
 	        .map(p -> {
 	            Map<String, Object> paymentMap = new HashMap<>();
@@ -1011,6 +1007,49 @@ public class PaymentService {
 	    res.put("payload", payload);
 
 	    return ResponseEntity.status(HttpStatus.OK).body(res);
+	}
+	
+	public Object searchPayment(String searchTerm,Pageable pageable) {
+		Page<Payment> paymentPage = this.paymentRepository.searchTx(searchTerm, pageable);
+	    Map<String, Object> pageInfo = new HashMap<>();
+	    pageInfo.put("totalPages", paymentPage.getTotalPages());
+	    pageInfo.put("totalElements", paymentPage.getTotalElements());
+	    pageInfo.put("currentPage", paymentPage.getNumber());
+	    pageInfo.put("pageSize", paymentPage.getSize());
+	    pageInfo.put("hasPreviousPage", paymentPage.hasPrevious());
+	    pageInfo.put("hasNextPage", paymentPage.hasNext());
+	    pageInfo.put("previousPage", paymentPage.hasPrevious() ? paymentPage.previousPageable().getPageNumber() : null);
+	    pageInfo.put("nextPage", paymentPage.hasNext() ? paymentPage.nextPageable().getPageNumber() : null);
+
+	    List<Map<String, Object>> payments = paymentPage.stream()
+	        .map(p -> {
+	            Map<String, Object> paymentMap = new HashMap<>();
+	            paymentMap.put("createdAt", p.getCreatedAt());
+	            paymentMap.put("txId", p.getTxtId() !=null ? p.getTxtId() : p.getKonnectCheckoutId());
+	            
+	            paymentMap.put("amount", p.getAmount());
+	            paymentMap.put("initiator", p.getUser() != null 
+	                    ? p.getUser().getFirstname() + " " + p.getUser().getLastname() 
+	                    : null);
+	            paymentMap.put("completed", p.getIsSuccessful());
+	            paymentMap.put("verified", p.getVerified());
+	            paymentMap.put("source", p.getApp().getName());
+	            paymentMap.put("phone", p.getMobileNumber());
+	            return paymentMap;
+	        })
+	        .collect(Collectors.toList());
+
+	    Map<String, Object> payload = new HashMap<>();
+	    payload.put("success", true);
+	    payload.put("message", "Request complete");
+	    payload.put("payments", payments);
+	    payload.put("pageInfo", pageInfo);
+
+	    Map<String, Object> res = new HashMap<>();
+	    res.put("payload", payload);
+
+	    return ResponseEntity.status(HttpStatus.OK).body(res);
+		
 	}
 
 }

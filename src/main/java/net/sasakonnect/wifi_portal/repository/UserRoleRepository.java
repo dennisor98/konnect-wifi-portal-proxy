@@ -12,6 +12,7 @@ import net.sasakonnect.wifi_portal.domain.UserRole;
 
 public interface UserRoleRepository extends JpaRepository<UserRole,String>{
   Optional<UserRole> findByUserAndRole(User user,Role role);
+  Optional<UserRole> findByUser(User user);
   @Query("SELECT ur.role FROM UserRole ur WHERE ur.user =:user")
   Optional<Role> findRoleByUser(@Param("user") User user);
 }

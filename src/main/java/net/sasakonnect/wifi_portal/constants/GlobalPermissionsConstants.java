@@ -96,6 +96,21 @@ public class GlobalPermissionsConstants {
 		
 	}
 	
+	public static class CanGetTransactions extends PermissionEntry {
+		public final static String PERMISSION = "can.get.transactions";
+		public final static String DESCRIPTION = "View Transactions";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+		
+	}
+	
 	public static class CanEditSubscriptions extends PermissionEntry {
 		public final static String PERMISSION = "can.edit.subscriptions";
 		public final static String DESCRIPTION = "Edit Subscriptions";

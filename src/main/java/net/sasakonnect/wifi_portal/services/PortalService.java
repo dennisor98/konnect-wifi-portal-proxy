@@ -46,6 +46,7 @@ import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.InternetPackages;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
+import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import net.sasakonnect.wifi_portal.repository.UserDevicesRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
@@ -76,8 +77,9 @@ public class PortalService {
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
-
 	UserService userService;
+	@Autowired
+	PaymentRepository paymentRepository;
    
 	
 	private String getUserToken(User user) {
@@ -707,6 +709,43 @@ public class PortalService {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
 		}
 	}
+	
+	public Object getStatSummary() {
+		var totalUsers =  this.userRepository.count();
+		var activePackages = this.packageRepository.count();
+		var completedTx = this.paymentRepository.countByIsSuccessfulTrue();
+		var incompleteTx =  this.paymentRepository.countByIsSuccessfulFalse();
+		Map<String,Object> stats = new HashMap<>();
+		stats.put("users",totalUsers);
+		stats.put("activePackages", activePackages);
+		stats.put("completedTx", completedTx);
+		stats.put("incompleteTx", incompleteTx);
+
+		Map<String,Object> res = new HashMap<>();
+		res.put("success",true);
+		res.put("message","Request complete");
+		res.put("stats",stats);
+		return ResponseEntity.status(HttpStatus.OK).body(res);
+	}
+	
+	public Object getTransactionsTrend() {
+		 List<Object[]>  paymentTrends = this.paymentRepository.getWeeklyTransactionSummary();
+		 var trends = paymentTrends.stream()
+		     .map(p->{
+		    	Map<String,Object> trend = new HashMap<>();
+		    	trend.put("txDate",p[0]);
+		    	trend.put("txCount",p[1]);
+		    	trend.put("txAmount",p[2]);
+		    return trend;
+		     }).collect(Collectors.toList());
+		Map<String,Object> trend =  new HashMap<>();
+		trend.put("success",true);
+		trend.put("summary",trends);
+		return ResponseEntity.status(HttpStatus.OK).body(trend);
+	}
+	
+	
+	
 
 
 }
