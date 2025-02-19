@@ -59,6 +59,7 @@ public class AdminController {
 	@Autowired
 	RoleService roleService;
 	
+	@HasPermission(GlobalPermissionsConstants.CanGetSubscriptions.PERMISSION)
 	@PutMapping("/package/update")
 	public Object updatePackage(@Valid @RequestBody UpdatePackageDto pkg) {
 		return this.portalService.updatePackage(pkg);
@@ -69,6 +70,7 @@ public class AdminController {
 		return this.portalService.getInternetPackages();
 	}
 	
+    @HasPermission(GlobalPermissionsConstants.CanGetTransactions.PERMISSION)
 	@GetMapping("payments")
 	public Object getPayments(
 			@RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
@@ -76,11 +78,25 @@ public class AdminController {
 			) {
 	
 		if(pageSize > 100) {
-			pageNumber = 100;
+			pageSize = 100;
 		}
 		return this.paymentService.getPayments(PageRequest.of(pageNumber,pageSize,Sort.Direction.DESC,"updatedAt"));
 	}
 	
+    
+    @HasPermission(GlobalPermissionsConstants.CanGetTransactions.PERMISSION)
+	@GetMapping("payment/search")
+	public Object searchPayment(
+			@RequestParam(name="searchTerm") String searchTerm,
+			@RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
+			@RequestParam(name="pageSize",defaultValue="20") Integer pageSize
+			) {
+	
+		if(pageSize > 10) {
+			pageSize = 10;
+		}
+		return this.paymentService.searchPayment(searchTerm,PageRequest.of(pageNumber,pageSize,Sort.Direction.DESC,"updatedAt"));
+	}
 	
 	
 	@PostMapping("/app")
@@ -141,6 +157,20 @@ public class AdminController {
 	}
 	
 	
+	@HasPermission(GlobalPermissionsConstants.CanGetUsers.PERMISSION)
+	@GetMapping("/user/searchByPhone")
+	public Object searchUserByPhone(
+			@RequestParam("phone") String phone,
+			@RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
+			@RequestParam(name="pageSize",defaultValue="10") Integer pageSize) {
+		if(pageSize > 10) {
+			pageSize =  10;
+		}
+		var page =  PageRequest.of(pageNumber,pageSize);
+		return this.userService.searchUserByPhone(phone,page);
+	}
+	
+	
 	@HasPermission(GlobalPermissionsConstants.CanAssignRole.PERMISSION)
 	@GetMapping("/permissions")
 	public Object getPermissions() {
@@ -181,6 +211,23 @@ public class AdminController {
 	  public Object getRolePermissions(@RequestParam(name="roleId",required=true) String roleId) {
 		  return this.roleService.getRolePermissions(roleId);
 	  }
+	  
+	  
+	  @GetMapping("/stats/summary")
+	  @HasPermission(GlobalPermissionsConstants.CreateRole.PERMISSION)
+	  public Object getStatSummary() {
+		  return this.portalService.getStatSummary();
+	  }
+	  
+	  
+	  @GetMapping("/payment/summary")
+//	  @HasPermission(GlobalPermissionsConstants.CreateRole.PERMISSION)
+	  public Object getPaymentStatSummary() {
+//		  return null;
+		  return this.portalService.getTransactionsTrend();
+	  }
+	  
+	  
 	  
 	
 	
