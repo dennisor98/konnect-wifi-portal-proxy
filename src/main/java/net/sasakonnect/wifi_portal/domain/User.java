@@ -76,6 +76,12 @@ public class User extends BasePortalDomain implements Serializable,UserDetails{
 
 	    @Column(nullable = true, columnDefinition = "boolean default false")
 	    private boolean isMuted;
+	    
+	    @Column(columnDefinition = "boolean default false")
+	    Boolean isRefered;
+	    
+	    @Column(nullable=true)
+	    String refCode;
 
 	    
 	    @JsonIgnore()

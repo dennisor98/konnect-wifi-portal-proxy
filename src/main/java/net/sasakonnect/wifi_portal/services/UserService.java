@@ -285,8 +285,11 @@ public class UserService  implements UserDetailsService{
 						user.put("accountType", payload.getAccountType());
 						user.put("canReceivecall", payload.getCanReceivecall());
 						user.put("avator_key", payload.getAvator_key());
+						user.put("isRefered",u.getIsRefered());
+						user.put("refCoded",u.getRefCode());
 						user.put("access_token",this.jwtService.generateToken(u));
 						user.put("refresh_token",this.jwtService.generateRefreshToken(u));
+						
 
 						map.put("payload", user);
 
@@ -367,6 +370,8 @@ public class UserService  implements UserDetailsService{
 			map.put("updated_at", payload.getUpdatedAt());
 			map.put("deletedAt", payload.getDeletedAt());
 			map.put("avatorColor", payload.getAvatorColor());
+			map.put("isRefered",payload.getIsRefered());
+			map.put("refCoded",payload.getRefCode());
 			map.put("access_token",this.jwtService.generateToken(payload));
 			map.put("refresh_token",this.jwtService.generateRefreshToken(payload));
 
@@ -427,6 +432,8 @@ public class UserService  implements UserDetailsService{
 						user.put("accountType", payload.getAccountType());
 						user.put("canReceivecall", payload.getCanReceivecall());
 						user.put("avator_key", payload.getAvator_key());
+						user.put("isRefered",u.getIsRefered());
+						user.put("refCoded",u.getRefCode());
 						user.put("access_token",this.jwtService.generateToken(u));
 						user.put("refresh_token",this.jwtService.generateRefreshToken(u));
 
