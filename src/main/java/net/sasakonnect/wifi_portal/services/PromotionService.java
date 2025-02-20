@@ -29,12 +29,12 @@ public class PromotionService {
 	ReferralCodeRepository referalRepository;
 	@Autowired
 	UserReferralRepository userReferalRepository;
-	private static final String UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
-    private static final String DIGITS = "0123456789";
+	private static final String UPPERCASE = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
+    private static final String LOWERCASE = "abcdefghijklmnpqrstuvwxyz";
+    private static final String DIGITS = "123456789";
     private static final String CHARACTERS = UPPERCASE + LOWERCASE + DIGITS;
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final int CODE_LENGTH = 8;
+    private static final int CODE_LENGTH = 6;
    public Object generateReferalCode() {
 	   User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	   Optional<ReferralCode> codeOpt = this.referalRepository.findByUser(user);
@@ -45,7 +45,7 @@ public class PromotionService {
 		   
 		   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
 	   }
-	   String refCode = generateUniqueRefCode();
+	   String refCode = generateUniqueRefCode().toUpperCase();
 	   var refBuild = ReferralCode.builder().code(refCode).isActive(true).user(user).build();
 	   
 	   try {
