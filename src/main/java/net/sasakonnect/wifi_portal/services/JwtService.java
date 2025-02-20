@@ -26,8 +26,7 @@ import net.sasakonnect.wifi_portal.enums.JwtType;
 @Slf4j
 @Service
 public class JwtService {
-//	1209600000
-	@Value("${JWT_EXPIRY_TIME:30000}")
+	@Value("${JWT_EXPIRY_TIME:1209600000}")
 	Long jwtExpiryTime;
 
 	@Value("${REFRESH_JWT_EXPIRY_TIME:1296000000}")
