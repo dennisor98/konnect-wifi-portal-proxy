@@ -214,14 +214,14 @@ public class AdminController {
 	  
 	  
 	  @GetMapping("/stats/summary")
-	  @HasPermission(GlobalPermissionsConstants.CreateRole.PERMISSION)
+	  @HasPermission(GlobalPermissionsConstants.CanGetTransactions.PERMISSION)
 	  public Object getStatSummary() {
 		  return this.portalService.getStatSummary();
 	  }
 	  
 	  
 	  @GetMapping("/payment/summary")
-//	  @HasPermission(GlobalPermissionsConstants.CreateRole.PERMISSION)
+	  @HasPermission(GlobalPermissionsConstants.CanGetTransactions.PERMISSION)
 	  public Object getPaymentStatSummary() {
 //		  return null;
 		  return this.portalService.getTransactionsTrend();
