@@ -1062,7 +1062,7 @@ public class PaymentService {
 	                    : null);
 	            paymentMap.put("completed", p.getIsSuccessful());
 	            paymentMap.put("verified", p.getVerified());
-	            paymentMap.put("source", p.getApp().getName());
+	            paymentMap.put("source",p.getApp() !=null ? p.getApp().getName() : null);
 	            paymentMap.put("phone", p.getMobileNumber());
 	            return paymentMap;
 	        })
@@ -1106,7 +1106,7 @@ public class PaymentService {
 	                    : null);
 	            paymentMap.put("completed", p.getIsSuccessful());
 	            paymentMap.put("verified", p.getVerified());
-	            paymentMap.put("source", p.getApp().getName());
+	            paymentMap.put("source",p.getApp() !=null ? p.getApp().getName() : null);
 	            paymentMap.put("phone", p.getMobileNumber());
 	            return paymentMap;
 	        })
