@@ -825,10 +825,24 @@ public class PaymentService {
 				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 			}else {
 				this.threadExceutorBean.addTask(new Runnable() {
-
+                  
 					@Override
 					public void run() {
-						String message = "Dear Customer, we noticed an issue processing your package. Please share your payment message & phone number here for help: bit.ly/3KPML1U";
+						try {
+							var payment = Payment.builder().amount(getValueByKey("Amount",result).toString())
+									.mobileNumber(sanitizedMobile).isSuccessful(true).verified(false)
+									.txtId(getValueByKey("ReceiptNo",result))
+									.konnectCheckoutId(AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase())
+									.paymentVerificationPayload(result.toString())
+									.paymentPayload(result.toString())
+									.build();
+							paymentRepository.save(payment);
+							paymentRepository.flush();
+							log.error("transaction saved");
+						}catch(Exception ex) {
+							ex.printStackTrace();
+						}
+						String message = "Dear Customer, we noticed an issue processing your package. Please share your payment message & phone number here for help: bit.ly/3KPML1U. Ref:"+getValueByKey("ReceiptNo", result);
 						Map<String,Object> params = new HashMap<>();
 						params.put("phone", sanitizedMobile);
 						params.put("message",message);
@@ -841,14 +855,7 @@ public class PaymentService {
 						String json =  responseMono.block();
 						System.out.println("{json}"+json);
 
-						var payment = Payment.builder().amount(getValueByKey("Amount",result))
-								.mobileNumber(sanitizedMobile).isSuccessful(true).verified(false)
-								.txtId(getValueByKey("ReceiptNo",result))
-								.paymentVerificationPayload(result.toString())
-								.paymentPayload(result.toString())
-								.build();
-
-						paymentRepository.save(payment);
+						
 					}
 
 				});	

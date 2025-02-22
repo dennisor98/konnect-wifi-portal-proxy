@@ -20,11 +20,12 @@ public class UserRole extends BasePortalDomain {
   User user;
   
   @ManyToOne()
-  @JoinColumn(name="role_id",nullable=false)
+  @JoinColumn(name="role_id",nullable=false,unique=false)
   Role role;
   
+  
   @ManyToOne()
-  @JoinColumn(name="creator",nullable=true)
+  @JoinColumn(name="creator",nullable=true,unique=false)
   User creator;
   
   
