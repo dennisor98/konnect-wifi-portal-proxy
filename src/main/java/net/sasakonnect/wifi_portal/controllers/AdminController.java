@@ -24,11 +24,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.AssignRoleDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAppDto;
 import net.sasakonnect.wifi_portal.RequestDto.DelRoleDto;
+import net.sasakonnect.wifi_portal.RequestDto.PayMethodDto;
 import net.sasakonnect.wifi_portal.RequestDto.RoleDto;
 import net.sasakonnect.wifi_portal.RequestDto.RoleEditDto;
 import net.sasakonnect.wifi_portal.RequestDto.RolePermDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateAppDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
+import net.sasakonnect.wifi_portal.RequestDto.UpdatePayMethodDto;
 import net.sasakonnect.wifi_portal.annotations.BackOfficeAuthFilter;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
 import net.sasakonnect.wifi_portal.annotations.HasPermission;
@@ -74,13 +76,14 @@ public class AdminController {
 	@GetMapping("payments")
 	public Object getPayments(
 			@RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
-			@RequestParam(name="pageSize",defaultValue="20") Integer pageSize
+			@RequestParam(name="pageSize",defaultValue="20") Integer pageSize,
+			@RequestParam(name="filter",defaultValue="verified") String filter
 			) {
 	
 		if(pageSize > 100) {
 			pageSize = 100;
 		}
-		return this.paymentService.getPayments(PageRequest.of(pageNumber,pageSize,Sort.Direction.DESC,"updatedAt"));
+		return this.paymentService.getPayments(PageRequest.of(pageNumber,pageSize,Sort.Direction.DESC,"updatedAt"),filter);
 	}
 	
     
@@ -223,9 +226,31 @@ public class AdminController {
 	  @GetMapping("/payment/summary")
 	  @HasPermission(GlobalPermissionsConstants.CanGetTransactions.PERMISSION)
 	  public Object getPaymentStatSummary() {
-//		  return null;
 		  return this.portalService.getTransactionsTrend();
 	  }
+	  
+	  
+	  @PostMapping("/payment/option")
+	  @HasPermission(GlobalPermissionsConstants.CanManagePayment.PERMISSION)
+	  public Object createPayMethod(@Valid @RequestBody()  PayMethodDto payDto) {
+		return this.paymentService.createPaymentMethod(payDto);  
+	  }
+	  
+	  
+	  @PutMapping("/payment/option")
+	  @HasPermission(GlobalPermissionsConstants.CanManagePayment.PERMISSION)
+	  public Object updatePayMethod(@Valid @RequestBody() UpdatePayMethodDto payDto) {
+		return this.paymentService.updatePayMethod(payDto);  
+	  }
+	  
+	  
+	  @DeleteMapping("/payment/option")
+	  @HasPermission(GlobalPermissionsConstants.CanManagePayment.PERMISSION)
+	  public Object deletePayMethod(@RequestParam("payId") String payId) {
+		  return this.deletePayMethod(payId);
+	  }
+	  
+	  
 	  
 	  
 	  

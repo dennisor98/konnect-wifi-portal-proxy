@@ -155,6 +155,8 @@ public class GlobalPermissionsConstants {
 		}
 	}
 	
+	
+	
 	public static class CanAddUser extends PermissionEntry{
 		public final static String PERMISSION = "can.create.user";
 		public final static String DESCRIPTION = "Add User";
@@ -169,6 +171,20 @@ public class GlobalPermissionsConstants {
 		}
 	}
 	
+	
+	public static class CanManagePayment extends PermissionEntry{
+		public final static String PERMISSION = "can.manage.payment";
+		public final static String DESCRIPTION = "Manage Payment";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+	}
 	
 	
 	

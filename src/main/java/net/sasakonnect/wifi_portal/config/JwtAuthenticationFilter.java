@@ -53,6 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 		}
 		
 	  String device_header = request.getHeader("user-agent");
+	  String appVersion = request.getHeader("App-Version");
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			token = authHeader.substring(7);
 			if (token != null) {
@@ -72,6 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 			try {
 				User userDetails = (User) userService.loadUserByUsername(id);
 				if (userDetails != null && this.jwtService.validateToken(token, userDetails)) {
+					userDetails.setAppVersion(appVersion);
+					this.userRepository.save(userDetails);
 					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
 							null, null);
 					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

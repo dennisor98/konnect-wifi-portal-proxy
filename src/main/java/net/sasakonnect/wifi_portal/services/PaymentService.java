@@ -1,8 +1,8 @@
 package net.sasakonnect.wifi_portal.services;
 
 import net.sasakonnect.wifi_portal.domain.Payment;
-import org.springframework.retry.annotation.Backoff;
-import java.io.IOException;
+import net.sasakonnect.wifi_portal.domain.PaymentMethod;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -30,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -50,10 +51,12 @@ import net.sasakonnect.wifi_portal.RequestDto.MerchantTransactionNotificationDto
 import net.sasakonnect.wifi_portal.RequestDto.MpesaCallBackDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaPaymentValidationDto;
 import net.sasakonnect.wifi_portal.RequestDto.MpesaResultDto;
+import net.sasakonnect.wifi_portal.RequestDto.PayMethodDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollTxStatusDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
+import net.sasakonnect.wifi_portal.RequestDto.UpdatePayMethodDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.MpesaResponse;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
 import net.sasakonnect.wifi_portal.ResponseDto.StkCallbackResponseDTO;
@@ -68,6 +71,7 @@ import net.sasakonnect.wifi_portal.domain.InternetPackages;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.repository.AppRepository;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
+import net.sasakonnect.wifi_portal.repository.PayMethodRepository;
 import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
@@ -128,6 +132,8 @@ public class PaymentService {
 	UserRepository userRepository;
 	@Autowired
 	RabbitMqSenderService rabbitSendService;
+	@Autowired
+	PayMethodRepository payMethodRepository;
 //	@Autowired
 //	RedisService redisService;
 	private final RabbitTemplate rabbitTemplate;
@@ -1039,8 +1045,17 @@ public class PaymentService {
 	}
 	
 	
-	public Object getPayments(Pageable pageable) {
-	    Page<Payment> paymentList = this.paymentRepository.findAll(pageable);
+	public Object getPayments(Pageable pageable,String filter) {
+		Page<Payment> paymentList;
+		if(filter == null) {
+			paymentList = this.paymentRepository.findAll(pageable);
+		}
+		if(filter !=null && filter.equalsIgnoreCase("verified")) {
+			paymentList = this.paymentRepository.findByVerified(true,pageable);
+		}else {
+			paymentList = this.paymentRepository.findByVerified(false,pageable);
+		}
+		
 	    Map<String, Object> pageInfo = new HashMap<>();
 	    pageInfo.put("totalPages", paymentList.getTotalPages());
 	    pageInfo.put("totalElements", paymentList.getTotalElements());
@@ -1124,5 +1139,127 @@ public class PaymentService {
 	    return ResponseEntity.status(HttpStatus.OK).body(res);
 		
 	}
+	
+	
+	public Object createPaymentMethod(PayMethodDto payDto) {
+		User user  = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<PaymentMethod> payOpt = this.payMethodRepository.findByName(payDto.getName());
+		if(payOpt.isPresent()) {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Payment option already exist");
+			
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+			
+		}
+		
+	var payBuild =	PaymentMethod.builder()
+			.description(payDto.getDescription())
+			.isActive(payDto.getIsActive())
+			.name(payDto.getName())
+			.url(payDto.getApiUrl())
+			.user(user)
+			.build();
+	
+	try {
+		this.payMethodRepository.save(payBuild);
+		ObjectNode res = JsonNodeFactory.instance.objectNode();
+		res.put("success",true);
+		res.put("message","Payment option created");
+		
+		return ResponseEntity.status(HttpStatus.OK).body(res);
+		
+	}catch(Exception ex) {
+		ex.printStackTrace();
+		ObjectNode res = JsonNodeFactory.instance.objectNode();
+		res.put("success",false);
+		res.put("message","Error while processing request");
+		
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+	}
+		
+	}
+	
+	public Object updatePayMethod(UpdatePayMethodDto payDto) {
+		User user  = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<PaymentMethod> payOpt =  this.payMethodRepository.findById(payDto.getId());
+		if(payOpt.isEmpty()) {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Invalid id");
+			
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		}
+		var payMethod =  payOpt.get();
+		payMethod.setDescription(payDto.getDescription());
+		payMethod.setIsActive(payDto.getIsActive());
+		payMethod.setName(payDto.getName());
+		payMethod.setUrl(payDto.getApiUrl());
+		payMethod.setUser(user);
+		
+		try {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",true);
+			res.put("message","Payment method edited!");
+			
+			return ResponseEntity.status(HttpStatus.OK).body(res);
+		}catch(Exception ex) {
+			ex.printStackTrace();
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Error while processing request");
+			
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+		}
+	}
+	
+ public Object deletePaymentMethod(String payOptionId) {
+	 Optional<PaymentMethod> payOpt =  this.payMethodRepository.findById(payOptionId);
+		if(payOpt.isEmpty()) {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Invalid id");
+			
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		}
+		var payMethod = payOpt.get();
+	try {
+		this.payMethodRepository.delete(payMethod);
+		ObjectNode res = JsonNodeFactory.instance.objectNode();
+		res.put("success",true);
+		res.put("message","Payment method deleted!!");
+		
+		return ResponseEntity.status(HttpStatus.OK).body(res);
+	}catch(Exception ex) {
+		ex.printStackTrace();
+		ObjectNode res = JsonNodeFactory.instance.objectNode();
+		res.put("success",false);
+		res.put("message","Error while processing request");
+		
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+	}
+ }
+ 
+ 
+ public Object getPaymentMethods() {
+	 List<PaymentMethod> paymethodsList = this.payMethodRepository.findAll();
+	 var payMethods =  paymethodsList.stream()
+			 .map(p->{
+				Map<String,Object> map = new HashMap<>();
+				map.put("id",p.getId());
+				map.put("name",p.getName());
+				map.put("description", p.getDescription());
+				map.put("isActive", p.getIsActive());
+				
+				return map;
+				}).collect(Collectors.toList());
+	 
+	 Map<String,Object> res = new HashMap<>();
+	 res.put("sucess",true);
+	 res.put("message","Request complete");
+	 res.put("payOptions",payMethods);
+	 
+	 return ResponseEntity.status(HttpStatus.OK).body(res);
+ }
 
 }
