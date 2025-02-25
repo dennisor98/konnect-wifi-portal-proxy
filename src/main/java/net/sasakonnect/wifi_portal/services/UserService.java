@@ -678,6 +678,7 @@ public class UserService  implements UserDetailsService{
 					map.put("name",u.getFirstname()+" "+u.getLastname());
 					map.put("phone",u.getPhone());
 					map.put("email", u.getEmail());
+					map.put("app-version",u.getAppVersion());
 					return map;
 				}).collect(Collectors.toList());
 

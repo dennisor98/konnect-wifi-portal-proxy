@@ -31,6 +31,9 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     Long countByIsSuccessfulTrue();
     Long countByIsSuccessfulFalse();
     
+    Page<Payment> findByVerified(Boolean verified,Pageable pageable);
+    
+    
     
     @Query(value = "SELECT DATE(created_at) AS transactionDate, COUNT(*) AS transactionCount, " +
     		"SUM(CAST(amount AS DECIMAL(10,2))) AS totalAmount " +

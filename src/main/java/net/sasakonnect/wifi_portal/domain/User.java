@@ -42,6 +42,9 @@ public class User extends BasePortalDomain implements Serializable,UserDetails{
 	    
 	    @Column()
 	    String avatorColor;
+	    
+	    @Column(nullable=true)
+	    String appVersion;
 
 	    @Column(length = 15, unique = true, nullable = true)
 	    private String phone;
