@@ -77,7 +77,7 @@ public class AdminController {
 	public Object getPayments(
 			@RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
 			@RequestParam(name="pageSize",defaultValue="20") Integer pageSize,
-			@RequestParam(name="filter",defaultValue="verified") String filter
+			@RequestParam(name="filter",defaultValue="all") String filter
 			) {
 	
 		if(pageSize > 100) {

@@ -982,15 +982,19 @@ public class PaymentService {
 	
 	
 	public Object getPayments(Pageable pageable,String filter) {
+		log.error("filter "+filter);
 		Page<Payment> paymentList;
-		if(filter == null) {
+		if(filter.equalsIgnoreCase("all")) {
+			log.error("all");	
 			paymentList = this.paymentRepository.findAll(pageable);
 		}
 		if(filter !=null && filter.equalsIgnoreCase("verified")) {
+			log.error("verified");	
 			paymentList = this.paymentRepository.findByVerified(true,pageable);
-		}else {
-			paymentList = this.paymentRepository.findByVerified(false,pageable);
 		}
+			log.error("unverified");	
+			paymentList = this.paymentRepository.findByVerified(false,pageable);
+		
 		
 	    Map<String, Object> pageInfo = new HashMap<>();
 	    pageInfo.put("totalPages", paymentList.getTotalPages());
