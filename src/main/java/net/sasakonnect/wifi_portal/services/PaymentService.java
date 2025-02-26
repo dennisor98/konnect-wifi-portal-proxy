@@ -1052,12 +1052,14 @@ public class PaymentService {
 			log.error("all");	
 			paymentList = this.paymentRepository.findAll(pageable);
 		}
-		if(filter !=null && filter.equalsIgnoreCase("verified")) {
+		else if(filter !=null && filter.equalsIgnoreCase("verified")) {
 			log.error("verified");	
 			paymentList = this.paymentRepository.findByVerified(true,pageable);
-		}
+		}else {
 			log.error("unverified");	
 			paymentList = this.paymentRepository.findByVerified(false,pageable);
+		}
+			
 		
 		
 	    Map<String, Object> pageInfo = new HashMap<>();
