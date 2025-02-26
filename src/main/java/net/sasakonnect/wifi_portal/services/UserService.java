@@ -2,6 +2,7 @@ package net.sasakonnect.wifi_portal.services;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -839,6 +840,33 @@ public class UserService  implements UserDetailsService{
 		Map<String,Object> res = new HashMap<>();
 		res.put("payload",payload);
 		return ResponseEntity.status(HttpStatus.OK).body(res);
+	}
+	
+	public Object getAppDownloadsTrend() {
+		try {
+			List<Object[]> userTrendList = this.userRepository.findUserCountsByDate();
+			var userTrends = userTrendList.stream()
+					.map(t->{
+						Map<String,Object> map  = new HashMap<>();
+						map.put("date",t[0]);
+						map.put("count",t[1]);
+						return map;
+					}).collect(Collectors.toList());
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",true);
+			res.put("message","Request completed");
+			res.put("stats",userTrends);
+			
+			return ResponseEntity.status(HttpStatus.OK).body(res);
+		}catch(Exception ex) {
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",true);
+			res.put("message","Error ocurred while processing request");
+//			res.put("stats",userTrends);
+			
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+		}
+		
 	}
 
 

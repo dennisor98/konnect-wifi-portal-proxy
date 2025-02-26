@@ -38,7 +38,7 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     @Query(value = "SELECT DATE(created_at) AS transactionDate, COUNT(*) AS transactionCount, " +
     		"SUM(CAST(amount AS DECIMAL(10,2))) AS totalAmount " +
     		"FROM payment " +
-    		"WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
+    		"WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
     		"GROUP BY DATE(created_at) " +
     		"ORDER BY transactionDate DESC", nativeQuery = true)
     List<Object[]> getWeeklyTransactionSummary();
