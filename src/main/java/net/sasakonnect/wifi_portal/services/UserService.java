@@ -118,7 +118,9 @@ public class UserService  implements UserDetailsService{
 			res.put("message","Access denied");
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
 		}
+		
 		var user = userOpt.get();
+		
 		Optional<Role> roleOpt = this.userRoleRepository.findRoleByUser(user);
 		if(roleOpt.isEmpty()) {
 			ObjectNode res =  JsonNodeFactory.instance.objectNode();
@@ -128,6 +130,17 @@ public class UserService  implements UserDetailsService{
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
 
 		}
+		
+		log.error("raw"+logins.getPassword()+"encoded"+ user.getPassword());
+		if(!new BCryptPasswordEncoder().matches(logins.getPassword(),user.getPassword())) {
+			ObjectNode res =  JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Invalid cridentials");
+
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+		}
+		
+		
 		Map<String,Object> resPayload = new HashMap<>();
 		Map<String,Object> res = new HashMap<>();
 
@@ -748,7 +761,7 @@ public class UserService  implements UserDetailsService{
 
 					@Override
 					public void run() {
-						String message = "Your password is "+password;
+						String message = "Your Konnect App Admin password is "+password;
 						Map<String,Object> params = new HashMap<>();
 						params.put("phone", sanitizedMobile);
 						params.put("message",message);
