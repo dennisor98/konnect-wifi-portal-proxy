@@ -159,6 +159,12 @@ public class AdminController {
 		return this.roleService.getUserRoleByUserId(userId);
 	}
 	
+	@HasPermission(GlobalPermissionsConstants.CanGetUsers.PERMISSION)
+	@GetMapping("/user/downloadTrend")
+	public Object getAppDownloadTrends() {
+		return this.userService.getAppDownloadsTrend();
+	}
+	
 	
 	@HasPermission(GlobalPermissionsConstants.CanGetUsers.PERMISSION)
 	@GetMapping("/user/searchByPhone")
@@ -172,6 +178,8 @@ public class AdminController {
 		var page =  PageRequest.of(pageNumber,pageSize);
 		return this.userService.searchUserByPhone(phone,page);
 	}
+	
+	
 	
 	
 	@HasPermission(GlobalPermissionsConstants.CanAssignRole.PERMISSION)
