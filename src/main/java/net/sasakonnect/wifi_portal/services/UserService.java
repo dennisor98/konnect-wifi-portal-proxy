@@ -30,6 +30,7 @@ import net.sasakonnect.wifi_portal.RequestDto.AssignRoleDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
 import net.sasakonnect.wifi_portal.RequestDto.ProfileUploadDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateCustomerDto;
+import net.sasakonnect.wifi_portal.RequestDto.UpdatePasswordDto;
 import net.sasakonnect.wifi_portal.RequestDto.VerifyOtpDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.UserLoginDto;
 import net.sasakonnect.wifi_portal.ResponseDto.GetTokenDto;
@@ -868,6 +869,50 @@ public class UserService  implements UserDetailsService{
 		}
 		
 	}
+	
+ public Object updateAdminPassword(UpdatePasswordDto pwDto) {
+	 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	 if(user.getPassword() !=null) {
+		 ObjectNode res = JsonNodeFactory.instance.objectNode();
+		 res.put("success",false);
+		 res.put("message", "Invalid operation");
+		 
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+	 }
+	 
+	 //match the raw old password with the hashed password
+	 if(!new BCryptPasswordEncoder().matches(pwDto.getOldPassword(),user.getPassword())) {
+		 ObjectNode res = JsonNodeFactory.instance.objectNode();
+		 res.put("success",false);
+		 res.put("message", "Old password is incorrect");
+		 
+		 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+	 }
+	 if(pwDto.getNewPassword().equalsIgnoreCase(pwDto.getOldPassword())) {
+		 ObjectNode res = JsonNodeFactory.instance.objectNode();
+		 res.put("success",false);
+		 res.put("message", "Use a different password from old password");
+		 
+		 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+	 }
+	 try {
+		 user.setPassword(new BCryptPasswordEncoder().encode(pwDto.getNewPassword()));
+		 this.userRepository.save(user);
+		 ObjectNode res = JsonNodeFactory.instance.objectNode();
+		 res.put("success",true);
+		 res.put("message", "Password updated");
+		 
+		 return ResponseEntity.status(HttpStatus.OK).body(res);
+	 }catch(Exception ex) {
+		 ex.printStackTrace();
+		 ObjectNode res = JsonNodeFactory.instance.objectNode();
+		 res.put("success",false);
+		 res.put("message", "Error occured while processing request");
+		 
+		 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+	 }
+	 
+ }
 
 
 
