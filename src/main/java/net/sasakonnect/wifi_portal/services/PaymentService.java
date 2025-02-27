@@ -964,7 +964,6 @@ public class PaymentService {
 	
 	
 	public Object getPaymentStatusByTxId(PollTxStatusDto req) {
-		log.error("transQuery"+req);
 		Optional<Payment> paymentOpt =  this.paymentRepository.findByKonnectCheckoutId(req.getTxId());
 		ObjectNode res  = JsonNodeFactory.instance.objectNode();
 		Map<String,Object> payload  = new HashMap<>();
