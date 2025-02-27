@@ -30,6 +30,7 @@ import net.sasakonnect.wifi_portal.RequestDto.RoleEditDto;
 import net.sasakonnect.wifi_portal.RequestDto.RolePermDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdateAppDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
+import net.sasakonnect.wifi_portal.RequestDto.UpdatePasswordDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdatePayMethodDto;
 import net.sasakonnect.wifi_portal.annotations.BackOfficeAuthFilter;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
@@ -256,6 +257,11 @@ public class AdminController {
 	  @HasPermission(GlobalPermissionsConstants.CanManagePayment.PERMISSION)
 	  public Object deletePayMethod(@RequestParam("payId") String payId) {
 		  return this.deletePayMethod(payId);
+	  }
+	  
+	  @PutMapping("/user/password/update")
+	  public Object updateAdminUserPassword(@Valid @RequestBody() UpdatePasswordDto pwDto) {
+		  return this.userService.updateAdminPassword(pwDto);
 	  }
 	  
 	  
