@@ -871,13 +871,18 @@ public class PaymentService {
 	}
 	
 	
+	
+	
 	public void processMpesaStatusResult(MpesaResultDto result) {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
 			String mobile = this.getValueByKey("DebitPartyName", result).split("-")[0].trim();
 			String sanitizedMobile = "254"+mobile.substring(mobile.length() - 9);
 			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(sanitizedMobile);
-			if(paymentOpt.isPresent()) {
+			Optional<Payment> payOpt =  paymentRepository.findByTxtId(getValueByKey("ReceiptNo", result));
+
+			//ensure there is a payment req && the transId processed is unique
+			if(paymentOpt.isPresent() && payOpt.isEmpty()) {
 				var payment = paymentOpt.get();
 				payment.setVerified(true);
 				payment.setIsSuccessful(true);
@@ -893,7 +898,6 @@ public class PaymentService {
 				.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(this.getValueByKey("ReasonType", result))
 				.build();
 				log.error(merchantNotification+"{}");
-
 				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 			}else {
 				this.threadExceutorBean.addTask(new Runnable() {
@@ -901,16 +905,21 @@ public class PaymentService {
 					@Override
 					public void run() {
 						try {
-							var payment = Payment.builder().amount(getValueByKey("Amount",result).toString())
-									.mobileNumber(sanitizedMobile).isSuccessful(true).verified(false)
-									.txtId(getValueByKey("ReceiptNo",result))
-									.konnectCheckoutId(AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase())
-									.paymentVerificationPayload(result.toString())
-									.paymentPayload(result.toString())
-									.build();
-							paymentRepository.save(payment);
-							paymentRepository.flush();
-							log.error("transaction saved");
+							if(payOpt.isEmpty()) {
+								var payment = Payment.builder().amount(getValueByKey("Amount",result).toString())
+										.mobileNumber(sanitizedMobile).isSuccessful(true).verified(false)
+										.txtId(getValueByKey("ReceiptNo",result))
+										.konnectCheckoutId(AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase())
+										.paymentVerificationPayload(result.toString())
+										.paymentPayload(result.toString())
+										.build();
+								paymentRepository.save(payment);
+								paymentRepository.flush();
+								log.error("transaction saved");
+							}
+							
+							log.error("payment exists");
+
 						}catch(Exception ex) {
 							ex.printStackTrace();
 						}
@@ -951,6 +960,8 @@ public class PaymentService {
 		}
 		
 	}
+	
+	
 	
 	public Object getPaymentStatusByTxId(PollTxStatusDto req) {
 		Optional<Payment> paymentOpt =  this.paymentRepository.findByKonnectCheckoutId(req.getTxId());
