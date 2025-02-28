@@ -9,7 +9,7 @@ build:
     - echo "Building the application on SSH server..."
     - hostname
     - pwd
-    - ssh wifi  "mkdir -p  /home/ahdev/application/wifiproxy-dev/ && cd /home/ahdev/application/wifiproxy-dev/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-dev/ && cd /home/DevOps/application/wifi-dev/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
 
     - echo "Source code built on remote server"
   only:
@@ -23,9 +23,9 @@ move:
     - pwd
 
 
-    - ssh wifi "rm -rf /home/ahdev/application/wifiproxy-dev/*"
+    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-dev/*"
 
-    - scp -o StrictHostKeyChecking=no   -r ./*  wifi:/home/ahdev/application/wifiproxy-dev/ 
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-dev/ 
 
 
     - echo "Artifacts uploaded to GitLab CI/CD."
