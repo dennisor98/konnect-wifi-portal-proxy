@@ -872,7 +872,7 @@ public class UserService  implements UserDetailsService{
 	
  public Object updateAdminPassword(UpdatePasswordDto pwDto) {
 	 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-	 if(user.getPassword() !=null) {
+	 if(user.getPassword() == null) {
 		 ObjectNode res = JsonNodeFactory.instance.objectNode();
 		 res.put("success",false);
 		 res.put("message", "Invalid operation");
