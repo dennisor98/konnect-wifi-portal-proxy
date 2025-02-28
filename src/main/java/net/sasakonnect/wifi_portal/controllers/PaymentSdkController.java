@@ -92,7 +92,7 @@ public class PaymentSdkController {
 
 
 	@ApiOperation(value = "Get Transaction status By Id", notes = "This endpoint gets transaction status by Id")
-	@PaymentSdkFilter
+	// @PaymentSdkFilter
 	@PostMapping("transaction/status/query")
 	public Object getTxStatusById(@Valid @RequestBody PollTxStatusDto req,
  			@RequestHeader(value = "App-Key") 
