@@ -41,7 +41,7 @@ public class AppBootLoader implements ApplicationListener<ApplicationReadyEvent>
 	@Override
 	@Transactional
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		this.msgService.sendMessage("Hello yooh");
+//		this.msgService.sendMessage("Hello yooh");
 //		this.msgService.receiveMessage();
 		//create super user
 		this.userService.createSuperUser("+254700000000");
