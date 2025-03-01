@@ -24,7 +24,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -98,9 +97,6 @@ public class PaymentService {
 	String wifiAppKey;
 	@Autowired
 	AuthService authService;
-	
-	@Autowired
-	MessagingService msgService;
 	
 	@Autowired
 	InternetPackageRepository internetPackageRepository;
@@ -505,57 +501,12 @@ public class PaymentService {
 
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
 			}
-			
-			mobile = phone.trim().substring(phone.length() -9);
-		}else {
-			var userphone = user.getPhone().trim();
-			mobile = userphone.substring(userphone.length() -9 );
-		}
-     
-		
-      
-		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-		var timestamp =  LocalDateTime.now().format(format);
-		ObjectNode req = JsonNodeFactory.instance.objectNode();
-		var password = this.authService.getMpesaMerchantPassword(timestamp);
-		req.put("BusinessShortCode",shortCode);
-		req.put("Password",password);
-		req.put("Timestamp",timestamp);
-		req.put("TransactionType","CustomerPayBillOnline");
-		req.put("Amount","1");
-		req.put("PartyA","254"+mobile);
-		req.put("PartyB", shortCode);
-		req.put("PhoneNumber", "254"+mobile);
-		req.put("CallBackURL",mpesaCallBackUrl);
-		req.put("AccountReference", "Test");
-		req.put("TransactionDesc", "Test");	
-			log.error(req+"{req}");
-			Mono<String> responseMono = this.mpesaClient.webClient
-			        .post()
-			        .uri(MpesaEndpointsConstants.STK_PUSH)
-			        .header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-			        .contentType(MediaType.APPLICATION_JSON)
-			        .body(BodyInserters.fromValue(req))
-			        .accept(MediaType.APPLICATION_JSON)
-			        .retrieve()  
-			        .bodyToMono(String.class);
 
-		try {
-			String responseJson = responseMono.block();
-			if(responseJson !=null) {
-				//    	   return responseJson;
-				var resp = new Gson().fromJson(responseJson,PollMpesaDto.class);
-				this.msgService.processMpesaStkPush(resp);
-				return resp;
-			}
-			
-		}catch(Exception ex) {
-			ex.printStackTrace();
-			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.put("success",false);
-			node.put("message","An error ocurred");
-			
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
+			mobile = phone.trim().substring(phone.length() - 9);
+		} else {
+			var userphone = user.getPhone().trim();
+			mobile = userphone.substring(userphone.length() - 9);
+		}
 
 		if (appOpt.isPresent()) {
 			App app = appOpt.get();
@@ -632,25 +583,23 @@ public class PaymentService {
 	}
 
 	public Object triggerMpesaStkPush(@Valid PaymentRequest stk) {
-		var appKey=stk.getAppKey();
+		var appKey = stk.getAppKey();
 		var phone = stk.getPhoneNumber();
 		String mobile = null;
-		if(phone !=null){
-			if(phone.trim().length() < 9) {
+		if (phone != null) {
+			if (phone.trim().length() < 9) {
 				ObjectNode node = JsonNodeFactory.instance.objectNode();
 				node.put("success", false);
-				node.put("message","Phone number must be at least 9 digits");
+				node.put("message", "Phone number must be at least 9 digits");
 
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
 			}
-			
-			mobile = phone.trim().substring(phone.length() -9);
+
+			mobile = phone.trim().substring(phone.length() - 9);
 		}
-     
-		
-      
+
 		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-		var timestamp =  LocalDateTime.now().format(format);
+		var timestamp = LocalDateTime.now().format(format);
 		ObjectNode req = JsonNodeFactory.instance.objectNode();
 		var password = this.authService.getMpesaMerchantPassword(timestamp);
 		req.put("BusinessShortCode", stk.getApp().getBusinessShortCode());
@@ -659,56 +608,44 @@ public class PaymentService {
 		req.put("TransactionType", "CustomerBuyGoodsOnline");
 		req.put("Amount", stk.getAmount());
 		req.put("PartyA", "254" + mobile);
-		log.error("password"+password);
-		req.put("BusinessShortCode",stk.getApp().getBusinessShortCode());
-		req.put("Password",password);
-		req.put("Timestamp",timestamp);
-		req.put("TransactionType","CustomerBuyGoodsOnline");
-		req.put("Amount",stk.getAmount());
-		req.put("PartyA","254"+mobile);
 		req.put("PartyB", stk.getApp().getMpesaTillNo());
-		req.put("PhoneNumber", "254"+mobile);
-		req.put("CallBackURL",mpesaCallBackUrl);
+		req.put("PhoneNumber", "254" + mobile);
+		req.put("CallBackURL", mpesaCallBackUrl);
 		req.put("AccountReference", stk.getApp().getName());
-		req.put("TransactionDesc", stk.getApp().getName()+" : ("+mobile+")");	
-			log.error(req+"{req}");
-			Mono<String> responseMono = this.mpesaClient.webClient
-			        .post()
-			        .uri(MpesaEndpointsConstants.STK_PUSH)
-			        .header("Authorization","Bearer "+ this.authService.getMpesaAccessToken())
-			        .contentType(MediaType.APPLICATION_JSON)
-			        .body(BodyInserters.fromValue(req))
-			        .accept(MediaType.APPLICATION_JSON)
-			        .retrieve()  
-			        .bodyToMono(String.class);
+		req.put("TransactionDesc", stk.getApp().getName() + " : (" + mobile + ")");
+		log.error(req + "{req}");
+		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.STK_PUSH)
+				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(req))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 
 		try {
 			String responseJson = responseMono.block();
-			  log.error("response"+responseJson);
-			if(responseJson !=null) {
-	            
-	            // Deserialize JSON into MpesaResponse object
-				ObjectMapper objectMapper = new ObjectMapper();
-	            MpesaResponse response = objectMapper.readValue(responseJson, MpesaResponse.class);
-	           var currentApp= this.appService.findAppByAppKey(appKey)	;	//    	   return responseJson;
-				
-	           if(currentApp.isPresent()){
+			log.error("response" + responseJson);
+			if (responseJson != null) {
 
-	       				this.saveOrUpdatePayment(stk,currentApp.get(),response.getCheckoutRequestID());
-	       				stk.setExternalCheckoutId(response.getCheckoutRequestID());
-	    				this.rabitMqSenderService.sendMpesaCheckoutRequestId(stk);
-	       				
-	       				return new Gson().fromJson(responseJson,Map.class);
-	           }
-	           
+				// Deserialize JSON into MpesaResponse object
+				ObjectMapper objectMapper = new ObjectMapper();
+				MpesaResponse response = objectMapper.readValue(responseJson, MpesaResponse.class);
+				var currentApp = this.appService.findAppByAppKey(appKey); // return responseJson;
+
+				if (currentApp.isPresent()) {
+
+					this.saveOrUpdatePayment(stk, currentApp.get(), response.getCheckoutRequestID());
+					stk.setExternalCheckoutId(response.getCheckoutRequestID());
+					this.rabitMqSenderService.sendMpesaCheckoutRequestId(stk);
+
+					return new Gson().fromJson(responseJson, Map.class);
+				}
+
 			}
-			
-		}catch(Exception ex) {
+
+		} catch (Exception ex) {
 			ex.printStackTrace();
 			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.put("success",false);
-			node.put("message","An error ocurred");
-			
+			node.put("success", false);
+			node.put("message", "An error ocurred");
+
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
 		}
 

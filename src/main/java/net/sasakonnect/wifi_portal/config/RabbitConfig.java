@@ -35,10 +35,6 @@ public class RabbitConfig {
     }
 
     @Bean
-     Queue transactionCallBackNotificationQueue() {
-        return new Queue("transactionCallBackNotificationQueue", true);
-    }
-    @Bean
     Queue transactionCallBackNotificationQueue() {
         return new Queue("transactionCallBackNotificationQueue", true);
     }

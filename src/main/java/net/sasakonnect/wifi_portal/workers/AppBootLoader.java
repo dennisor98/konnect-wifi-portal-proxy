@@ -36,8 +36,8 @@ public class AppBootLoader implements ApplicationListener<ApplicationReadyEvent>
 	UserRoleRepository userRoleRepository;
 	@Autowired
 	PermissionService permissionService;
-	@Autowired
-	MessagingService msgService;	
+//	@Autowired
+//	MessagingService msgService;	
 	@Override
 	@Transactional
 	public void onApplicationEvent(ApplicationReadyEvent event) {
