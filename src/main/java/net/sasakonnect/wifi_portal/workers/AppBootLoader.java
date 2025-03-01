@@ -17,7 +17,6 @@ import net.sasakonnect.wifi_portal.domain.UserRole;
 import net.sasakonnect.wifi_portal.repository.RolePermissionRepository;
 import net.sasakonnect.wifi_portal.repository.RoleRepository;
 import net.sasakonnect.wifi_portal.repository.UserRoleRepository;
-import net.sasakonnect.wifi_portal.services.MessagingService;
 import net.sasakonnect.wifi_portal.services.PermissionService;
 import net.sasakonnect.wifi_portal.services.RoleService;
 import net.sasakonnect.wifi_portal.services.UserService;
