@@ -90,6 +90,8 @@ public class PaymentSdkController {
 		log.error("{payload}"+payReq);
 		return this.paymentService.createMerchantPaymentRequest(payReq);
 	}
+	
+	
 
 
 	@ApiOperation(value = "Get Transaction status By Id", notes = "This endpoint gets transaction status by Id")
@@ -111,6 +113,22 @@ public class PaymentSdkController {
 		log.error("transQuery"+req);
 
 		return this.paymentService.getPaymentStatusByTxId(req);
+	}
+	
+	
+	@PostMapping("/transaction/txStatus")
+	public Object queryTx(
+			@RequestParam(name="txId") String txId
+			) {
+		
+		try {
+			return this.paymentService.getTransactionStatus(txId);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 
 
