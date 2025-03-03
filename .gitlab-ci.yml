@@ -17,13 +17,12 @@ deploy:
     - echo "Deploying JAR file to multiple directories on the remote server..."
 
     # Fetch JAR path from the build
+    - ssh wifi-proxy "mkdir -p /home/DevOps/application/wifi-dev-node2 /home/DevOps/application/wifi-dev-node3"
     - JAR_FILE=$(ssh wifi-proxy "find /home/DevOps/application/wifi-dev/build/libs -name '*.jar' | head -n 1")
 
     - echo "JAR file found: $JAR_FILE"
 
-    # Ensure target directories exist and copy the JAR
-    - ssh wifi-proxy "mkdir -p /home/DevOps/application/wifi-dev-node2 /home/DevOps/application/wifi-dev-node3"
-
+    # Copy the JAR to target directories
     - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev/"
     - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev-node2/"
     - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev-node3/"
