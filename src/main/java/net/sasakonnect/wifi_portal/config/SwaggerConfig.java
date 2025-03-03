@@ -30,7 +30,7 @@ public class SwaggerConfig {
 
 	@Bean
 	OpenAPI openApiInformation() throws Exception {
-		Server localServer = new Server().url("http://localhost:8080/konnect-wifi")
+		Server localServer = new Server().url("http://localhost:9000/konnect-wifi-dev")
 				.description("Localhost Server URL");
 		Server devServer = new Server().url("https://mfood.sasakonnect.net/konnect-wifi-dev")
 				.description("Dev  Server URL");

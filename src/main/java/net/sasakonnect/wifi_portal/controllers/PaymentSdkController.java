@@ -111,6 +111,11 @@ public class PaymentSdkController {
 
 		return this.paymentService.getPaymentStatusByTxId(req);
 	}
+	
+	@PostMapping("/transaction/txStatus")
+	public Object  getTxStatus(@RequestParam(name="txId") String txId) throws Exception {
+	   return this.paymentService.getTransactionStatus(txId);
+	}
 
 
 }
