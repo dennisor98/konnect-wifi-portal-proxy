@@ -1,33 +1,33 @@
 stages:
-  - move
   - build
-  
+  - deploy
 
 build:
   stage: build
   script:
-    - echo "Building the application on SSH server..."
-    - hostname
-    - pwd
-    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-dev/ && mkdir -p /home/DevOps/application/wifi-dev-node2/ && mkdir -p /home/DevOps/application/wifi-dev-node3/  && cd /home/DevOps/application/wifi-dev/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test && cd /home/DevOps/application/wifi-dev-node2/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test && cd /home/DevOps/application/wifi-dev-node3/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
-
-    - echo "Source code built on remote server"
+    - echo "Building the Spring Boot application on the SSH server..."
+    - ssh wifi-proxy "mkdir -p /home/DevOps/application/wifi-dev/ && cd /home/DevOps/application/wifi-dev/ && chmod +x ./gradlew && ./gradlew clean build -x test"
+    - echo "Build completed on remote server."
   only:
     - dev
 
-move:
-  stage: move
+deploy:
+  stage: deploy
   script:
-    - echo "Copying  from remote server to GitLab CI/CD..."
-    - hostname
-    - pwd
+    - echo "Deploying JAR file to multiple directories on the remote server..."
 
+    # Fetch JAR path from the build
+    - JAR_FILE=$(ssh wifi-proxy "find /home/DevOps/application/wifi-dev/build/libs -name '*.jar' | head -n 1")
 
-    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-dev/*"
+    - echo "JAR file found: $JAR_FILE"
 
-    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-dev/ wifi-proxy:/home/DevOps/application/wifi-dev-node2/ wifi-proxy:/home/DevOps/application/wifi-dev-node3/ 
+    # Ensure target directories exist and copy the JAR
+    - ssh wifi-proxy "mkdir -p /home/DevOps/application/wifi-dev-node2 /home/DevOps/application/wifi-dev-node3"
 
+    - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev/"
+    - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev-node2/"
+    - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev-node3/"
 
-    - echo "Artifacts uploaded to GitLab CI/CD."
+    - echo "Deployment completed successfully."
   only:
     - dev
