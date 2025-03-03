@@ -721,8 +721,8 @@ public class PaymentService {
 			params.put("TransactionID",transId);
 			params.put("PartyA",businessShortCode);
 			params.put("IdentifierType","4");
-			params.put("ResultURL","https://d998-105-29-165-233.ngrok-free.app/konnect-wifi/payment/result");
-			params.put("QueueTimeOutURL","https://d998-105-29-165-233.ngrok-free.app/konnect-wifi/payment/result");
+			params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
+			params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
 			params.put("Remarks","OK");
 			params.put("Occasion","OK");
 
