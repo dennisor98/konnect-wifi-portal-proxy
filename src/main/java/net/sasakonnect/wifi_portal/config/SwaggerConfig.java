@@ -32,7 +32,7 @@ public class SwaggerConfig {
 	OpenAPI openApiInformation() throws Exception {
 		Server localServer = new Server().url("http://localhost:8080/konnect-wifi")
 				.description("Localhost Server URL");
-		Server devServer = new Server().url("https://mobile.sasakonnect.net/konnect-wifi")
+		Server devServer = new Server().url("https://mfood.sasakonnect.net/konnect-wifi-dev")
 				.description("Dev  Server URL");
 		Server productionServer = new Server().url("https://mfood.sasakonnect.net/konnect-wifi")
 				.description("Production Server URL");
