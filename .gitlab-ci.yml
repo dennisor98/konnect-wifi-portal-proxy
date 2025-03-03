@@ -1,29 +1,37 @@
 stages:
+  - move
   - build
-  - deploy
+  
 
 build:
   stage: build
   script:
-    - echo "Building the Spring Boot application on the SSH server..."
-    - ssh wifi-proxy "mkdir -p /home/DevOps/application/wifi-dev/ && cd /home/DevOps/application/wifi-dev/ && chmod +x ./gradlew && ./gradlew clean build -x test"
-    - echo "Build completed on remote server."
+    - echo "Building the application on SSH server..."
+    - hostname
+    - pwd
+    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-dev/ && cd /home/DevOps/application/wifi-dev/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-prod-node2/ && cd /home/DevOps/application/wifi-prod-node2/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-prod-node3/ && cd /home/DevOps/application/wifi-prod-node3/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+
+    - echo "Source code built on remote server"
   only:
     - dev
 
-deploy:
-  stage: deploy
+move:
+  stage: move
   script:
-    - echo "Deploying JAR file to multiple directories on the remote server..."
+    - echo "Copying  from remote server to GitLab CI/CD..."
+    - hostname
+    - pwd
 
-    # Ensure target directories exist
-    - ssh wifi-proxy "mkdir /home/DevOps/application/wifi-dev/  mkdir -p /home/DevOps/application/wifi-prod-node1 /home/DevOps/application/wifi-prod-node2 /home/DevOps/application/wifi-prod-node3"
 
-    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-prod/* /home/DevOps/application/wifi-prod-node2/* ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-prod-node3/*"
+    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-dev/*  /home/DevOps/application/wifi-prod-node2/* /home/DevOps/application/wifi-prod-node3/*"
 
-    # Copy files to target directories using SCP
-    - scp -o StrictHostKeyChecking=no -r ./ wifi-proxy:/home/DevOps/application/wifi-dev/ wifi-proxy:/home/DevOps/application/wifi-prod-node2/ wifi-proxy:/home/DevOps/application/wifi-prod-node3/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-dev/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-prod-node2/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-prod-node3/ 
 
-    - echo "Deployment completed successfully."
+
+    - echo "Artifacts uploaded to GitLab CI/CD."
   only:
     - dev
