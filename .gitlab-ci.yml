@@ -16,16 +16,13 @@ deploy:
   script:
     - echo "Deploying JAR file to multiple directories on the remote server..."
 
-    # Fetch JAR path from the build
-    - ssh wifi-proxy "mkdir -p /home/DevOps/application/wifi-dev-node2 /home/DevOps/application/wifi-dev-node3"
-    - JAR_FILE=$(ssh wifi-proxy "find /home/DevOps/application/wifi-dev/build/libs -name '*.jar' | head -n 1")
+    # Ensure target directories exist
+    - ssh wifi-proxy "mkdir /home/DevOps/application/wifi-dev/  mkdir -p /home/DevOps/application/wifi-prod-node1 /home/DevOps/application/wifi-prod-node2 /home/DevOps/application/wifi-prod-node3"
 
-    - echo "JAR file found: $JAR_FILE"
+    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-prod/* /home/DevOps/application/wifi-prod-node2/* ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-prod-node3/*"
 
-    # Copy the JAR to target directories
-    - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev/"
-    - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev-node2/"
-    - ssh wifi-proxy "cp $JAR_FILE /home/DevOps/application/wifi-dev-node3/"
+    # Copy files to target directories using SCP
+    - scp -o StrictHostKeyChecking=no -r ./ wifi-proxy:/home/DevOps/application/wifi-dev/ wifi-proxy:/home/DevOps/application/wifi-prod-node2/ wifi-proxy:/home/DevOps/application/wifi-prod-node3/
 
     - echo "Deployment completed successfully."
   only:
