@@ -1,5 +1,6 @@
 package net.sasakonnect.wifi_portal.services;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -912,6 +913,24 @@ public class UserService  implements UserDetailsService{
 		 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
 	 }
 	 
+	 
+	
+	 
+	 
+	 
+ }
+ 
+ public Object getUserPermissions() {
+	 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	 Optional<UserRole> userRoleOpt = this.userRoleRepository.findByUser(user);
+	 List<String> permissions = new ArrayList<>();
+	 
+	 if(userRoleOpt.isPresent()) {
+		 UserRole userRole = userRoleOpt.get();
+		 
+		 
+	 }
+	 return null;
  }
 
 

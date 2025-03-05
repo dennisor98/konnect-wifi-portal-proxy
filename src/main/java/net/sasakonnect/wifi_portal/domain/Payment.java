@@ -39,6 +39,9 @@ public class Payment extends BasePortalDomain {
 	    @Column(nullable = true)
 	    private String amount;
 	    
+	    @Column(nullable=true)
+	    private String packageId;
+	    
 	    @Column(nullable = false)
 	    private Boolean verified; 
 	    
