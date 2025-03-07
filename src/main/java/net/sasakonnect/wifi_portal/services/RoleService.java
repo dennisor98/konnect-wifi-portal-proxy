@@ -329,5 +329,37 @@ public class RoleService {
 	 return ResponseEntity.status(HttpStatus.OK).body(res);
  }
  
+ public Object getRoleUsers(String roleId) {
+	 Optional<Role> roleOpt = this.roleRepository.findById(roleId);
+	 if(roleOpt.isEmpty()) {
+		 Map<String,Object> res = new HashMap<>();
+		 res.put("success",false);
+		 res.put("message","Invalid roleId");
+
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+	 }
+	 
+	 Role role = roleOpt.get();
+	 
+	 List<User> roleUsersList = this.userRoleRepository.findRoleUsers(role);
+	 var users = roleUsersList.stream()
+			 .map(u->{
+				 Map<String,Object> map = new HashMap<>();
+				 map.put("id",u.getId());
+				 map.put("name",u.getFirstname()+" "+u.getLastname());
+				 map.put("phone",u.getEmail());
+				 
+				 return map;
+			 }).collect(Collectors.toList());
+	 
+	 Map<String,Object> response = new HashMap<>();
+	 response.put("success",true);
+	 response.put("message","Request complete");
+	 response.put("users",users);
+	 
+	 return ResponseEntity.status(HttpStatus.OK).body(response);
+	 
+ }
+ 
  
 }

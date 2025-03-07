@@ -41,10 +41,12 @@ import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.beans.ThreadExecuterBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
+import net.sasakonnect.wifi_portal.domain.Permission;
 import net.sasakonnect.wifi_portal.domain.Role;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.domain.UserRole;
 import net.sasakonnect.wifi_portal.domain.UserImage;
+import net.sasakonnect.wifi_portal.repository.RolePermissionRepository;
 import net.sasakonnect.wifi_portal.repository.RoleRepository;
 import net.sasakonnect.wifi_portal.repository.UserImageRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
@@ -86,6 +88,8 @@ public class UserService  implements UserDetailsService{
 
 	@Autowired
 	RoleRepository roleRepository;
+	@Autowired
+	RolePermissionRepository rolePermissionRepository;
 
 	@Autowired
 	ThreadExecuterBean threadExceutorBean;
@@ -927,10 +931,20 @@ public class UserService  implements UserDetailsService{
 	 
 	 if(userRoleOpt.isPresent()) {
 		 UserRole userRole = userRoleOpt.get();
+		 Role role = userRole.getRole();
 		 
-		 
+		 List<Permission> permissionList =  this.rolePermissionRepository.findPermissionsByRole(role);
+		 permissionList.stream()
+		 .map(p->{
+			return  permissions.add(p.getName());
+		 }).collect(Collectors.toList());
 	 }
-	 return null;
+	 
+	 Map<String,Object> res =  new HashMap<>();
+	 res.put("success",true);
+	 res.put("message","Request completed");
+	 res.put("permissions",permissions);
+	 return ResponseEntity.status(HttpStatus.OK).body(res);
  }
 
 

@@ -47,7 +47,7 @@ public class UserController {
 	
 	@GetMapping("/permissions")
 	public Object getUserPermissions() {
-		return null;
+		return this.userService.getUserPermissions();
 	}
 	
 	@PostMapping("/login")

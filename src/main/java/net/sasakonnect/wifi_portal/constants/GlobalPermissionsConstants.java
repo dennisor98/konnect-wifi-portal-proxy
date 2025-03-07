@@ -155,6 +155,20 @@ public class GlobalPermissionsConstants {
 		}
 	}
 	
+	public static class CanManageApp extends PermissionEntry{
+		public final static String PERMISSION = "can.manage.app";
+		public final static String DESCRIPTION = "View Users";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+	}
+	
 	
 	
 	public static class CanAddUser extends PermissionEntry{

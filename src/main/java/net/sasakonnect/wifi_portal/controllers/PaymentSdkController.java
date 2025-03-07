@@ -1,6 +1,10 @@
 package net.sasakonnect.wifi_portal.controllers;
 
+import java.util.HashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -115,6 +119,14 @@ public class PaymentSdkController {
 	@PostMapping("/transaction/txStatus")
 	public Object  getTxStatus(@RequestParam(name="txId") String txId) throws Exception {
 	   return this.paymentService.getTransactionStatus(txId);
+	}
+	
+	@GetMapping("/health-check")
+	public Object  getHealth()  {
+		var res = new HashMap<>();
+		res.put("sucess", true);
+		res.put("message","Service available");
+	   return ResponseEntity.status(HttpStatus.OK).body(res);
 	}
 
 
