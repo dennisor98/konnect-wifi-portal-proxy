@@ -713,29 +713,7 @@ public class PaymentService {
 		System.out.println("{json}"+json);
 
 	}
-	
-	public Object getTransactionStatus(String transId) throws Exception {
-			ObjectNode params = JsonNodeFactory.instance.objectNode();
-			params.put("Initiator",initiator);
-			params.put("SecurityCredential",this.authService.generateSecurityCredential(mpesaPassword));
-			params.put("CommandID","TransactionStatusQuery");
-			params.put("TransactionID",transId);
-			params.put("PartyA",businessShortCode);
-			params.put("IdentifierType","4");
-			params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
-			params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
-			params.put("Remarks","OK");
-			params.put("Occasion","OK");
 
-			Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_STATUS)
-					.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
-					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
-					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-			String json =  responseMono.block();
-			System.out.println("{json}"+json);
-			
-			return ResponseEntity.status(HttpStatus.OK).body(json);	
-	}
 	
 	public Object createMerchantPaymentRequest(ToolkitPayDto req) {
 		log.error("payload",req);
