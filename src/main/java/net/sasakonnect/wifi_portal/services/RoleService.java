@@ -343,14 +343,17 @@ public class RoleService {
 	 
 	 Role role = roleOpt.get();
 	 
-	 List<User> roleUsersList = this.userRoleRepository.findRoleUsers(role);
+	 List<UserRole> roleUsersList = this.userRoleRepository.findRoleUsers(role);
 	 var users = roleUsersList.stream()
-			 .map(u->{
+			 .map(ur->{
 				 Map<String,Object> map = new HashMap<>();
+				 var u = ur.getUser();
+				 map.put("createdAt",ur.getCreatedAt());
+				 map.put("updatedAt",ur.getUpdatedAt());
 				 map.put("id",u.getId());
 				 map.put("name",u.getFirstname()+" "+u.getLastname());
-				 map.put("phone",u.getPhone());
-				 
+				 map.put("phone",u.getPhone());	
+				 map.put("creator",ur.getCreator().getFirstname()+" "+ur.getCreator().getLastname());
 				 return map;
 			 }).collect(Collectors.toList());
 	 

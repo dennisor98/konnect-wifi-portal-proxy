@@ -16,6 +16,6 @@ public interface UserRoleRepository extends JpaRepository<UserRole,String>{
   Optional<UserRole> findByUser(User user);
   @Query("SELECT ur.role FROM UserRole ur WHERE ur.user =:user")
   Optional<Role> findRoleByUser(@Param("user") User user);
-  @Query("SELECT ur.user FROM UserRole ur WHERE ur.role =:role AND ur.user.phone !='+254700000000'")
-  List<User> findRoleUsers(@Param("role") Role role);
+  @Query("SELECT ur FROM UserRole ur WHERE ur.role =:role AND ur.user.phone !='+254700000000'")
+  List<UserRole> findRoleUsers(@Param("role") Role role);
 }
