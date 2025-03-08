@@ -1,5 +1,6 @@
 package net.sasakonnect.wifi_portal.services;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -40,10 +41,12 @@ import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.beans.ThreadExecuterBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
+import net.sasakonnect.wifi_portal.domain.Permission;
 import net.sasakonnect.wifi_portal.domain.Role;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.domain.UserRole;
 import net.sasakonnect.wifi_portal.domain.UserImage;
+import net.sasakonnect.wifi_portal.repository.RolePermissionRepository;
 import net.sasakonnect.wifi_portal.repository.RoleRepository;
 import net.sasakonnect.wifi_portal.repository.UserImageRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
@@ -85,6 +88,8 @@ public class UserService  implements UserDetailsService{
 
 	@Autowired
 	RoleRepository roleRepository;
+	@Autowired
+	RolePermissionRepository rolePermissionRepository;
 
 	@Autowired
 	ThreadExecuterBean threadExceutorBean;
@@ -711,6 +716,13 @@ public class UserService  implements UserDetailsService{
 	@Transactional()
 	public Object addAdminUser(AssignRoleDto roleDto) {
 		User loggedInUser =  (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if(loggedInUser.getId().equalsIgnoreCase(roleDto.getUserId())) {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Invalid operation");
+
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		}
 		Optional<User> userOpt =  this.userRepository.findById(roleDto.getUserId());
 		if(userOpt.isEmpty()) {
 			ObjectNode res = JsonNodeFactory.instance.objectNode();
@@ -912,6 +924,47 @@ public class UserService  implements UserDetailsService{
 		 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
 	 }
 	 
+	 
+	
+	 
+	 
+	 
+ }
+ 
+ public Object getUserPermissions() {
+	 User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	 Optional<UserRole> userRoleOpt = this.userRoleRepository.findByUser(user);
+	 List<String> permissions = new ArrayList<>();
+	 
+	 if(userRoleOpt.isPresent()) {
+		 UserRole userRole = userRoleOpt.get();
+		 Role role = userRole.getRole();
+		 
+		 List<Permission> permissionList =  this.rolePermissionRepository.findPermissionsByRole(role);
+		 permissionList.stream()
+		 .map(p->{
+			return  permissions.add(p.getName());
+		 }).collect(Collectors.toList());
+	 }
+	 
+	 Map<String,Object> res =  new HashMap<>();
+	 res.put("success",true);
+	 res.put("message","Request completed");
+	 res.put("permissions",permissions);
+	 return ResponseEntity.status(HttpStatus.OK).body(res);
+ }
+ 
+ public Object resetAdminPassword(String userId) {
+	 Optional<User> userOpt = this.userRepository.findById(userId);
+	 
+	 if(userOpt.isEmpty()) {
+		 Map<String,Object> res = new HashMap<>();
+		 res.put("success",false);
+		 res.put("message","Invalid userId");
+		 
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+	 }
+	 return null;
  }
 
 

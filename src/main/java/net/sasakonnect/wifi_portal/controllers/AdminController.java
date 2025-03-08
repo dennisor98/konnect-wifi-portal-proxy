@@ -160,6 +160,13 @@ public class AdminController {
 		return this.roleService.getUserRoleByUserId(userId);
 	}
 	
+	@HasPermission(GlobalPermissionsConstants.CanAssignRole.PERMISSION)
+	@DeleteMapping("/user/role/remove")
+	public Object removeUserFromRole(@RequestParam("userId") String userId) {
+		return this.roleService.deleteUserRole(userId);
+				
+	}
+	
 	@HasPermission(GlobalPermissionsConstants.CanGetUsers.PERMISSION)
 	@GetMapping("/user/downloadTrend")
 	public Object getAppDownloadTrends() {
@@ -188,6 +195,15 @@ public class AdminController {
 	public Object getPermissions() {
 		
 		return this.roleService.getAllPermissions();
+	}
+	
+	@HasPermission(GlobalPermissionsConstants.CanGetRoles.PERMISSION)
+	@GetMapping("/role/users")
+	public Object getRoleUsers(
+			@RequestParam(name="roleId") String roleId
+			) {
+		
+		return this.roleService.getRoleUsers(roleId);
 	}
 	
 
@@ -256,7 +272,7 @@ public class AdminController {
 	  @DeleteMapping("/payment/option")
 	  @HasPermission(GlobalPermissionsConstants.CanManagePayment.PERMISSION)
 	  public Object deletePayMethod(@RequestParam("payId") String payId) {
-		  return this.deletePayMethod(payId);
+		  return this.paymentService.deletePaymentMethod(payId);
 	  }
 	  
 	  @PutMapping("/user/password/update")

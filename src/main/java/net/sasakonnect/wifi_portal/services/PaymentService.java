@@ -97,6 +97,7 @@ public class PaymentService {
 	String wifiAppKey;
 	@Autowired
 	AuthService authService;
+	
 	@Autowired
 	InternetPackageRepository internetPackageRepository;
 	@Autowired
@@ -765,6 +766,28 @@ public class PaymentService {
 		return payment_checkoutId;
 	}
 
+	public Object getTransactionStatus(String transId) throws Exception {
+		ObjectNode params = JsonNodeFactory.instance.objectNode();
+		params.put("Initiator",initiator);
+		params.put("SecurityCredential",this.authService.generateSecurityCredential(mpesaPassword));
+		params.put("CommandID","TransactionStatusQuery");
+		params.put("TransactionID",transId);
+		params.put("PartyA",businessShortCode);
+		params.put("IdentifierType","4");
+		params.put("ResultURL","https://83d1-105-29-165-233.ngrok-free.app/konnect-wifi-dev/payment/result");
+		params.put("QueueTimeOutURL","https://83d1-105-29-165-233.ngrok-free.app/konnect-wifi-dev/payment/result");
+		params.put("Remarks","OK");
+		params.put("Occasion","OK");
+
+		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_STATUS)
+				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		String json =  responseMono.block();
+		System.out.println("{json}"+json);
+		
+		return ResponseEntity.status(HttpStatus.OK).body(json);	
+}
 
 	public Object createPaymentRequest(AppToolKitPayDto req) {
 		App app = null;
@@ -1024,10 +1047,10 @@ public class PaymentService {
 		}
 		else if(filter !=null && filter.equalsIgnoreCase("verified")) {
 			log.error("verified");	
-			paymentList = this.paymentRepository.findByVerified(true,pageable);
+			paymentList = this.paymentRepository.findByVerifiedAndIsSuccessful(true,true,pageable);
 		}else {
 			log.error("unverified");	
-			paymentList = this.paymentRepository.findByVerified(false,pageable);
+			paymentList = this.paymentRepository.findByVerifiedAndIsSuccessful(false,true,pageable);
 		}
 			
 		

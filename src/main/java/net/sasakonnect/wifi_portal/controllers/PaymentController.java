@@ -126,6 +126,11 @@ public class PaymentController {
 	   return this.paymentService.getPaymentStatusByTxId(payReq);
    }
    
+   @PostMapping("options")
+   public Object getPaymentMethods() {
+	   return this.paymentService.getPaymentMethods();
+   }
+   
    
 }
 

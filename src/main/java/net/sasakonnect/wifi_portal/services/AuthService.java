@@ -72,7 +72,7 @@ public class AuthService {
 	public String getMpesaAccessToken() {
 		var basicAuth = this.getMpesaBasicAuth();
 		log.error(basicAuth);
-		Mono<String> responseMono = this.webClient.webClient
+		Mono<String> responseMono = webClient.webClient
 				.get()
 				.uri(uriBuilder -> uriBuilder
 						.path("/oauth/v1/generate")

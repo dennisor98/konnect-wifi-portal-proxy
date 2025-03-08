@@ -45,6 +45,11 @@ public class UserController {
 		return this.userService.getAuthenticatedUserProfile();
 	}
 	
+	@GetMapping("/permissions")
+	public Object getUserPermissions() {
+		return this.userService.getUserPermissions();
+	}
+	
 	@PostMapping("/login")
 	public Object login(@Valid @RequestBody() UserLoginDto logins) {
 		return this.userService.adminUserLogin(logins);
