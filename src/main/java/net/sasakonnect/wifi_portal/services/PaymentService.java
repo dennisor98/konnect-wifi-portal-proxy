@@ -1024,10 +1024,10 @@ public class PaymentService {
 		}
 		else if(filter !=null && filter.equalsIgnoreCase("verified")) {
 			log.error("verified");	
-			paymentList = this.paymentRepository.findByVerified(true,pageable);
+			paymentList = this.paymentRepository.findByVerifiedAndIsSuccessful(true,true,pageable);
 		}else {
 			log.error("unverified");	
-			paymentList = this.paymentRepository.findByVerified(false,pageable);
+			paymentList = this.paymentRepository.findByVerifiedAndIsSuccessful(false,true,pageable);
 		}
 			
 		

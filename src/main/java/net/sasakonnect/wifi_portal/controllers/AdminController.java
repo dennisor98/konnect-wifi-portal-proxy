@@ -160,6 +160,13 @@ public class AdminController {
 		return this.roleService.getUserRoleByUserId(userId);
 	}
 	
+	@HasPermission(GlobalPermissionsConstants.CanAssignRole.PERMISSION)
+	@DeleteMapping("/user/role/remove")
+	public Object removeUserFromRole(@RequestParam("userId") String userId) {
+		return this.roleService.deleteUserRole(userId);
+				
+	}
+	
 	@HasPermission(GlobalPermissionsConstants.CanGetUsers.PERMISSION)
 	@GetMapping("/user/downloadTrend")
 	public Object getAppDownloadTrends() {

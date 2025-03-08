@@ -716,6 +716,13 @@ public class UserService  implements UserDetailsService{
 	@Transactional()
 	public Object addAdminUser(AssignRoleDto roleDto) {
 		User loggedInUser =  (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if(loggedInUser.getId().equalsIgnoreCase(roleDto.getUserId())) {
+			ObjectNode res = JsonNodeFactory.instance.objectNode();
+			res.put("success",false);
+			res.put("message","Invalid operation");
+
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		}
 		Optional<User> userOpt =  this.userRepository.findById(roleDto.getUserId());
 		if(userOpt.isEmpty()) {
 			ObjectNode res = JsonNodeFactory.instance.objectNode();
@@ -945,6 +952,19 @@ public class UserService  implements UserDetailsService{
 	 res.put("message","Request completed");
 	 res.put("permissions",permissions);
 	 return ResponseEntity.status(HttpStatus.OK).body(res);
+ }
+ 
+ public Object resetAdminPassword(String userId) {
+	 Optional<User> userOpt = this.userRepository.findById(userId);
+	 
+	 if(userOpt.isEmpty()) {
+		 Map<String,Object> res = new HashMap<>();
+		 res.put("success",false);
+		 res.put("message","Invalid userId");
+		 
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+	 }
+	 return null;
  }
 
 

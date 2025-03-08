@@ -32,7 +32,7 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     Long countByIsSuccessfulTrue();
     Long countByIsSuccessfulFalse();
     
-    Page<Payment> findByVerified(Boolean verified,Pageable pageable);
+    Page<Payment> findByVerifiedAndIsSuccessful(Boolean verified,Boolean succesful,Pageable pageable);
     
     
     

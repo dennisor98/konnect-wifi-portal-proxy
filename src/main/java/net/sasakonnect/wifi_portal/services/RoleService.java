@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.sasakonnect.wifi_portal.domain.RolePermission;
 import net.sasakonnect.wifi_portal.domain.User;
+import net.sasakonnect.wifi_portal.domain.UserRole;
 import net.sasakonnect.wifi_portal.RequestDto.DelRoleDto;
 import net.sasakonnect.wifi_portal.RequestDto.RoleDto;
 import net.sasakonnect.wifi_portal.RequestDto.RoleEditDto;
@@ -347,7 +349,7 @@ public class RoleService {
 				 Map<String,Object> map = new HashMap<>();
 				 map.put("id",u.getId());
 				 map.put("name",u.getFirstname()+" "+u.getLastname());
-				 map.put("phone",u.getEmail());
+				 map.put("phone",u.getPhone());
 				 
 				 return map;
 			 }).collect(Collectors.toList());
@@ -358,6 +360,55 @@ public class RoleService {
 	 response.put("users",users);
 	 
 	 return ResponseEntity.status(HttpStatus.OK).body(response);
+	 
+ }
+ 
+ public Object deleteUserRole(String userId) {
+	 User loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	 if(userId.equalsIgnoreCase(loggedInUser.getId())) {
+		 Map<String,Object> res = new HashMap<>();
+		 res.put("success",false);
+		 res.put("message","Invalid operation");
+		 
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res); 
+	 }
+	 Optional<User> userOpt = this.userRepository.findById(userId);
+	 if(userOpt.isEmpty()) {
+		 Map<String,Object> res = new HashMap<>();
+		 res.put("success",false);
+		 res.put("message","Invalid userId");
+		 
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+	 }
+	 
+	 User user = userOpt.get();
+	 Optional<UserRole> userRoleOpt = this.userRoleRepository.findByUser(user);
+	 if(userRoleOpt.isEmpty()) {
+		 Map<String,Object> res = new HashMap<>();
+		 
+		 res.put("success",false);
+		 res.put("message","Invalid operation");
+		 
+		 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		 
+	 }
+	 
+	 UserRole userRole = userRoleOpt.get();
+	 try {
+		 this.userRoleRepository.delete(userRole);
+		 Map<String,Object> res = new HashMap<>();
+		 res.put("success", true);
+		 res.put("message","User removed from role!");
+		 
+		 return ResponseEntity.status(HttpStatus.OK).body(res);
+	 }catch(Exception ex) {
+		 ex.printStackTrace();
+		 Map<String,Object> res = new HashMap<>();
+		 res.put("success",false);
+		 res.put("message","Error occured while processing request");
+		 
+		 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+	 }
 	 
  }
  
