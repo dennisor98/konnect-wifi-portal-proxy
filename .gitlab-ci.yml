@@ -10,6 +10,8 @@ build:
     - hostname
     - pwd
     - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-prod/ && cd /home/DevOps/application/wifi-prod/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-backend  "mkdir -p  /home/DevOps/application/wifi-prod-node2/ && cd /home/DevOps/application/wifi-prod-node2/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-backend  "mkdir -p  /home/DevOps/application/wifi-prod-node3/ && cd /home/DevOps/application/wifi-prod-node3/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
 
     - echo "Source code built on remote server"
   only:
@@ -23,9 +25,12 @@ move:
     - pwd
 
 
-    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-prod/*"
+    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-prod/* /home/DevOps/application/wifi-prod-node2/* /home/DevOps/application/wifi-prod-node3/*"
 
     - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-prod/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-prod-node2/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-prod-node3/ 
+
 
 
     - echo "Artifacts uploaded to GitLab CI/CD."
