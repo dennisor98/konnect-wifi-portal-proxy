@@ -9,9 +9,9 @@ build:
     - echo "Building the application on SSH server..."
     - hostname
     - pwd
-    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-dev/ && cd /home/DevOps/application/wifi-dev/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
-    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-dev-node2/ && cd /home/DevOps/application/wifi-dev-node2/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
-    - ssh wifi-proxy  "mkdir -p  /home/DevOps/application/wifi-dev-node3/ && cd /home/DevOps/application/wifi-dev-node3/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-backend  "mkdir -p  /home/DevOps/application/wifi-dev/ && cd /home/DevOps/application/wifi-dev/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-backend  "mkdir -p  /home/DevOps/application/wifi-dev-node2/ && cd /home/DevOps/application/wifi-dev-node2/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-backend  "mkdir -p  /home/DevOps/application/wifi-dev-node3/ && cd /home/DevOps/application/wifi-dev-node3/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
 
     - echo "Source code built on remote server"
   only:
@@ -25,11 +25,11 @@ move:
     - pwd
 
 
-    - ssh wifi-proxy "rm -rf /home/DevOps/application/wifi-dev/*  /home/DevOps/application/wifi-dev-node2/* /home/DevOps/application/wifi-dev-node3/*"
+    - ssh wifi-backend "rm -rf /home/DevOps/application/wifi-dev/*  /home/DevOps/application/wifi-dev-node2/* /home/DevOps/application/wifi-dev-node3/*"
 
-    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-dev/
-    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-dev-node2/
-    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-proxy:/home/DevOps/application/wifi-dev-node3/ 
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-dev/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-dev-node2/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-dev-node3/ 
 
 
     - echo "Artifacts uploaded to GitLab CI/CD."
