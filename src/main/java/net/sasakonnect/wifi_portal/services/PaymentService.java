@@ -3,6 +3,7 @@ package net.sasakonnect.wifi_portal.services;
 import net.sasakonnect.wifi_portal.domain.Payment;
 import net.sasakonnect.wifi_portal.domain.PaymentMethod;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -243,76 +244,87 @@ public class PaymentService {
 	}
 	
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
-	public void handleTransactionConfirmationCallBackNotification(MerchantTransactionNotificationDto payment) {
-		log.error("notifier called.."+payment);
-		String transAmount = payment.getTransAmount();
-		if (transAmount.contains(".")) {
-			transAmount = transAmount.split("\\.")[0];
+	public void handleTransactionConfirmationCallBackNotification(MerchantTransactionNotificationDto payment,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
+		try {
+			log.error("notifier called.."+payment);
+			String transAmount = payment.getTransAmount();
+			if (transAmount.contains(".")) {
+				transAmount = transAmount.split("\\.")[0];
+			}
+		    System.out.println(payment);
+			ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+		     resp.put("TransType",payment.getTransType());
+		     resp.put("TransID", payment.getTransId());
+		     resp.put("TransAmount",transAmount);
+		     resp.put("TransTime",payment.getTransTime());
+		     resp.put("BusinessShortCode",payment.getBusinessShortCode());
+		     resp.put("packageId",this.getPackageIdByCost(transAmount));
+		     resp.put("BillRefNumber",payment.getBillRefNumber());
+		     resp.put("Mobile",payment.getMobile());
+		     resp.put("name",payment.getName());
+		     resp.put("userId",payment.getUserId());
+		     resp.put("KonnectTransID",payment.getKonnectTransId());
+		     resp.put("ResultCode","0");
+		     resp.put("staMac",payment.getDeviceMac());
+		     resp.put("initiator",payment.getPlatform());
+		     log.error(payment+"{}");
+		     log.error(resp+"{body}");
+		     threadExceutorBean.addTask(new Runnable()  {
+				 @Override
+				public void run(){
+					 notifyKonnectWater(payment);
+				 }
+			 });
+	        
+		     threadExceutorBean.addTask(new Runnable() {
+
+		    	 @Override
+		    	 public void run() {
+		    		 log.error("Executing task...");
+		    		 try {
+		    			 Mono<?> respMono = webClient.webClient.post()
+		    					 .uri(payment.getApp().getCallbackUrl())
+		    					 .contentType(MediaType.APPLICATION_JSON)
+		    					 .body(BodyInserters.fromValue(resp.toPrettyString()))
+		    					 .accept(MediaType.APPLICATION_JSON)
+		    					 .exchangeToMono(clientResponse -> {
+		    						 HttpStatusCode statusCode = clientResponse.statusCode();
+
+		    						 if (statusCode.value() != 200) {
+		    							 log.error("Request failed with status: {}", statusCode);
+		    							 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
+		    						 }
+
+		    						 return clientResponse.bodyToMono(String.class);
+		    					 })
+		    					 .doOnError(error -> {
+		    						 log.error("Error occurred while making request: {}", error.getMessage(), error);
+		    						 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
+		    					 });
+
+		    			 // Block to get the response (optional, consider reactive approach instead)
+		    			 var response = respMono.block();
+		    			 log.error("Response: {}", response);
+		    		 } catch (Exception e) {
+		    			 log.error("Unexpected error during request execution: {}", e.getMessage(), e);
+		    			 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
+		    		 }
+		    	 }});
+		     channel.basicAck(deliveryTag, false);
+		}catch(Exception ex) {
+			try {
+				channel.basicReject(deliveryTag, false);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-	    System.out.println(payment);
-		ObjectNode resp =  JsonNodeFactory.instance.objectNode();
-	     resp.put("TransType",payment.getTransType());
-	     resp.put("TransID", payment.getTransId());
-	     resp.put("TransAmount",transAmount);
-	     resp.put("TransTime",payment.getTransTime());
-	     resp.put("BusinessShortCode",payment.getBusinessShortCode());
-	     resp.put("packageId",this.getPackageIdByCost(transAmount));
-	     resp.put("BillRefNumber",payment.getBillRefNumber());
-	     resp.put("Mobile",payment.getMobile());
-	     resp.put("name",payment.getName());
-	     resp.put("userId",payment.getUserId());
-	     resp.put("KonnectTransID",payment.getKonnectTransId());
-	     resp.put("ResultCode","0");
-	     resp.put("staMac",payment.getDeviceMac());
-	     resp.put("initiator",payment.getPlatform());
-	     log.error(payment+"{}");
-	     log.error(resp+"{body}");
-	     threadExceutorBean.addTask(new Runnable()  {
-			 @Override
-			public void run(){
-				 notifyKonnectWater(payment);
-			 }
-		 });
-        
-	     threadExceutorBean.addTask(new Runnable() {
-
-	    	 @Override
-	    	 public void run() {
-	    		 log.error("Executing task...");
-	    		 try {
-	    			 Mono<?> respMono = webClient.webClient.post()
-	    					 .uri(payment.getApp().getCallbackUrl())
-	    					 .contentType(MediaType.APPLICATION_JSON)
-	    					 .body(BodyInserters.fromValue(resp.toPrettyString()))
-	    					 .accept(MediaType.APPLICATION_JSON)
-	    					 .exchangeToMono(clientResponse -> {
-	    						 HttpStatusCode statusCode = clientResponse.statusCode();
-
-	    						 if (statusCode.value() != 200) {
-	    							 log.error("Request failed with status: {}", statusCode);
-	    							 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
-	    						 }
-
-	    						 return clientResponse.bodyToMono(String.class);
-	    					 })
-	    					 .doOnError(error -> {
-	    						 log.error("Error occurred while making request: {}", error.getMessage(), error);
-	    						 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
-	    					 });
-
-	    			 // Block to get the response (optional, consider reactive approach instead)
-	    			 var response = respMono.block();
-	    			 log.error("Response: {}", response);
-	    		 } catch (Exception e) {
-	    			 log.error("Unexpected error during request execution: {}", e.getMessage(), e);
-	    			 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
-	    		 }
-	    	 }});
+	     
 
 	}
 
 	@RabbitListener(queues = "failedPaymentNotificationQueue0")
-	public void handleFailedPaymentNotification0(MerchantTransactionNotificationDto payment) {
+	public void handleFailedPaymentNotification0(MerchantTransactionNotificationDto payment,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		threadExceutorBean.addTask(new Runnable() {
 
 			@Override
@@ -349,7 +361,15 @@ public class PaymentService {
 	                                return clientResponse.bodyToMono(Void.class);
 	                            });
 						responseMono.block();	
+						//acknowledge and don't requeue
+						channel.basicAck(deliveryTag, false);
 					} catch (Exception e) {
+						try {
+							channel.basicReject(deliveryTag, false);
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 						e.printStackTrace();
 					} finally {
 						executor.shutdown();
@@ -361,7 +381,7 @@ public class PaymentService {
 	}
 	
 	@RabbitListener(queues = "failedPaymentNotificationQueue1")
-	public void handleFailedPaymentNotification1(MerchantTransactionNotificationDto payment) {
+	public void handleFailedPaymentNotification1(MerchantTransactionNotificationDto payment,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		threadExceutorBean.addTask(new Runnable() {
 			@Override
 			public void run() {
@@ -395,9 +415,16 @@ public class PaymentService {
 	                                }
 	                                return clientResponse.bodyToMono(Void.class);
 	                            });
-						respMono.block();	
+						respMono.block();
+						channel.basicAck(deliveryTag, false);
 					} catch (Exception e) {
 						e.printStackTrace();
+						try {
+							channel.basicReject(deliveryTag, false);
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 					} finally {
 						executor.shutdown();
 					}
@@ -408,7 +435,7 @@ public class PaymentService {
 	}
 	
 	@RabbitListener(queues = "failedPaymentNotificationQueue2")
-	public void handleFailedPaymentNotification2(MerchantTransactionNotificationDto payment) {
+	public void handleFailedPaymentNotification2(MerchantTransactionNotificationDto payment, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		threadExceutorBean.addTask(new Runnable() {
 
 			@Override
@@ -438,7 +465,16 @@ public class PaymentService {
 								.accept(MediaType.APPLICATION_JSON).retrieve()
 								.bodyToMono(Object.class);
 						respMono.block();	
+						channel.basicAck(deliveryTag,false);
 					} catch (Exception e) {
+						try {
+							
+							//reject and don't requeue
+							channel.basicReject(deliveryTag,false);
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 						e.printStackTrace();
 					} finally {
 						executor.shutdown();
@@ -692,25 +728,31 @@ public class PaymentService {
 
 
 	@RabbitListener(queues = "transactionStatusQueue")
-	public void getTxStatusByTxId(MpesaPaymentValidationDto data) throws Exception {
-		ObjectNode params = JsonNodeFactory.instance.objectNode();
-		params.put("Initiator",initiator);
-		params.put("SecurityCredential",this.authService.generateSecurityCredential(mpesaPassword));
-		params.put("CommandID","TransactionStatusQuery");
-		params.put("TransactionID",data.getTransID());
-		params.put("PartyA",businessShortCode);
-		params.put("IdentifierType","4");
-		params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
-		params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
-		params.put("Remarks","OK");
-		params.put("Occasion","OK");
+	public void getTxStatusByTxId(MpesaPaymentValidationDto data,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws Exception {
+		try {
+			ObjectNode params = JsonNodeFactory.instance.objectNode();
+			params.put("Initiator",initiator);
+			params.put("SecurityCredential",this.authService.generateSecurityCredential(mpesaPassword));
+			params.put("CommandID","TransactionStatusQuery");
+			params.put("TransactionID",data.getTransID());
+			params.put("PartyA",businessShortCode);
+			params.put("IdentifierType","4");
+			params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
+			params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
+			params.put("Remarks","OK");
+			params.put("Occasion","OK");
 
-		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_STATUS)
-				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
-				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
-				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-		String json =  responseMono.block();
-		System.out.println("{json}"+json);
+			Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_STATUS)
+					.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
+					.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
+					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+			String json =  responseMono.block();
+			System.out.println("{json}"+json);
+			
+			 channel.basicAck(deliveryTag, false);
+		}catch(Exception ex) {
+			channel.basicReject(deliveryTag,true);
+		}
 
 	}
 	
