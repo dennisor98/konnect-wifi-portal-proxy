@@ -34,7 +34,7 @@ public class LarkService {
 	@Value("${lark.bot.app.secret}")
 	String botAppSecret;
 	
-	String larkGroup = "oc_f11965f2d1af0ecb6e39c29ff7beec86";
+	String larkGroup = "oc_032ab1be3d75adf98db975fa36636434";
 	protected final String larkBaseUrl = "https://open.larksuite.com/open-apis";
 	  public void sendPaymentNotification(String message) {
 		  var urlEndpoint = this.larkBaseUrl+"/message/v4/send/";
