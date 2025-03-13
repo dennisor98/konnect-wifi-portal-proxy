@@ -70,7 +70,7 @@ public class LarkService {
 		    headerMap.put("template", "blue");
 		    Map<String, Object> title = new HashMap<>();
 		    title.put("tag", "plain_text");
-		    title.put("content", "Pending Payment for followup");
+		    title.put("content", "Unprocessed Payment for followup");
 		    headerMap.put("title", title);
 		    cardObj.put("header", headerMap);
 		    card.put("card", cardObj);

@@ -944,6 +944,7 @@ public class PaymentService {
 							+"**InitiatedTime**: "+convertDateToHumanReadableString(getValueByKey("InitiatedTime", result))+" \n"
 							+"**FinalisedTime**: "+convertDateToHumanReadableString(getValueByKey("FinalisedTime",result))+"\n"
 							+ "**ReceiptNo**: "+getValueByKey("ReceiptNo", result)+" \n"
+							+"**Amount**: "+getValueByKey("Amount", result)+"\n"
 							+"**Reason** :Payment unscheduled";
 
 					larkService.sendPaymentNotification(larkMessage);
