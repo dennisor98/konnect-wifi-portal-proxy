@@ -131,8 +131,8 @@ public class PaymentService {
 	RabbitMqSenderService rabbitSendService;
 	@Autowired
 	PayMethodRepository payMethodRepository;
-//	@Autowired
-//	RedisService redisService;
+	@Autowired
+	LarkService larkService;
 	private final RabbitTemplate rabbitTemplate;
 
 	public PaymentService(RabbitTemplate rabbitTemplate) {
@@ -302,7 +302,6 @@ public class PaymentService {
 		    						 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
 		    					 });
 
-		    			 // Block to get the response (optional, consider reactive approach instead)
 		    			 var response = respMono.block();
 		    			 log.error("Response: {}", response);
 		    		 } catch (Exception e) {
@@ -879,7 +878,7 @@ public class PaymentService {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
 			String mobile = this.getValueByKey("DebitPartyName", result).split("-")[0].trim();
-			String sanitizedMobile = "254"+mobile.substring(mobile.length() - 9);
+			String sanitizedMobile = mobile.length() >= 9 ? "254"+mobile.substring(mobile.length() - 9) : "254"+mobile;
 			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(sanitizedMobile);
 			Optional<Payment> payOpt =  paymentRepository.findByTxtId(getValueByKey("ReceiptNo", result));
 
@@ -937,8 +936,17 @@ public class PaymentService {
 								.doOnError(error-> log.error("Request failed",error));
 						String json =  responseMono.block();
 						System.out.println("{json}"+json);
-
 						
+					String larkMessage = 
+							"<at id=all></at> \n"+
+							"**Phone Number**: "+getValueByKey("DebitPartyName", result).split("-")[0]+" \n"
+							+"**Name**: "+getValueByKey("DebitPartyName", result).split("-")[1]+" \n"
+							+"**InitiatedTime**: "+convertDateToHumanReadableString(getValueByKey("InitiatedTime", result))+" \n"
+							+"**FinalisedTime**: "+convertDateToHumanReadableString(getValueByKey("FinalisedTime",result))+"\n"
+							+ "**ReceiptNo**: "+getValueByKey("ReceiptNo", result)+" \n"
+							+"**Reason** :Payment unscheduled";
+
+					larkService.sendPaymentNotification(larkMessage);
 					}
 
 				});	
@@ -946,6 +954,24 @@ public class PaymentService {
 			
 		}
 	}
+	
+	public String convertDateToHumanReadableString(String timestamp) {
+
+        // Define the input format
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+        // Parse the timestamp to LocalDateTime
+        LocalDateTime dateTime = LocalDateTime.parse(timestamp, inputFormatter);
+
+        // Define the output format
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy hh:mm:ss a");
+
+        // Convert to human-readable format
+        String humanReadable = dateTime.format(outputFormatter);
+        
+        return humanReadable;
+
+    }
 	
 	public void processMpesaCallBack(StkCallbackResponseDTO paymentCallBack) {
 		var stkCall = paymentCallBack.getBody().getStkCallback();
