@@ -34,6 +34,7 @@ import io.swagger.annotations.ApiParam;
 @RestController
 @Slf4j
 public class PaymentSdkController {
+	
 	@Autowired
 	private AppRequestBean requestScopedBean;
 	@Autowired
@@ -93,10 +94,12 @@ public class PaymentSdkController {
 		log.error("{payload}"+payReq);
 		return this.paymentService.createMerchantPaymentRequest(payReq);
 	}
+	
+	
 
 
 	@ApiOperation(value = "Get Transaction status By Id", notes = "This endpoint gets transaction status by Id")
-	@PaymentSdkFilter
+	// @PaymentSdkFilter
 	@PostMapping("transaction/status/query")
 	public Object getTxStatusById(@Valid @RequestBody PollTxStatusDto req,
  			@RequestHeader(value = "App-Key") 
@@ -116,17 +119,20 @@ public class PaymentSdkController {
 		return this.paymentService.getPaymentStatusByTxId(req);
 	}
 	
-	@PostMapping("/transaction/txStatus")
-	public Object  getTxStatus(@RequestParam(name="txId") String txId) throws Exception {
-	   return this.paymentService.getTransactionStatus(txId);
-	}
 	
-	@GetMapping("/health-check")
-	public Object  getHealth()  {
-		var res = new HashMap<>();
-		res.put("sucess", true);
-		res.put("message","Service available");
-	   return ResponseEntity.status(HttpStatus.OK).body(res);
+	@PostMapping("/transaction/txStatus")
+	public Object queryTx(
+			@RequestParam(name="txId") String txId
+			) {
+		
+		try {
+			return this.paymentService.getTransactionStatus(txId);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 
 
