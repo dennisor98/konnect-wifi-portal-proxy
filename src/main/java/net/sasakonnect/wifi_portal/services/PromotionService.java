@@ -1,10 +1,15 @@
 package net.sasakonnect.wifi_portal.services;
 
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -144,6 +149,60 @@ public class PromotionService {
            characters[j] = temp;
        }
        return new String(characters);
+   }
+   
+   public Object getReferalDetails(Pageable pageble) {
+	   try {
+		   Page<UserReferal> userRefPage = this.userReferalRepository.findAll(pageble);
+
+		   var refs = userRefPage.stream()
+				   .map((ref)->{
+					   Map<String,Object> map = new HashMap<>();
+					   map.put("id",ref.getId());
+					   map.put("refererId",ref.getReferer().getUser().getId());
+					   map.put("refererName",ref.getReferer().getUser().getFirstname()+" "+ref.getReferer().getUser().getLastname());
+					   map.put("refreeId",ref.getUser().getId());
+					   map.put("refreeName",ref.getUser().getFirstname() +" "+ref.getUser().getLastname());
+					   return map;
+				   }).collect(Collectors.toList());
+		   Map<String,Object> res = new HashMap<>();
+		   res.put("success",true);
+		   res.put("message","Request processed succesfuly");
+
+		   return ResponseEntity.status(HttpStatus.OK).body(res);
+	   }catch(Exception ex) {
+		   ex.printStackTrace();
+		   Map<String,Object> res = new HashMap<>();
+		   res.put("success",false);
+		   res.put("message","Server error encountered");
+		   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+	   }
+   }
+   
+   
+   public Object getReferalsByUserId(String userId,Pageable pageable) {
+	   try {
+		   Optional<User> userOpt = this.userRepository.findById(userId);
+		   if(userOpt.isEmpty()) {
+			   Map<String,Object> res = new HashMap<>();
+			   res.put("success",false);
+			   res.put("message","Invalid userId");
+			   
+			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+		   }
+		   
+		   var user = userOpt.get();
+		   
+		   
+	   }catch(Exception ex) {
+		   ex.printStackTrace();
+		   Map<String,Object> res = new HashMap<>();
+		   res.put("success",false);
+		   res.put("message","server error encountered");
+		   
+		   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+	   }
+	   return null;
    }
 
 }

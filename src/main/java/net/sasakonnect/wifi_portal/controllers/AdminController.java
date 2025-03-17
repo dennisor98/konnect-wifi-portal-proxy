@@ -41,6 +41,7 @@ import net.sasakonnect.wifi_portal.repository.AppRepository;
 import net.sasakonnect.wifi_portal.services.AppService;
 import net.sasakonnect.wifi_portal.services.PaymentService;
 import net.sasakonnect.wifi_portal.services.PortalService;
+import net.sasakonnect.wifi_portal.services.PromotionService;
 import net.sasakonnect.wifi_portal.services.RoleService;
 import net.sasakonnect.wifi_portal.services.UserService;
 
@@ -61,6 +62,8 @@ public class AdminController {
 	AppService appService;
 	@Autowired
 	RoleService roleService;
+	@Autowired
+	PromotionService promotionService;
 	
 	@HasPermission(GlobalPermissionsConstants.CanGetSubscriptions.PERMISSION)
 	@PutMapping("/package/update")
@@ -278,6 +281,21 @@ public class AdminController {
 	  @PutMapping("/user/password/update")
 	  public Object updateAdminUserPassword(@Valid @RequestBody() UpdatePasswordDto pwDto) {
 		  return this.userService.updateAdminPassword(pwDto);
+	  }
+	  
+	  @GetMapping("/promotions/referals")
+	  public Object getReferals(
+			  @RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
+			  @RequestParam(name="pageSize",defaultValue="10") Integer pageSize 
+			  ) {
+		  
+		  //limit a maximum of 100 pageSize
+		  if(pageSize > 100) {
+			  pageSize = 100;
+		  }
+		  PageRequest pageable = PageRequest.of(pageNumber,pageSize).withSort(Sort.Direction.DESC,"createdAt");
+		  
+		  return this.promotionService.getReferalDetails(pageable);
 	  }
 	  
 	  
