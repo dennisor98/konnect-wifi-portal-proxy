@@ -19,8 +19,11 @@ public class TvConnection extends BasePortalDomain {
     @JoinColumn(name="user_id")
     User user;
     
-    @Column()
+    @Column(nullable=true)
     String deviceName;
+    
+    @Column(nullable=true)
+    String vlan;
     
     @Column()
     String macAddress;

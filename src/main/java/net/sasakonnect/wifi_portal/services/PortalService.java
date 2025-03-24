@@ -759,6 +759,8 @@ public class PortalService {
 		if(deviceOpt.isPresent()) {
 			TvConnection device =  deviceOpt.get();
 			device.setUpdatedAt(new Date());
+			device.setDeviceName(tv.getDeviceName());
+			device.setVlan(tv.getVlan());
 			
 			Map<String,Object> res = new HashMap<>();
 			res.put("success",true);
@@ -767,7 +769,7 @@ public class PortalService {
 			return ResponseEntity.status(HttpStatus.OK).body(res);
 		}
 		// create a new connetion record
-		TvConnection connectionBuild = TvConnection.builder().deviceName(tv.getDeviceName()).macAddress(tv.getStaMac()).user(user).build();
+		TvConnection connectionBuild = TvConnection.builder().deviceName(tv.getDeviceName()).macAddress(tv.getStaMac()).vlan(tv.getVlan()).user(user).build();
 		try {
 			this.tvconnectRepository.save(connectionBuild);
 			Map<String,Object> res = new HashMap<>();

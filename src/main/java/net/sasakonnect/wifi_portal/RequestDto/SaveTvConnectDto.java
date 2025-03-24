@@ -9,5 +9,8 @@ public class SaveTvConnectDto {
   @NotNull()
   String staMac;
   
+  @NotNull
+  String vlan;
+  
   String deviceName;
 }
