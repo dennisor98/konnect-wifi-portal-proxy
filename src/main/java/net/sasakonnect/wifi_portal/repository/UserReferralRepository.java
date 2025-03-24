@@ -14,7 +14,7 @@ import net.sasakonnect.wifi_portal.domain.UserReferal;
 public interface UserReferralRepository extends JpaRepository<UserReferal,String>{
 	Optional<UserReferal> findByUser(User user);
 	
-	@Query("SELECT ur FROM UserReferal WHERE ur.referer.user.id =: refId")
+	@Query("SELECT ur FROM UserReferal ur WHERE ur.referer.user.id =:refId")
 	Page<UserReferal> findByReferer(@Param("refId") String refId,Pageable pageable);
 
 }

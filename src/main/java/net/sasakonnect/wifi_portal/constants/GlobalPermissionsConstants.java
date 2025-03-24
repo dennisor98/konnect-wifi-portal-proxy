@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class GlobalPermissionsConstants {
 	public static class CreateRole extends PermissionEntry {
 		public final static String PERMISSION = "can.create.role";
-		public final static String DESCRIPTION = "Create User";
+		public final static String DESCRIPTION = "Create Role";
 		@Override
 		public String getPERMISSION() {
 			return PERMISSION;

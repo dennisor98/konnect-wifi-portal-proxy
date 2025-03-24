@@ -139,6 +139,44 @@ public class PromotionService {
 
        return shuffleString(sb.toString());
    }
+   
+   public Object getReferalCodes(Pageable pageable) {
+	   try {
+		   Page<ReferralCode> referalCodesPage = this.referalRepository.findAll(pageable);
+
+		   var refCodes = referalCodesPage.stream()
+				   .map((ref)->{
+					   Map<String,Object> map = new HashMap<>();
+					   map.put("id",ref.getId());
+					   map.put("createdAt",ref.getCreatedAt());
+					   map.put("updatedAt",ref.getUpdatedAt());
+					   map.put("code", ref.getCode());
+					   map.put("ownerId",ref.getUser().getId());
+					   map.put("phone", ref.getUser().getPhone());
+					   map.put("ownerName", ref.getUser().getFirstname()+" "+ref.getUser().getLastname());
+					   map.put("isActive",ref.getIsActive());
+
+					   return map;
+				   }).collect(Collectors.toList());
+
+		   Map<String,Object> res = new HashMap<>();
+		   res.put("success", true);
+		   res.put("message","Request completed successfully");
+		   res.put("refs",refCodes);
+
+		   return ResponseEntity.status(HttpStatus.OK).body(res);
+	   }catch(Exception ex) {
+		   ex.printStackTrace();
+		   Map<String,Object> res = new HashMap<>();
+		   res.put("success", false);
+		   res.put("message","Server error while processing request");
+
+
+		   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+
+	   }
+
+   }
 
    private static String shuffleString(String input) {
        char[] characters = input.toCharArray();
@@ -158,6 +196,7 @@ public class PromotionService {
 		   var refs = userRefPage.stream()
 				   .map((ref)->{
 					   Map<String,Object> map = new HashMap<>();
+					   map.put("createdAt",ref.getCreatedAt());
 					   map.put("id",ref.getId());
 					   map.put("refererId",ref.getReferer().getUser().getId());
 					   map.put("refererName",ref.getReferer().getUser().getFirstname()+" "+ref.getReferer().getUser().getLastname());
@@ -168,6 +207,7 @@ public class PromotionService {
 		   Map<String,Object> res = new HashMap<>();
 		   res.put("success",true);
 		   res.put("message","Request processed succesfuly");
+		   res.put("refs", refs);
 
 		   return ResponseEntity.status(HttpStatus.OK).body(res);
 	   }catch(Exception ex) {
@@ -180,19 +220,30 @@ public class PromotionService {
    }
    
    
+   
+   
    public Object getReferalsByUserId(String userId,Pageable pageable) {
 	   try {
-		   Optional<User> userOpt = this.userRepository.findById(userId);
-		   if(userOpt.isEmpty()) {
-			   Map<String,Object> res = new HashMap<>();
-			   res.put("success",false);
-			   res.put("message","Invalid userId");
-			   
-			   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-		   }
-		   
-		   var user = userOpt.get();
-		   
+//	
+		  Page<UserReferal> userRefsPage =  this.userReferalRepository.findByReferer(userId, pageable);
+		  var refs = userRefsPage.stream()
+				  .map((ref)->{
+					  Map<String,Object> map = new HashMap<>();
+					   map.put("createdAt",ref.getCreatedAt());
+					   map.put("id",ref.getId());
+					   map.put("refererId",ref.getReferer().getUser().getId());
+					   map.put("refererName",ref.getReferer().getUser().getFirstname()+" "+ref.getReferer().getUser().getLastname());
+					   map.put("refreeId",ref.getUser().getId());
+					   map.put("refreeName",ref.getUser().getFirstname() +" "+ref.getUser().getLastname());
+					   return map;
+				  }).collect(Collectors.toList());
+		  
+		  Map<String,Object> res = new HashMap<>();
+		  res.put("success",true);
+		  res.put("message","Request processed succesfuly");
+		  res.put("refs", refs);
+
+		  return ResponseEntity.status(HttpStatus.OK).body(res);
 		   
 	   }catch(Exception ex) {
 		   ex.printStackTrace();
@@ -202,7 +253,6 @@ public class PromotionService {
 		   
 		   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
 	   }
-	   return null;
    }
 
 }

@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,8 +34,6 @@ import net.sasakonnect.wifi_portal.annotations.BackOfficeAuthFilter;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
 import net.sasakonnect.wifi_portal.annotations.HasPermission;
 import net.sasakonnect.wifi_portal.constants.GlobalPermissionsConstants;
-import net.sasakonnect.wifi_portal.domain.App;
-import net.sasakonnect.wifi_portal.repository.AppRepository;
 import net.sasakonnect.wifi_portal.services.AppService;
 import net.sasakonnect.wifi_portal.services.PaymentService;
 import net.sasakonnect.wifi_portal.services.PortalService;
@@ -283,10 +279,26 @@ public class AdminController {
 		  return this.userService.updateAdminPassword(pwDto);
 	  }
 	  
+	  @GetMapping("/promotions/referalCodes")
+	  public Object getReferalCodes(
+			  @RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
+			  @RequestParam(name="pageSize",defaultValue="10") Integer pageSize
+			  ) {
+		  
+		  //limit a maximum of 100 pageSize
+		  if(pageSize > 100) {
+			  pageSize = 100;
+		  }
+		  PageRequest pageable = PageRequest.of(pageNumber,pageSize).withSort(Sort.Direction.DESC,"createdAt");
+		  
+		  return this.promotionService.getReferalCodes(pageable);
+	  }
+	  
 	  @GetMapping("/promotions/referals")
 	  public Object getReferals(
 			  @RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
-			  @RequestParam(name="pageSize",defaultValue="10") Integer pageSize 
+			  @RequestParam(name="pageSize",defaultValue="10") Integer pageSize,
+			  @RequestParam(name="status",defaultValue="all") String status
 			  ) {
 		  
 		  //limit a maximum of 100 pageSize
@@ -298,6 +310,16 @@ public class AdminController {
 		  return this.promotionService.getReferalDetails(pageable);
 	  }
 	  
+	  @GetMapping("/promotions/referals/searchById")
+	  public Object searchUserReferals(
+			  @RequestParam(name="userId") String userId,
+			  @RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
+			  @RequestParam(name="pageSize",defaultValue="10") Integer pageSize
+			  
+ 			  ) {
+		  PageRequest pageReq =  PageRequest.of(pageNumber,pageSize).withSort(Sort.Direction.DESC,"createdAt");
+		  return this.promotionService.getReferalsByUserId(userId,pageReq);
+	  }
 	  
 	  
 	  

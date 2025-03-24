@@ -14,6 +14,7 @@ import net.sasakonnect.wifi_portal.RequestDto.ConnectTvDto;
 import net.sasakonnect.wifi_portal.RequestDto.CreateAccDto;
 import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
+import net.sasakonnect.wifi_portal.RequestDto.SaveTvConnectDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
@@ -141,8 +142,8 @@ public class PortalController extends BasePortalController{
    }
    
    @PostMapping("connectTv")
-   public Object connectTv(@Valid @RequestBody ConnectTvDto input) {
-	   return this.portalService.initiateTvConnection(input);
+   public Object connectTv(@Valid @RequestBody SaveTvConnectDto input) {
+	   return this.portalService.saveTvConnect(input);
    }
    
    

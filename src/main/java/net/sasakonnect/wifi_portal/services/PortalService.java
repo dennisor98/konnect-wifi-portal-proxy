@@ -1,6 +1,7 @@
 package net.sasakonnect.wifi_portal.services;
 
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import net.sasakonnect.wifi_portal.RequestDto.ConnectTvDto;
 import net.sasakonnect.wifi_portal.RequestDto.KompVlanDto;
 import net.sasakonnect.wifi_portal.RequestDto.PackageByMacDto;
 import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
+import net.sasakonnect.wifi_portal.RequestDto.SaveTvConnectDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
@@ -44,9 +46,11 @@ import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.InternetPackages;
+import net.sasakonnect.wifi_portal.domain.TvConnection;
 import net.sasakonnect.wifi_portal.domain.User;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
 import net.sasakonnect.wifi_portal.repository.PaymentRepository;
+import net.sasakonnect.wifi_portal.repository.TvConnectionRepository;
 import net.sasakonnect.wifi_portal.repository.UserDevicesRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
 import reactor.core.publisher.Mono;
@@ -80,6 +84,8 @@ public class PortalService {
 	UserService userService;
 	@Autowired
 	PaymentRepository paymentRepository;
+	@Autowired
+	TvConnectionRepository tvconnectRepository;
    
 	
 	private String getUserToken(User user) {
@@ -744,6 +750,41 @@ public class PortalService {
 		return ResponseEntity.status(HttpStatus.OK).body(trend);
 	}
 	
+	
+	public Object saveTvConnect(SaveTvConnectDto tv) {
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<TvConnection> deviceOpt = this.tvconnectRepository.findByMacAddress(tv.getStaMac());
+		
+		//update last connection time if the device connection record exist
+		if(deviceOpt.isPresent()) {
+			TvConnection device =  deviceOpt.get();
+			device.setUpdatedAt(new Date());
+			
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",true);
+			res.put("message","Connection updated");
+			
+			return ResponseEntity.status(HttpStatus.OK).body(res);
+		}
+		// create a new connetion record
+		TvConnection connectionBuild = TvConnection.builder().deviceName(tv.getDeviceName()).macAddress(tv.getStaMac()).user(user).build();
+		try {
+			this.tvconnectRepository.save(connectionBuild);
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",true);
+			res.put("message","Connection created");
+			
+			return ResponseEntity.status(HttpStatus.OK).body(res);
+		}catch(Exception ex) {
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",false);
+			res.put("message","Error while processing request");
+			
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+		}
+		
+		
+	}
 	
 	
 
