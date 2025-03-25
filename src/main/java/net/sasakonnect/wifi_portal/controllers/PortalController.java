@@ -150,7 +150,6 @@ public class PortalController extends BasePortalController{
    @PostMapping("/user/refresh/token")
    @RefreshMiddleware()
    public Object createRefreshToken() {
-	   
 	   return this.userService.createRefreshToken();
    }
    

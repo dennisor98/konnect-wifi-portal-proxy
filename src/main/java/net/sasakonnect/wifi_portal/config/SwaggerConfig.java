@@ -34,6 +34,8 @@ public class SwaggerConfig {
 				.description("Localhost Server URL");
 		Server devServer = new Server().url("https://mfood.sasakonnect.net/konnect-wifi-dev")
 				.description("Dev  Server URL");
+		Server ngrokServer = new Server().url("https://goat-select-buck.ngrok-free.app/konnect-wifi-dev")
+				.description("Ngrok  Server URL");
 		Server productionServer = new Server().url("https://mfood.sasakonnect.net/konnect-wifi")
 				.description("Production Server URL");
 		
@@ -56,6 +58,7 @@ public class SwaggerConfig {
 		);
 		openApi.info(info).addServersItem(localServer);
 		openApi.info(info).addServersItem(devServer);
+		openApi.info(info).addServersItem(ngrokServer);
 		openApi.info(info).addServersItem(productionServer);
 
 	

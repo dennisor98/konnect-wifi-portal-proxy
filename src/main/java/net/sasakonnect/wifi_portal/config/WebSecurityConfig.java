@@ -119,7 +119,7 @@ public class WebSecurityConfig {
 //				.requestMatchers("/device/**")
 //				.permitAll()
 				.requestMatchers("/sdk/**").permitAll()
-				.requestMatchers("/notification/**").permitAll()
+				.requestMatchers("/notification/send").permitAll()
 				.requestMatchers("/views/**").permitAll()
                 .requestMatchers("/utility/**").permitAll()		
                 .requestMatchers(HttpMethod.OPTIONS, "/**")

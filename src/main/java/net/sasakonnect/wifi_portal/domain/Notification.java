@@ -27,8 +27,15 @@ public class Notification extends BasePortalDomain {
     @Column(nullable = false)
     private Boolean isPublic;
     
+    @Column(nullable=true)
+    String caption;
+    
     @Column(columnDefinition = "TEXT", nullable = true)
     private String title;
+    
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isRead;
+
 
  
 }
