@@ -737,7 +737,7 @@ public class PaymentService {
 			params.put("PartyA",businessShortCode);
 			params.put("IdentifierType","4");
 			params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
-			params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
+			params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi-dev/payment/result");
 			params.put("Remarks","OK");
 			params.put("Occasion","OK");
 
@@ -884,22 +884,31 @@ public class PaymentService {
 
 			//ensure there is a payment req && the transId processed is unique
 			if(paymentOpt.isPresent() && payOpt.isEmpty()) {
-				var payment = paymentOpt.get();
-				payment.setVerified(true);
-				payment.setIsSuccessful(true);
-				payment.setPaymentPayload(String.valueOf(result));
-				payment.setPaymentVerificationPayload(String.valueOf(result));
-				payment.setAmount(this.getValueByKey("Amount", result));
-				payment.setTxtId(this.getValueByKey("ReceiptNo", result));
-				this.paymentRepository.save(payment);
-				log.error("{payment}"+payment);
-				var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result))
-				.businessShortCode(this.getValueByKey("CreditPartyName", result).split("-")[0]).mobile(this.getValueByKey("DebitPartyName", result).split("-")[0]).platform(payment.getSource())
-				.konnectTransId(payment.getKonnectCheckoutId()).name(this.getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(this.getValueByKey("Amount", result))
-				.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(this.getValueByKey("ReceiptNo", result)).transTime(this.getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(this.getValueByKey("ReasonType", result))
-				.build();
-				log.error(merchantNotification+"{}");
-				this.rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
+				this.threadExceutorBean.addTask(new Runnable() {
+
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						var payment = paymentOpt.get();
+						payment.setVerified(true);
+						payment.setIsSuccessful(true);
+						payment.setPaymentPayload(String.valueOf(result));
+						payment.setPaymentVerificationPayload(String.valueOf(result));
+						payment.setAmount(getValueByKey("Amount", result));
+						payment.setTxtId(getValueByKey("ReceiptNo", result));
+						paymentRepository.save(payment);
+						log.error("{payment}"+payment);
+						var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result))
+								.businessShortCode(getValueByKey("CreditPartyName", result).split("-")[0]).mobile(getValueByKey("DebitPartyName", result).split("-")[0]).platform(payment.getSource())
+								.konnectTransId(payment.getKonnectCheckoutId()).name(getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(getValueByKey("Amount", result))
+								.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(getValueByKey("ReceiptNo", result)).transTime(getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(getValueByKey("ReasonType", result))
+								.build();
+						log.error(merchantNotification+"{}");
+						rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
+					}
+					
+				});
+				
 			}else {
 				this.threadExceutorBean.addTask(new Runnable() {
                   
@@ -917,6 +926,18 @@ public class PaymentService {
 								paymentRepository.save(payment);
 								paymentRepository.flush();
 								log.error("transaction saved");
+								
+							String larkMessage = 
+									"<at id=all></at> \n"+
+									"**Phone Number**: "+getValueByKey("DebitPartyName", result).split("-")[0]+" \n"
+									+"**Name**: "+getValueByKey("DebitPartyName", result).split("-")[1]+" \n"
+									+"**InitiatedTime**: "+convertDateToHumanReadableString(getValueByKey("InitiatedTime", result))+" \n"
+									+"**FinalisedTime**: "+convertDateToHumanReadableString(getValueByKey("FinalisedTime",result))+"\n"
+									+ "**ReceiptNo**: "+getValueByKey("ReceiptNo", result)+" \n"
+									+"**Amount**: "+getValueByKey("Amount", result)+"\n"
+									+"**Reason** :Payment unscheduled";
+
+							larkService.sendPaymentNotification(larkMessage);
 							}
 							
 							log.error("payment exists");
@@ -924,30 +945,7 @@ public class PaymentService {
 						}catch(Exception ex) {
 							ex.printStackTrace();
 						}
-						String message = "Dear Customer, we noticed an issue processing your package. Please share your payment message & phone number here for help: bit.ly/3KPML1U. Ref:"+getValueByKey("ReceiptNo", result);
-						Map<String,Object> params = new HashMap<>();
-						params.put("phone", sanitizedMobile);
-						params.put("message",message);
-						Mono<String> responseMono = webClient.webClient.post().uri(messageUrl)
-								.header("Authorization", "Bearer " + messageAuth)
-								.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
-								.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class)
-								.doOnSuccess(response -> log.info("Response",response))
-								.doOnError(error-> log.error("Request failed",error));
-						String json =  responseMono.block();
-						System.out.println("{json}"+json);
 						
-					String larkMessage = 
-							"<at id=all></at> \n"+
-							"**Phone Number**: "+getValueByKey("DebitPartyName", result).split("-")[0]+" \n"
-							+"**Name**: "+getValueByKey("DebitPartyName", result).split("-")[1]+" \n"
-							+"**InitiatedTime**: "+convertDateToHumanReadableString(getValueByKey("InitiatedTime", result))+" \n"
-							+"**FinalisedTime**: "+convertDateToHumanReadableString(getValueByKey("FinalisedTime",result))+"\n"
-							+ "**ReceiptNo**: "+getValueByKey("ReceiptNo", result)+" \n"
-							+"**Amount**: "+getValueByKey("Amount", result)+"\n"
-							+"**Reason** :Payment unscheduled";
-
-					larkService.sendPaymentNotification(larkMessage);
 					}
 
 				});	

@@ -23,6 +23,7 @@ import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.RequestDto.sdk.PaymentRequest;
 import net.sasakonnect.wifi_portal.annotations.PaymentSdkFilter;
+import net.sasakonnect.wifi_portal.annotations.RateLimit;
 import net.sasakonnect.wifi_portal.beans.AppRequestBean;
 import net.sasakonnect.wifi_portal.beans.PackagePricesBean;
 import net.sasakonnect.wifi_portal.services.PaymentService;
@@ -99,7 +100,8 @@ public class PaymentSdkController {
 
 
 	@ApiOperation(value = "Get Transaction status By Id", notes = "This endpoint gets transaction status by Id")
-	// @PaymentSdkFilter
+//	 @PaymentSdkFilter
+	 @RateLimit(maxRequests = 5, durationSeconds = 60)
 	@PostMapping("transaction/status/query")
 	public Object getTxStatusById(@Valid @RequestBody PollTxStatusDto req,
  			@RequestHeader(value = "App-Key") 

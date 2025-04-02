@@ -28,6 +28,8 @@ import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
 import net.sasakonnect.wifi_portal.RequestDto.ToolkitPayDto;
 import net.sasakonnect.wifi_portal.ResponseDto.StkCallbackResponseDTO;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
+import net.sasakonnect.wifi_portal.annotations.RateLimit;
+import net.sasakonnect.wifi_portal.beans.ThreadExecuterBean;
 import net.sasakonnect.wifi_portal.domain.Payment;
 import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import net.sasakonnect.wifi_portal.services.AuthService;
@@ -53,7 +55,8 @@ public class PaymentController {
 	RedisService redisService;
 	@Autowired
 	PaymentRepository paymentRepository;
-
+	@Autowired
+	ThreadExecuterBean threadExceutorBean;
 	//	@Autowired
 	//	MessagingService messageService;
 
@@ -103,6 +106,7 @@ public class PaymentController {
    }
 //   
    @PostMapping("/result")
+   @RateLimit(maxRequests = 10, durationSeconds = 60)
    public void mpesaInit(@Valid @RequestBody() String result) throws Exception {
 	  log.info("{result}"+result);
 	  try {
