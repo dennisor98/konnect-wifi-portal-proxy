@@ -819,7 +819,7 @@ public class PaymentService {
 		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).deviceMac(req.getStaMac().trim()).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(mobile).isSuccessful(false).verified(false).source("super-app").build();
+		var payment = Payment.builder().app(app).deviceMac(req.getStaMac()).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(mobile).isSuccessful(false).verified(false).source("super-app").build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
