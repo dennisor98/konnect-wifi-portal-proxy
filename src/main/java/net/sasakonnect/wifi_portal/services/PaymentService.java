@@ -905,7 +905,7 @@ public class PaymentService {
 								.build();
 						log.error(merchantNotification+"{}");
 						rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
-					}
+//					}
 					
 //				});
 				
