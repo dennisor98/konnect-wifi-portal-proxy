@@ -884,10 +884,10 @@ public class PaymentService {
 
 			//ensure there is a payment req && the transId processed is unique
 			if(paymentOpt.isPresent() && payOpt.isEmpty()) {
-				this.threadExceutorBean.addTask(new Runnable() {
+//				this.threadExceutorBean.addTask(new Runnable() {
 
-					@Override
-					public void run() {
+//					@Override
+//					public void run() {
 						// TODO Auto-generated method stub
 						var payment = paymentOpt.get();
 						payment.setVerified(true);
@@ -907,7 +907,7 @@ public class PaymentService {
 						rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 					}
 					
-				});
+//				});
 				
 			}else {
 				this.threadExceutorBean.addTask(new Runnable() {
