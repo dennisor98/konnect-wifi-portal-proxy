@@ -737,7 +737,7 @@ public class PaymentService {
 			params.put("PartyA",businessShortCode);
 			params.put("IdentifierType","4");
 			params.put("ResultURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
-			params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi-dev/payment/result");
+			params.put("QueueTimeOutURL","https://mfood.sasakonnect.net/konnect-wifi/payment/result");
 			params.put("Remarks","OK");
 			params.put("Occasion","OK");
 
