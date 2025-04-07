@@ -46,7 +46,7 @@ public class WebSecurityConfig {
 
 	UserService userService;
 	JwtAuthenticationFilter jwtAuthenticationFilter;
-	
+
 
 	WebSecurityConfig(UserService userService, JwtAuthenticationFilter jwtAuthenticationFilter) {
 		this.userService = userService;
@@ -77,10 +77,10 @@ public class WebSecurityConfig {
 
 		// Allow credentials (e.g., cookies)
 		configuration.setAllowCredentials(true);
-		
-		
+
+
 		// Ensure the `Access-Control-Allow-Origin` header is sent
-	    configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin", "Authorization"));
+		configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin", "Authorization"));
 
 
 		// Set max age (in seconds) for preflight requests
@@ -110,22 +110,20 @@ public class WebSecurityConfig {
 						"/portal/confirmOTPV2","/payment/callBack",
 						"/payment/confirm","/payment/callbackResolver",
 						"/payment/result",
-//						"/portal/getSubscriptionpackages",
+						//						"/portal/getSubscriptionpackages",
 						"/payment/mpesa/confirmTransaction",
+						"/pnal/**",
 						"/user/login")
 				.permitAll()
-//				.requestMatchers("/payment/**")
-//				.permitAll()
-//				.requestMatchers("/device/**")
-//				.permitAll()
+
 				.requestMatchers("/sdk/**").permitAll()
 				.requestMatchers("/notification/send").permitAll()
 				.requestMatchers("/views/**").permitAll()
-                .requestMatchers("/utility/**").permitAll()		
-                .requestMatchers(HttpMethod.OPTIONS, "/**")
+				.requestMatchers("/utility/**").permitAll()		
+				.requestMatchers(HttpMethod.OPTIONS, "/**")
 				.permitAll() // Permit OPTIONS requests
 				.anyRequest().authenticated()
-		);
+				);
 		http.httpBasic(basic -> basic.disable());
 		http.csrf(csrf -> csrf.disable());
 		http.cors(cors -> cors.disable());
@@ -153,24 +151,22 @@ public class WebSecurityConfig {
 
 
 
-//	private SecurityScheme createAPIKeyScheme() {
-//		return new SecurityScheme().type(SecurityScheme.Type.HTTP).bearerFormat("JWT").scheme("bearer");
-//	}
+
 
 	@Bean
-	 WebMvcConfigurer corsConfigurer() {
+	WebMvcConfigurer corsConfigurer() {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**").allowedMethods("GET", "POST", "PUT", "DELETE")
-				        .allowedOrigins("*")
-						.allowedHeaders("*");
+				.allowedOrigins("*")
+				.allowedHeaders("*");
 			}
 		};
 	}
 
 
-	
+
 	@Bean
 	GlobalOpenApiCustomizer globalOpenApiConstomizer() {
 		Object example_token = "bearertoken";
@@ -180,7 +176,7 @@ public class WebSecurityConfig {
 					if ("/portal/user/refresh/token".equals(path)) {
 						operation.addParametersItem(
 								new HeaderParameter().name("refresh-token-header")
-										.allowEmptyValue(false).example("ej....").required(false));
+								.allowEmptyValue(false).example("ej....").required(false));
 						return;
 					}
 				});
@@ -198,7 +194,7 @@ public class WebSecurityConfig {
 		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 		return objectMapper;
 	}
-	
+
 	@Bean
 	FilterRegistrationBean<RequestContextFilter> requestContextFilter() {
 		FilterRegistrationBean<RequestContextFilter> registrationBean = new FilterRegistrationBean<>();
@@ -207,9 +203,9 @@ public class WebSecurityConfig {
 		return registrationBean;
 	}
 	@Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return builder.build();  // Use the builder to create the RestTemplate instance
-    }
+	RestTemplate restTemplate(RestTemplateBuilder builder) {
+		return builder.build();  // Use the builder to create the RestTemplate instance
+	}
 
 
 }

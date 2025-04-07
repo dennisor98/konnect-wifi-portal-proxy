@@ -451,7 +451,8 @@ public class PortalService {
 					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 			String responseJson = responseMono.block();
 			if(responseJson !=null) {
-				return new Gson().fromJson(responseJson,Map.class);
+			   var res = new Gson().fromJson(responseJson,Map.class);
+			   return res;
 			}
 
 		}
@@ -473,7 +474,8 @@ public class PortalService {
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 		String responseJson = responseMono.block();
 		if(responseJson !=null) {
-			return new Gson().fromJson(responseJson,Map.class);
+			var res = new Gson().fromJson(responseJson,Map.class);
+			return res;
 		}
 
 
