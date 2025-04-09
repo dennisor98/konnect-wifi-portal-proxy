@@ -105,7 +105,7 @@ public class PnalService {
 						failed.add(error);
 					}
 					
-					Optional<VirtualSub> vsubOpt =  vsubRepository.findFirstByUserAndActiveTrue(userOpt.get());
+					Optional<VirtualSub> vsubOpt =  vsubRepository.findFirstByUserAndIsActiveTrue(userOpt.get());
 					if(vsubOpt.isPresent()) {
 						var vsubBuild =  VirtualSub.builder()
 								.amount(s.getAmount())
