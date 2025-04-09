@@ -105,16 +105,20 @@ public class PnalService {
 						failed.add(error);
 					}
 					
-					var vsubBuild =  VirtualSub.builder()
-							.amount(s.getAmount())
-							.isActive(true)
-							.name("GIFT")
-							.packageId(paymentService.getPackageIdByCost(s.getAmount()))
-							.subId(generateUniqueSubId())
-							.user(userOpt.get())
-							.build();
+					Optional<VirtualSub> vsubOpt =  vsubRepository.findFirstByUserAndActiveTrue(userOpt.get());
+					if(vsubOpt.isPresent()) {
+						var vsubBuild =  VirtualSub.builder()
+								.amount(s.getAmount())
+								.isActive(true)
+								.name("GIFT")
+								.packageId(paymentService.getPackageIdByCost(s.getAmount()))
+								.subId(generateUniqueSubId())
+								.user(userOpt.get())
+								.build();
+
+						vsubList.add(vsubBuild);
+					}
 					
-					vsubList.add(vsubBuild);
 					
 					return vsubList;
 				}).collect(Collectors.toList());

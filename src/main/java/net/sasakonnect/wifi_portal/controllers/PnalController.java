@@ -11,12 +11,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import net.sasakonnect.wifi_portal.RequestDto.BulkVirtualSubDto;
 import net.sasakonnect.wifi_portal.RequestDto.VirtualSubDto;
+import net.sasakonnect.wifi_portal.annotations.BackOfficeAuthFilter;
 import net.sasakonnect.wifi_portal.annotations.CustomController;
 import net.sasakonnect.wifi_portal.services.PnalService;
 
 @CustomController
 @RequestMapping("pnal")
 @Tag(name="PNAL")
+@BackOfficeAuthFilter()
 public class PnalController {
 	@Autowired
 	PnalService pnalService;

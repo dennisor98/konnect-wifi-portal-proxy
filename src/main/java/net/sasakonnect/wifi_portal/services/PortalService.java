@@ -161,7 +161,6 @@ public class PortalService {
 		Map<String,Object> map = new HashMap<>();
 		Mono<PackageResponseDto> responseMono = this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_PACKAGES)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(map)))
-				//				.header("Authorization", "Basic " + authService.getBasicAuth())
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(PackageResponseDto.class);
 		PackageResponseDto responseJson = responseMono.block();
 		if(responseJson !=null) {
@@ -176,7 +175,6 @@ public class PortalService {
 		List<InternetPackages> packagesList = this.packageRepository.findAll(Sort.by(Sort.Direction.ASC,"cost"));
 		var packages = packagesList.stream()
 				.filter(p -> {
-			        // If it's a gift and vsubList is empty, skip it
 			        if (p.getIsGift() && vsubLists.isEmpty()) {
 			            return false;
 			        }

@@ -112,7 +112,6 @@ public class WebSecurityConfig {
 						"/payment/result",
 						//						"/portal/getSubscriptionpackages",
 						"/payment/mpesa/confirmTransaction",
-						"/pnal/**",
 						"/user/login")
 				.permitAll()
 
