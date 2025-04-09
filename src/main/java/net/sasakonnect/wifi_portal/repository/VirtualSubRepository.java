@@ -11,6 +11,6 @@ import net.sasakonnect.wifi_portal.domain.VirtualSub;
 public interface VirtualSubRepository extends JpaRepository<VirtualSub,String>{
     List<VirtualSub> findByUser(User user);
     Optional<VirtualSub> findBySubId(String subId);
-    Optional<VirtualSub> findFirstByUserAndActiveTrue(User user);
+    Optional<VirtualSub> findFirstByUserAndIsActiveTrue(User user);
 
 }
