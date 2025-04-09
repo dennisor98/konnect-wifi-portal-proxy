@@ -200,6 +200,20 @@ public class GlobalPermissionsConstants {
 		}
 	}
 	
+	public static class CanGenerateGiftSub extends PermissionEntry{
+		public final static String PERMISSION = "can.generate.gift.sub";
+		public final static String DESCRIPTION = "Generate gift subscription";
+		@Override
+		public String getPERMISSION() {
+			return PERMISSION;
+		}
+
+		@Override
+		public String getDESCRIPTION() {
+			return DESCRIPTION;
+		}
+	}
+	
 	
 	
 	public static Map<String, String> scan() {

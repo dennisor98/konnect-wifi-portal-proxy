@@ -61,7 +61,7 @@ public class AdminController {
 	@Autowired
 	PromotionService promotionService;
 	
-	@HasPermission(GlobalPermissionsConstants.CanGetSubscriptions.PERMISSION)
+	@HasPermission(GlobalPermissionsConstants.CanGenerateGiftSub.PERMISSION)
 	@PutMapping("/package/update")
 	public Object updatePackage(@Valid @RequestBody UpdatePackageDto pkg) {
 		return this.portalService.updatePackage(pkg);
