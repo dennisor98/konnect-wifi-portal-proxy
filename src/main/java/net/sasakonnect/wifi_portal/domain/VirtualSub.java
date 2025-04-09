@@ -21,7 +21,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VirtualSub extends BasePortalDomain implements Serializable{
-
 	private static final long serialVersionUID = 8106501304964450466L;
 	
 	@ManyToOne()

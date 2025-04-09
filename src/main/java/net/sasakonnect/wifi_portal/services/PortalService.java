@@ -1,6 +1,7 @@
 package net.sasakonnect.wifi_portal.services;
 
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,19 +44,24 @@ import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
 import net.sasakonnect.wifi_portal.ResponseDto.InternetPackageDto;
 import net.sasakonnect.wifi_portal.ResponseDto.PackageResponseDto;
 import net.sasakonnect.wifi_portal.ResponseDto.GetTokenDto;
+import net.sasakonnect.wifi_portal.beans.AdvancedUniqueKeyGenerator;
 import net.sasakonnect.wifi_portal.beans.DefaultWebClientBean;
 import net.sasakonnect.wifi_portal.beans.PortalWebClientBean;
+import net.sasakonnect.wifi_portal.beans.ThreadExecuterBean;
 import net.sasakonnect.wifi_portal.constants.PortalEndpointsConstant;
 import net.sasakonnect.wifi_portal.domain.InternetPackages;
 import net.sasakonnect.wifi_portal.domain.TvConnection;
 import net.sasakonnect.wifi_portal.domain.User;
+import net.sasakonnect.wifi_portal.domain.VirtualSub;
 import net.sasakonnect.wifi_portal.repository.InternetPackageRepository;
 import net.sasakonnect.wifi_portal.repository.PaymentRepository;
 import net.sasakonnect.wifi_portal.repository.TvConnectionRepository;
 import net.sasakonnect.wifi_portal.repository.UserDevicesRepository;
 import net.sasakonnect.wifi_portal.repository.UserRepository;
+import net.sasakonnect.wifi_portal.repository.VirtualSubRepository;
 import reactor.core.publisher.Mono;
-
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 @Service
 @Slf4j
@@ -83,10 +90,17 @@ public class PortalService {
 	@Autowired
 	UserService userService;
 	@Autowired
+	PnalService pnalService;
+	@Autowired
+	PaymentService paymentService;
+	@Autowired
 	PaymentRepository paymentRepository;
 	@Autowired
 	TvConnectionRepository tvconnectRepository;
-   
+	@Autowired
+	ThreadExecuterBean threadExceutorBean;
+	@Autowired
+	VirtualSubRepository vsubRepository;
 	
 	private String getUserToken(User user) {
 		if(user.getDevId() == null) {
@@ -143,6 +157,7 @@ public class PortalService {
 
 
 	public Object getInternetPackages() {
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Map<String,Object> map = new HashMap<>();
 		Mono<PackageResponseDto> responseMono = this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.GET_PACKAGES)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(new Gson().toJson(map)))
@@ -155,13 +170,18 @@ public class PortalService {
 			res.put("success",resp.getSuccess());
 			res.put("payload", resp.getPayload());
 			this.updatePackages(resp.getPayload());
-			//		   if(resp.getStatus() ==  HttpStatus.OK) {
-			//			   
-			//		   }
-			//			return ResponseEntity.status(HttpStatus.OK).body(res);
+			
 		}
+		List<VirtualSub> vsubLists =  this.pnalService.getUserVirtualSub();
 		List<InternetPackages> packagesList = this.packageRepository.findAll(Sort.by(Sort.Direction.ASC,"cost"));
 		var packages = packagesList.stream()
+				.filter(p -> {
+			        // If it's a gift and vsubList is empty, skip it
+			        if (p.getIsGift() && vsubLists.isEmpty()) {
+			            return false;
+			        }
+			        return true;
+			    })
 				.map(p->{
 					Map<String,Object> pkgs = new HashMap<>();
 					pkgs.put("createdAt",String.valueOf(p.getCreatedAt()));
@@ -296,15 +316,83 @@ public class PortalService {
 		params.put("userId",user.getUserId());
 		params.put("konnecter",user.getUserId());
 		params.put("authAttempt",new Gson().toJson(auth));
+		Optional<VirtualSub> vsubOpt =  this.pnalService.getVsubByID(deviceDto.getCode());
+		if(vsubOpt.isPresent()) {
+			var vsub = vsubOpt.get();
+			if(!vsub.getIsActive()) {
+				Map<String,Object> res = new HashMap<>();
+				res.put("success",false);
+				res.put("message","Inactive subscription");
+				
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+			}
+			
+			//make a subscription creation request to portal micro service
+			ObjectNode resp =  JsonNodeFactory.instance.objectNode();
+		     resp.put("TransType","Merchant Pay Online");
+		     resp.put("TransID",this.pnalService.generateGiftTransId());
+		     resp.put("TransAmount",vsub.getAmount());
+		     resp.put("TransTime", System.currentTimeMillis());
+		     resp.put("BusinessShortCode","5467232");
+		     resp.put("packageId",vsub.getPackageId());
+		     resp.put("BillRefNumber",this.pnalService.generateGiftTransId());
+		     resp.put("Mobile",user.getPhone());
+		     resp.put("name",user.getFirstname()+" "+user.getLastname());
+		     resp.put("userId",user.getUserId());
+		     resp.put("KonnectTransID",AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase());
+		     resp.put("ResultCode","0");
+		     resp.put("staMac",authAttempt.getStaMac());
+		     resp.put("initiator","super-app");
+		     log.error(resp+"{body}");
+		    
+	        
+		     threadExceutorBean.addTask(new Runnable() {
+
+		    	 @Override
+		    	 public void run() {
+		    		 log.error("Executing task...");
+		    		 try {
+		    			 Mono<?> respMono = portalWebClient.webClient.post()
+		    					 .uri("https://api.sasakonnect.net/KonnectC2BConfirmationURL")
+		    					 .contentType(MediaType.APPLICATION_JSON)
+		    					 .body(BodyInserters.fromValue(resp.toPrettyString()))
+		    					 .accept(MediaType.APPLICATION_JSON)
+		    					 .exchangeToMono(clientResponse -> {
+		    						 HttpStatusCode statusCode = clientResponse.statusCode();
+
+		    						
+
+		    						 return clientResponse.bodyToMono(String.class);
+		    					 });
+		    					
+
+		    			 var response = respMono.block();
+		    			 vsub.setIsActive(false);
+		    			 vsubRepository.save(vsub);
+		    			 vsubRepository.flush();
+		    			 log.error("Response: {}", response);
+		    		 }catch(Exception ex) {
+		    			 ex.printStackTrace();
+		    		 }
+		    	 }
+		     });
+		}
+		
+		
 		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.ADD_DEVICE_TO_PACKAGE)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(params))
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 		String responseJson = responseMono.block();
 
 		if(responseJson !=null) {
-			return new Gson().fromJson(responseJson,Map.class);
+			var res = new Gson().fromJson(responseJson,Map.class);
+			log.error("{response} "+res);
+			return res;
 		}
-
+		
+		Map<String,Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("payload",new ArrayList<>());
 		return null;
 	}
 
@@ -468,13 +556,24 @@ public class PortalService {
 
 		log.error("{body}"+data);
 
-
+        var virtSubs =  this.pnalService.getUserVirtualPackages();
 		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(data))
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 		String responseJson = responseMono.block();
 		if(responseJson !=null) {
-			var res = new Gson().fromJson(responseJson,Map.class);
+			Type type = new TypeToken<Map<String, Object>>(){}.getType();
+			Gson gson = new Gson();
+			Map<String, Object> res = gson.fromJson(responseJson, type);
+
+			List<Map<String, Object>> payload = (List<Map<String, Object>>) res.get("payload");
+			if (payload == null) {
+			    payload = new ArrayList<>();
+			    res.put("payload", payload);
+			}
+
+			payload.addAll(virtSubs);
+
 			return res;
 		}
 

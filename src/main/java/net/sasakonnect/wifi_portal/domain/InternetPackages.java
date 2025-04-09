@@ -45,6 +45,9 @@ public class InternetPackages  extends BasePortalDomain{
    @Column()
    String description;
    
+   @Column(columnDefinition = "BOOLEAN DEFAULT FALSE",nullable = false)
+   Boolean isGift;
+   
    @Column()
    Boolean isNew;
    

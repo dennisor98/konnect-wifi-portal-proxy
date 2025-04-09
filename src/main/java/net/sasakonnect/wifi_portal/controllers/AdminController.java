@@ -284,7 +284,6 @@ public class AdminController {
 			  @RequestParam(name="pageNumber",defaultValue="0") Integer pageNumber,
 			  @RequestParam(name="pageSize",defaultValue="10") Integer pageSize
 			  ) {
-		  
 		  //limit a maximum of 100 pageSize
 		  if(pageSize > 100) {
 			  pageSize = 100;
