@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 import net.sasakonnect.wifi_portal.RequestDto.BulkVirtualSubDto;
@@ -73,6 +74,8 @@ public class PnalService {
 		}
 	}
 	
+	
+	@Transactional
 	public Object createBulkVirtualSubs(List<VirtualSubDto> vsubs) {
 		if(vsubs.isEmpty()) {
 			Map<String,Object> res =  new HashMap<>();
@@ -150,6 +153,7 @@ public class PnalService {
 	}
 	
 	
+	@Transactional
 	public Object createBulkVirtualSubsV2(BulkVirtualSubDto vsubs) {
 		if(vsubs.getContacts().isEmpty()) {
 			Map<String,Object> res =  new HashMap<>();
@@ -161,10 +165,6 @@ public class PnalService {
 		
 		List<VirtualSub> vsubList =  new ArrayList<>();
 		List<Map<String,Object>> failed =  new ArrayList<>();
-//		this.threadExecBean.addTask(new  Runnable(){
-
-//			@Override
-//			public void run() {
 				vsubs.getContacts().stream()
 				.map((c)->{
 					String mobile = c.trim();
@@ -198,9 +198,6 @@ public class PnalService {
 				}).collect(Collectors.toList());
 				
 				
-//			}
-//			
-//		});
 		if(!vsubList.isEmpty()) {
 			try {
 				vsubRepository.saveAll(vsubList);
@@ -254,7 +251,7 @@ public class PnalService {
 		        map.put("amount", sub.getAmount());
 		        map.put("active", sub.getIsActive() ? 1.0 : 0.0);
 		        map.put("uid", sub.getSubId());
-		        map.put("devices",""); // or real devices if available
+		        map.put("devices",""); 
 		       
 
 		        resultList.add(map);

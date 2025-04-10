@@ -513,6 +513,14 @@ public class UserService  implements UserDetailsService{
 		}catch(Exception ex) {
 			ex.printStackTrace();
 		}
+		
+		Map<String,Object> body = new HashMap<>();
+		body.put("phone",payload.getPhone());
+		Mono<String> responseMono = this.defaultClientBean.webClient.post().uri("https://gw.sasakonnect.net/mfoodplus/superapp/new-user")
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		String responseJson = responseMono.block();
+		
 	}
 
 

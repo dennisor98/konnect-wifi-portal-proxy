@@ -139,6 +139,7 @@ public class PaymentService {
 		this.rabbitTemplate = rabbitTemplate;
 	}
 
+	@Transactional
 	private Payment saveOrUpdatePayment(PaymentRequest payment, App app, String mpesaCheckoutId) {
 		// Check if a payment with the same konnectCheckoutId exists
 		Optional<Payment> existingPayment = paymentRepository.findByKonnectCheckoutId(payment.getKonnectCheckoutID());
@@ -155,6 +156,7 @@ public class PaymentService {
 		return null;
 	}
 
+	@Transactional
 	private Payment saveOrUpdatePaymentMessage(String message, String konnectCheckoutId) {
 		// Check if a payment with the same konnectCheckoutId exists
 		Optional<Payment> existingPayment = paymentRepository.findByKonnectCheckoutId(konnectCheckoutId);
@@ -171,6 +173,7 @@ public class PaymentService {
 	}
 
 	@RabbitListener(queues = "paymentRequestQueue")
+	@Transactional
 	public void handlePaymentRequest(String jsonPayload) {
 		try {
 			PaymentRequest paymentRequest = new ObjectMapper().readValue(jsonPayload, PaymentRequest.class);
@@ -194,6 +197,7 @@ public class PaymentService {
 	
 	
 	@RabbitListener(queues = "transactionConfirmedNotificationQueue")
+	@Transactional
 	public void handleTransactionConfirmationNotification(MerchantTransactionNotificationDto payment) {
 		String transAmount = payment.getTransAmount();
 		if (transAmount.contains(".")) {
@@ -244,6 +248,7 @@ public class PaymentService {
 	}
 	
 	@RabbitListener(queues = "transactionCallBackNotificationQueue")
+	@Transactional
 	public void handleTransactionConfirmationCallBackNotification(MerchantTransactionNotificationDto payment,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		try {
 			log.error("notifier called.."+payment);
@@ -323,6 +328,7 @@ public class PaymentService {
 	}
 
 	@RabbitListener(queues = "failedPaymentNotificationQueue0")
+	@Transactional
 	public void handleFailedPaymentNotification0(MerchantTransactionNotificationDto payment,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		threadExceutorBean.addTask(new Runnable() {
 
@@ -380,6 +386,7 @@ public class PaymentService {
 	}
 	
 	@RabbitListener(queues = "failedPaymentNotificationQueue1")
+	@Transactional
 	public void handleFailedPaymentNotification1(MerchantTransactionNotificationDto payment,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		threadExceutorBean.addTask(new Runnable() {
 			@Override
@@ -434,6 +441,7 @@ public class PaymentService {
 	}
 	
 	@RabbitListener(queues = "failedPaymentNotificationQueue2")
+	@Transactional
 	public void handleFailedPaymentNotification2(MerchantTransactionNotificationDto payment, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		threadExceutorBean.addTask(new Runnable() {
 
@@ -487,6 +495,7 @@ public class PaymentService {
 
 
 	@RabbitListener(queues = "checkOutIdConfirmationQueue")
+	@Transactional
 	public void checkOutIDConfirmationQueue(PaymentRequest paymentRequest, Channel channel,
 			@Header(AmqpHeaders.DELIVERY_TAG) long tag) {
 		threadExceutorBean.addTask(new Runnable() {
@@ -512,14 +521,6 @@ public class PaymentService {
 
 		});
 	}
-	//	public Object mpesacallBackUrl(Object request){
-	//		log.error("{callBack} "+request);
-	//        rabbitTemplate.convertAndSend("transactionExchange","transaction.callbackNotification",request);
-	//
-	//		return ResponseEntity.status(HttpStatus.OK);
-	//	}
-	//	
-
 
 
 	public Object stkPush(StkPushDto stk) {
@@ -873,7 +874,7 @@ public class PaymentService {
 	
 	
 	
-	
+	@Transactional
 	public void processMpesaStatusResult(MpesaResultDto result) {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
@@ -971,6 +972,7 @@ public class PaymentService {
         return humanReadable;
 
     }
+	
 	
 	public void processMpesaCallBack(StkCallbackResponseDTO paymentCallBack) {
 		var stkCall = paymentCallBack.getBody().getStkCallback();
