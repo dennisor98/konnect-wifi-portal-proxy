@@ -126,6 +126,8 @@ public class PortalController extends BasePortalController{
 	   return this.portalService.mpesaStkPush(stk);
    }
    
+   
+   
    @PostMapping("getActiveSubscriptionrenewalsByPhone")
    public Object getActiveSubscriptionrenewalsByPhone(@Valid @RequestBody SendOtpDto input) {
 	   return this.portalService.getUserSubscriptionsByPhone(input.getPhone());

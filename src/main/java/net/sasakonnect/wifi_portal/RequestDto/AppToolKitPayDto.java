@@ -9,4 +9,6 @@ public class AppToolKitPayDto {
 	String mobileNumber;
 	
 	String staMac;
+	
+    Boolean actNow;
 }

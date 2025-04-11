@@ -780,8 +780,8 @@ public class PaymentService {
 		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
 		log.error("payload",req.getAuthAttempt());
-		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).source(app.getName())
-				      .amount(String.valueOf(req.getAmount())).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
+		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).source(app.getName()).activateNow(req.getActNow())
+				.amount(String.valueOf(req.getAmount())).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -820,7 +820,16 @@ public class PaymentService {
 		String mobile = "254"+req.getMobileNumber().substring(req.getMobileNumber().length() -9);
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		var payment = Payment.builder().app(app).deviceMac(req.getStaMac()).idUser(user.getUserId()).konnectCheckoutId(payment_checkoutId).user(user).mobileNumber(mobile).isSuccessful(false).verified(false).source("super-app").build();
+		var payment = Payment.builder()
+				.app(app)
+				.deviceMac(req.getStaMac())
+				.idUser(user.getUserId())
+				.konnectCheckoutId(payment_checkoutId)
+				.user(user).mobileNumber(mobile)
+				.isSuccessful(false).verified(false)
+				.source("super-app").activateNow(req.getActNow())
+				.build();
+		
 		this.paymentRepository.save(payment);
 		return payment_checkoutId;
 	}
@@ -899,7 +908,7 @@ public class PaymentService {
 						payment.setTxtId(getValueByKey("ReceiptNo", result));
 						paymentRepository.save(payment);
 						log.error("{payment}"+payment);
-						var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result))
+						var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result)).actNow(payment.getActivateNow())
 								.businessShortCode(getValueByKey("CreditPartyName", result).split("-")[0]).mobile(getValueByKey("DebitPartyName", result).split("-")[0]).platform(payment.getSource())
 								.konnectTransId(payment.getKonnectCheckoutId()).name(getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(getValueByKey("Amount", result))
 								.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(getValueByKey("ReceiptNo", result)).transTime(getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(getValueByKey("ReasonType", result))

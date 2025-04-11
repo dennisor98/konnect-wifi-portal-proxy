@@ -39,6 +39,7 @@ import net.sasakonnect.wifi_portal.RequestDto.PollMpesaDto;
 import net.sasakonnect.wifi_portal.RequestDto.SaveTvConnectDto;
 import net.sasakonnect.wifi_portal.RequestDto.SendOtpDto;
 import net.sasakonnect.wifi_portal.RequestDto.StkPushDto;
+import net.sasakonnect.wifi_portal.RequestDto.StkPushDtoV1;
 import net.sasakonnect.wifi_portal.RequestDto.TillConfirmDto;
 import net.sasakonnect.wifi_portal.RequestDto.UpdatePackageDto;
 import net.sasakonnect.wifi_portal.ResponseDto.InternetPackageDto;
@@ -519,6 +520,44 @@ public class PortalService {
 		}
 		return null;
 	}
+	
+	public Object mpesaStkPush(StkPushDtoV1 tillDto) {
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		var data = new HashMap<>();
+
+		String mobile = null;
+		if(tillDto.getPhone() !=null) {
+			mobile = tillDto.getPhone().trim();
+			if(mobile.length() < 9) {
+				Map<String,Object> map = new HashMap<>();
+				map.put("success", "false");
+				map.put("message","Phone must be at least 9 digits");
+
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+			}
+		}
+
+
+		data.put("firstname", user.getFirstname());
+		data.put("phone",mobile !=null ? "+254"+ mobile.substring(mobile.length() -9 ) : user.getPhone().trim());
+		data.put("subscriptionPlanId", tillDto.getSubscriptionPlanId());
+		data.put("ipAddress","");
+		data.put("authAttempt","");
+		data.put("userId",user.getUserId());
+		data.put("amount","");
+		data.put("smsContent","");
+		data.put("initiator","super-app");
+		data.put("actNow",tillDto.getActNow() ? "true":"false");
+		var body = new Gson().toJson(data);
+		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.BUY_PACKAGE_THOUGH_MPESA)
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		String responseJson = responseMono.block();
+		if(responseJson !=null) {
+			return new Gson().fromJson(responseJson,Map.class);
+		}
+		return null;
+	}
 
 	public Object getUserSubscriptionsByPhone(String phone) {
 		var mobile = "+254"+phone.substring(phone.length() -9);
@@ -578,6 +617,8 @@ public class PortalService {
 
 		return null;
 	}
+	
+	
 
 	public Object getUserSubscriptionsByUserId(String phone) {
 		Optional<User> userOpt =  this.userRepository.findByPhone(phone);
@@ -646,107 +687,10 @@ public class PortalService {
 
 
 
-	public Object initiateTvConnection(ConnectTvDto tvconnect) {
-		String pageType = null;
-		if(tvconnect.getVlan() !=null && tvconnect.getMode() !=null) {
-			if(tvconnect.getMode().equalsIgnoreCase("gpon")) {
-				pageType = "remote";
-			}else {
-				pageType = "100";
-			}
-			String requestBody = "pagetype="+pageType+"&vlan="+tvconnect.getVlan()+"&staMac="+tvconnect.getStaMac();
-			log.error(requestBody+"{req}");
-			Mono<String> responseMono =  this.defaultWeclientBean.webClient.post().uri(PortalEndpointsConstant.WEB_PORTAL_AUTH)
-
-					.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-					.bodyValue(requestBody)
-					.header("Authorization","Basic JDJhJDEwJExhQWg1eGhjbzpaMGhLSng1UnZ5bGVHNEhwdkQ3")
-					.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-
-			String responseJson = responseMono.block();
-			if(responseJson !=null) {
-				return new Gson().fromJson(responseJson,Map.class);
-			}
-		}
-		//calculate subnet from localIp
-		String localIp = tvconnect.getStaIp();
-
-		String subnet = calculateSubnetFromLocalIp(localIp);
-		log.error(subnet);
-		log.error(subnet);
-		if(subnet == null) {
-			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.put("success", false);
-			node.put("message","Failed to obtain VLAN information");
-
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(node);
-		}
-		//request vlan information
-		ObjectNode req =  JsonNodeFactory.instance.objectNode();
-		req.put("public_ip",tvconnect.getPublicIp());
-		req.put("subnet", subnet);
-		String uri = UriComponentsBuilder.fromUriString(PortalEndpointsConstant.GET_VLAN_INFO)
-				.queryParam("public_ip",tvconnect.getPublicIp())
-				.queryParam("subnet",subnet)
-				.build()
-				.toUriString();
-
-		Mono<String> response =  this.defaultWeclientBean.webClient.get().uri(uri)
-				.header("Authorization","Bearer "+getKompAuthToken())
-				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-
-
-		try {
-			String responseJson = response.block();
-			if(responseJson !=null) {
-				var resp = new Gson().fromJson(responseJson,KompVlanDto.class);
-
-				var build = ConnectTvDto.builder().mode(resp.getData().getModel().toLowerCase())
-						.publicIp(resp.getData().getPublicIp()).staIp(tvconnect.getStaIp())
-						.staMac(tvconnect.getStaMac()).vlan(resp.getData().getVlan().getVlanName().replace("v","")).build();
-				//			log.error("body{}"+body);
-				if(resp.getData().getModel().equalsIgnoreCase("gpon")) {
-					pageType = "remote";
-				}else {
-					pageType = "100";
-				}
-
-				String requestBody = "pagetype="+pageType+"&vlan="+resp.getData().getVlan().getVlanName().replace("v","") +"&staMac="+tvconnect.getStaMac();
-				log.error(requestBody+"{req}");
-				Mono<String> responseMono =  this.defaultWeclientBean.webClient.post().uri(PortalEndpointsConstant.WEB_PORTAL_AUTH)
-						.contentType(MediaType.APPLICATION_FORM_URLENCODED) // Set content type to form-urlencoded
-						.bodyValue(requestBody)
-						.header("Authorization","Basic JDJhJDEwJExhQWg1eGhjbzpaMGhLSng1UnZ5bGVHNEhwdkQ3")
-						.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
-
-				try {
-					String connectResponseJson = responseMono.block();
-					if(connectResponseJson !=null) {
-						return new Gson().fromJson(connectResponseJson,Map.class);
-					}
-				}catch(Exception ex) {
-					ObjectNode node = JsonNodeFactory.instance.objectNode();
-					node.put("success",false);
-					node.put("message","Error occured while authenticating device");
-
-					return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
-				}
-
-			}
 
 
 
-		}catch(Exception ex) {
-			ex.printStackTrace();
-			ObjectNode node = JsonNodeFactory.instance.objectNode();
-			node.put("success",false);
-			node.put("message","Error obtaining VLAN information");
 
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(node);
-		}
-
-		return null;
-	}
 
 	public String calculateSubnetFromLocalIp(String localIp) {
 		String[] parts = localIp.split("\\.");
@@ -885,6 +829,20 @@ public class PortalService {
 		}
 		
 		
+	}
+	
+	
+	public Object activateSub(String subID) {
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		String body = "subID="+subID+"&konnecter="+user.getUserId()+"&token="+this.getUserToken(user);
+		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.TRANSACTIONS_BY_ID)
+				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
+		String responseJson = responseMono.block();
+		if(responseJson !=null) {
+			return new Gson().fromJson(responseJson,Map.class);
+		}
+		return null;
 	}
 	
 	

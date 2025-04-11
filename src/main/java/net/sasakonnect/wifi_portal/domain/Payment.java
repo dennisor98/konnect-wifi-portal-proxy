@@ -57,6 +57,9 @@ public class Payment extends BasePortalDomain {
 	    @Column()
 	    private String idUser;
 	    
+	    @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
+	    Boolean activateNow;
+	    
 	    @Lob
 	    @Column(name = "payment_verification_payload")
 	    private String paymentVerificationPayload;

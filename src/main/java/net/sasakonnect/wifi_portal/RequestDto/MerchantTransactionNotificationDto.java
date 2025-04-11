@@ -29,5 +29,7 @@ String transType;
    String konnectTransId;
    String deviceMac;
    String platform;
+   Boolean actNow;
    App app;
+   
 }
