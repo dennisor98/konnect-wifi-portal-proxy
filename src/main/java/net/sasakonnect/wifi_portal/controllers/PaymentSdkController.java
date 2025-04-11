@@ -100,8 +100,7 @@ public class PaymentSdkController {
 
 
 	@ApiOperation(value = "Get Transaction status By Id", notes = "This endpoint gets transaction status by Id")
-//	 @PaymentSdkFilter
-	 @RateLimit(maxRequests = 1000, durationSeconds = 10)
+	@RateLimit(maxRequests = 100000, durationSeconds = 1)
 	@PostMapping("transaction/status/query")
 	public Object getTxStatusById(@Valid @RequestBody PollTxStatusDto req,
  			@RequestHeader(value = "App-Key") 
