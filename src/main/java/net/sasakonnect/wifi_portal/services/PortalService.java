@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -294,8 +295,8 @@ public class PortalService {
 	}
 
 
-
-	public Object addDevice(AddDeviceDto deviceDto) {
+   @Transactional
+	public Object addDevice(AddDeviceDto deviceDto) {		 
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var authAttempt = deviceDto.getAuthAttempt();
 		Map<String,Object> auth = new HashMap<>();
@@ -325,16 +326,19 @@ public class PortalService {
 				
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
 			}
-			
+			 threadExceutorBean.addTask(new Runnable() {
+				 @Override
+		    	 public void run() {
+		    		 log.error("Executing task...");
 			//make a subscription creation request to portal micro service
 			ObjectNode resp =  JsonNodeFactory.instance.objectNode();
 		     resp.put("TransType","Merchant Pay Online");
-		     resp.put("TransID",this.pnalService.generateGiftTransId());
+		     resp.put("TransID",pnalService.generateGiftTransId());
 		     resp.put("TransAmount",vsub.getAmount());
 		     resp.put("TransTime", System.currentTimeMillis());
 		     resp.put("BusinessShortCode","5467232");
 		     resp.put("packageId",vsub.getPackageId());
-		     resp.put("BillRefNumber",this.pnalService.generateGiftTransId());
+		     resp.put("BillRefNumber",pnalService.generateGiftTransId());
 		     resp.put("Mobile",user.getPhone());
 		     resp.put("name",user.getFirstname()+" "+user.getLastname());
 		     resp.put("userId",user.getUserId());
@@ -345,12 +349,11 @@ public class PortalService {
 		     log.error(resp+"{body}");
 		    
 	        
-		     threadExceutorBean.addTask(new Runnable() {
-
-		    	 @Override
-		    	 public void run() {
-		    		 log.error("Executing task...");
+		    	 
 		    		 try {
+		    			 vsub.setIsActive(false);
+		    			 vsubRepository.save(vsub);
+		    			 vsubRepository.flush();
 		    			 Mono<?> respMono = portalWebClient.webClient.post()
 		    					 .uri("https://api.sasakonnect.net/KonnectC2BConfirmationURL")
 		    					 .contentType(MediaType.APPLICATION_JSON)
@@ -366,9 +369,7 @@ public class PortalService {
 		    					
 
 		    			 var response = respMono.block();
-		    			 vsub.setIsActive(false);
-		    			 vsubRepository.save(vsub);
-		    			 vsubRepository.flush();
+		    			
 		    			 log.error("Response: {}", response);
 		    		 }catch(Exception ex) {
 		    			 ex.printStackTrace();
