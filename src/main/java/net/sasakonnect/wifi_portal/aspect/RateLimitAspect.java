@@ -36,7 +36,8 @@ public class RateLimitAspect {
         HttpServletRequest request = attributes.getRequest();
         String ip = request.getRemoteAddr();
         String route = request.getRequestURI();
-        String key = "rate_limit:" + ip + ":" + route; // Redis key (per IP per route)
+        String txId = request.getParameter("txId");
+        String key = "rate_limit:" + ip + ":" + route+"/"+txId; // Redis key (per IP per route)
 
         // Get current request count from Redis
         String countStr = redisTemplate.opsForValue().get(key);
@@ -47,7 +48,7 @@ public class RateLimitAspect {
         }
 
         // Increment count and set expiration if it's the first request
-        redisTemplate.opsForValue().increment(key);
+       redisTemplate.opsForValue().increment(key);
         if (count == 0) {
             redisTemplate.expire(key, rateLimit.durationSeconds(), TimeUnit.SECONDS);
         }

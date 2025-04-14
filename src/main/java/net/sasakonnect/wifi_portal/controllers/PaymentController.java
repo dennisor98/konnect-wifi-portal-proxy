@@ -106,7 +106,7 @@ public class PaymentController {
    }
 //   
    @PostMapping("/result")
-   @RateLimit(maxRequests = 100, durationSeconds = 60)
+//   @RateLimit(maxRequests = 100, durationSeconds = 60)
    public void mpesaInit(@Valid @RequestBody() String result) throws Exception {
 	  log.info("{result}"+result);
 	  try {

@@ -4,6 +4,7 @@ import net.sasakonnect.wifi_portal.domain.Payment;
 import net.sasakonnect.wifi_portal.domain.PaymentMethod;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -134,9 +136,10 @@ public class PaymentService {
 	@Autowired
 	LarkService larkService;
 	private final RabbitTemplate rabbitTemplate;
-
-	public PaymentService(RabbitTemplate rabbitTemplate) {
+	private final RedisTemplate<String, String> redisTemplate;
+	public PaymentService(RabbitTemplate rabbitTemplate,RedisTemplate<String, String> redisTemplate) {
 		this.rabbitTemplate = rabbitTemplate;
+		this.redisTemplate = redisTemplate;
 	}
 
 	@Transactional
@@ -887,19 +890,24 @@ public class PaymentService {
 	public void processMpesaStatusResult(MpesaResultDto result) {
 		var res = result.getResult();
 		if(res !=null && res.getResultCode() == 0 ) {
+			 //process transaction from redis
+			String key = "tx:"+getValueByKey("ReceiptNo", result);
+			String str = this.redisTemplate.opsForValue().get(key);
+			if(str != null) {
+				return;
+			}
+			
+			this.redisTemplate.opsForValue().set("tx:"+getValueByKey("ReceiptNo", result),getValueByKey("ReceiptNo", result),Duration.ofHours(24));
+			
 			String mobile = this.getValueByKey("DebitPartyName", result).split("-")[0].trim();
 			String sanitizedMobile = mobile.length() >= 9 ? "254"+mobile.substring(mobile.length() - 9) : "254"+mobile;
 			Optional<Payment> paymentOpt = this.getPaymentByMobileNumber(sanitizedMobile);
 			Optional<Payment> payOpt =  paymentRepository.findByTxtId(getValueByKey("ReceiptNo", result));
-
+           
 			//ensure there is a payment req && the transId processed is unique
-			if(paymentOpt.isPresent() && payOpt.isEmpty()) {
-//				this.threadExceutorBean.addTask(new Runnable() {
-
-//					@Override
-//					public void run() {
-						// TODO Auto-generated method stub
+			if(paymentOpt.isPresent() && payOpt.isEmpty()) {				
 						var payment = paymentOpt.get();
+						this.redisTemplate.opsForValue().set("ktx:"+payment.getKonnectCheckoutId(),payment.getKonnectCheckoutId(),Duration.ofHours(24));
 						payment.setVerified(true);
 						payment.setIsSuccessful(true);
 						payment.setPaymentPayload(String.valueOf(result));
@@ -915,9 +923,6 @@ public class PaymentService {
 								.build();
 						log.error(merchantNotification+"{}");
 						rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
-//					}
-					
-//				});
 				
 			}else {
 				this.threadExceutorBean.addTask(new Runnable() {
@@ -1002,6 +1007,23 @@ public class PaymentService {
 	
 	
 	public Object getPaymentStatusByTxId(PollTxStatusDto req) {
+		String key = "ktx:"+req.getTxId();
+		
+		String valStr =  this.redisTemplate.opsForValue().get(key);
+		if(valStr == null) {
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",true);
+			res.put("isSuccessful",false);
+			res.put("transactionCode",null);
+			res.put("amount",null);
+			res.put("mobileNumber",null);
+			res.put("userId",null);
+			
+			Map<String,Object> payload  = new HashMap<>();
+			payload.put("result",res);
+			
+			return ResponseEntity.status(HttpStatus.OK).body(payload);
+		}
 		Optional<Payment> paymentOpt =  this.paymentRepository.findByKonnectCheckoutId(req.getTxId());
 		ObjectNode res  = JsonNodeFactory.instance.objectNode();
 		Map<String,Object> payload  = new HashMap<>();
