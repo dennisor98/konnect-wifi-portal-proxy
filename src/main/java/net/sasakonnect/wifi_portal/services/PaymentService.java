@@ -221,7 +221,7 @@ public class PaymentService {
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
 	     resp.put("ResultCode","0");
 	     resp.put("staMac",payment.getDeviceMac());
-	     resp.put("actNow",payment.getActNow());
+	     resp.put("actNow",payment.getActNow()?"true":"false");
 	     resp.put("initiator",payment.getPlatform());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
@@ -276,7 +276,7 @@ public class PaymentService {
 		     resp.put("ResultCode","0");
 		     resp.put("staMac",payment.getDeviceMac());
 		     resp.put("initiator",payment.getPlatform());
-		     resp.put("actNow",payment.getActNow());
+		     resp.put("actNow",payment.getActNow()?"true":"false");
 		     log.error(payment+"{}");
 		     log.error(resp+"{body}");
 		     threadExceutorBean.addTask(new Runnable()  {
@@ -358,7 +358,7 @@ public class PaymentService {
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
 						resp.put("initiator",payment.getPlatform());
-						resp.put("actNow",payment.getActNow());
+						resp.put("actNow",payment.getActNow()?"true":"false");
 						Mono<Void> responseMono = webClient.webClient.post()
 	                            .uri(payment.getApp().getCallbackUrl())
 	                            .contentType(MediaType.APPLICATION_JSON)
@@ -416,7 +416,7 @@ public class PaymentService {
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
 						resp.put("initiator",payment.getPlatform());
-						resp.put("actNow",payment.getActNow());
+						resp.put("actNow",payment.getActNow()?"true":"false");
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -473,7 +473,7 @@ public class PaymentService {
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
 						resp.put("initiator",payment.getPlatform());
-						resp.put("actNow",payment.getActNow());
+						resp.put("actNow",payment.getActNow()?"true":"false");
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
