@@ -221,6 +221,7 @@ public class PaymentService {
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
 	     resp.put("ResultCode","0");
 	     resp.put("staMac",payment.getDeviceMac());
+	     resp.put("actNow",payment.getActNow());
 	     resp.put("initiator",payment.getPlatform());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
@@ -275,6 +276,7 @@ public class PaymentService {
 		     resp.put("ResultCode","0");
 		     resp.put("staMac",payment.getDeviceMac());
 		     resp.put("initiator",payment.getPlatform());
+		     resp.put("actNow",payment.getActNow());
 		     log.error(payment+"{}");
 		     log.error(resp+"{body}");
 		     threadExceutorBean.addTask(new Runnable()  {
@@ -356,6 +358,7 @@ public class PaymentService {
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
 						resp.put("initiator",payment.getPlatform());
+						resp.put("actNow",payment.getActNow());
 						Mono<Void> responseMono = webClient.webClient.post()
 	                            .uri(payment.getApp().getCallbackUrl())
 	                            .contentType(MediaType.APPLICATION_JSON)
@@ -413,6 +416,7 @@ public class PaymentService {
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
 						resp.put("initiator",payment.getPlatform());
+						resp.put("actNow",payment.getActNow());
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -469,6 +473,7 @@ public class PaymentService {
 						resp.put("ResultCode","0");
 						resp.put("staMac",payment.getDeviceMac());
 						resp.put("initiator",payment.getPlatform());
+						resp.put("actNow",payment.getActNow());
 						Mono<Object> respMono = webClient.webClient.post().uri(payment.getApp().getCallbackUrl())
 								.contentType(MediaType.APPLICATION_JSON)
 								.body(BodyInserters.fromValue(resp.toPrettyString()))
@@ -813,9 +818,7 @@ public class PaymentService {
 }
 
 	public Object createPaymentRequest(AppToolKitPayDto req) {
-		App app = null;
-		
-//		var appKey = "f7bc83f430538424b13298e6aa6fb143efd8427454f7f9a3e49e91d90c416b0e";
+		App app = null;		
 		Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(wifiAppKey);
 		if(appOpt.isPresent()) {
 			app = appOpt.get();
@@ -995,13 +998,13 @@ public class PaymentService {
 		if(paymentOpt.isPresent()) {
 			var payment = paymentOpt.get();
 			var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("MpesaReceiptNumber",paymentCallBack))
-				.businessShortCode(payment.getApp().getBusinessShortCode()).mobile(this.getValueByKey("PhoneNumber", paymentCallBack)).platform("super-app")
-				.konnectTransId(payment.getKonnectCheckoutId()).name(null).transAmount(this.getValueByKey("Amount", paymentCallBack))
-				.deviceMac(payment.getDeviceMac()).transId(this.getValueByKey("MpesaReceiptNumber", paymentCallBack)).transTime(this.getValueByKey("TransactionDate", paymentCallBack)).userId(payment.getIdUser()).transType("Merchant Online Pay")
-				.build();
-		this.rabitMqSenderService.sendTransactionNotificationCallBackToMerchant(merchantNotification);
+					.businessShortCode(payment.getApp().getBusinessShortCode()).mobile(this.getValueByKey("PhoneNumber", paymentCallBack)).platform("super-app")
+					.konnectTransId(payment.getKonnectCheckoutId()).name(null).transAmount(this.getValueByKey("Amount", paymentCallBack))
+					.deviceMac(payment.getDeviceMac()).transId(this.getValueByKey("MpesaReceiptNumber", paymentCallBack)).transTime(this.getValueByKey("TransactionDate", paymentCallBack)).userId(payment.getIdUser()).transType("Merchant Online Pay")
+					.build();
+			this.rabitMqSenderService.sendTransactionNotificationCallBackToMerchant(merchantNotification);
 		}
-		
+
 	}
 	
 	
