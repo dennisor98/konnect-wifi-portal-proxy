@@ -221,7 +221,7 @@ public class PaymentService {
 	     resp.put("KonnectTransID",payment.getKonnectTransId());
 	     resp.put("ResultCode","0");
 	     resp.put("staMac",payment.getDeviceMac());
-	     resp.put("actNow",payment.getActNow()?"true":"false");
+	     resp.put("actNow",payment.getActNow() !=null && payment.getActNow()?"true":"false");
 	     resp.put("initiator",payment.getPlatform());
 	     log.error(payment+"{}");
 	     log.error(resp+"{body}");
