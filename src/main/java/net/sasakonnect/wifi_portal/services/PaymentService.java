@@ -919,7 +919,7 @@ public class PaymentService {
 						payment.setTxtId(getValueByKey("ReceiptNo", result));
 						paymentRepository.save(payment);
 						log.error("{payment}"+payment);
-						var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result)).actNow(payment.getActivateNow())
+						var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result)).actNow(payment.getActivateNow() == null? true:payment.getActivateNow())
 								.businessShortCode(getValueByKey("CreditPartyName", result).split("-")[0]).mobile(getValueByKey("DebitPartyName", result).split("-")[0]).platform(payment.getSource())
 								.konnectTransId(payment.getKonnectCheckoutId()).name(getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(getValueByKey("Amount", result))
 								.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(getValueByKey("ReceiptNo", result)).transTime(getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(getValueByKey("ReasonType", result))
