@@ -13,6 +13,12 @@ build:
     - ssh wifi-backend  "mkdir -p  /home/DevOps/application/wifi-prod-node2/ && cd /home/DevOps/application/wifi-prod-node2/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
     - ssh wifi-backend  "mkdir -p  /home/DevOps/application/wifi-prod-node3/ && cd /home/DevOps/application/wifi-prod-node3/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
 
+    - ssh wifi-backend-node2  "mkdir -p  /home/DevOps/application/wifi-portal-node1/ && cd /home/DevOps/application/wifi-portal-node1/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-backend-node2  "mkdir -p  /home/DevOps/application/wifi-portal-node2/ && cd /home/DevOps/application/wifi-portal-node2/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+    - ssh wifi-backend-node2  "mkdir -p  /home/DevOps/application/wifi-portal-node3/ && cd /home/DevOps/application/wifi-portal-node3/ && chmod +x ./gradlew && ./gradlew clean && ./gradlew build -x test"
+
+
+
     - echo "Source code built on remote server"
   only:
     - main
@@ -30,6 +36,12 @@ move:
     - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-prod/
     - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-prod-node2/
     - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend:/home/DevOps/application/wifi-prod-node3/ 
+
+    - ssh wifi-backend-node2 "rm -rf /home/DevOps/application/wifi-portal-node1/* /home/DevOps/application/wifi-portal-node2/* /home/DevOps/application/wifi-portal-node3/*"
+
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend-node2:/home/DevOps/application/wifi-portal-node1/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend-node2:/home/DevOps/application/wifi-portal-node2/
+    - scp -o StrictHostKeyChecking=no   -r ./*  wifi-backend-node2:/home/DevOps/application/wifi-portal-node3/
 
 
 
