@@ -115,7 +115,6 @@ public class PaymentSdkController {
 			example = "1d8d6cf2c65c0f2875e6b79f675bd1e5ad3b90f9b4e18f649134d8f5c8f94e7d") 
 			String appSecret
 			) {
-		log.error("transQuery"+req);
 
 		return this.paymentService.getPaymentStatusByTxId(req);
 	}

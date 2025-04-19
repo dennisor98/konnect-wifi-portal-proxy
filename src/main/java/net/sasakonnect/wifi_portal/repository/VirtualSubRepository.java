@@ -15,5 +15,6 @@ public interface VirtualSubRepository extends JpaRepository<VirtualSub,String>{
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<VirtualSub> findBySubId(String subId);
     Optional<VirtualSub> findFirstByUserAndIsActiveTrue(User user);
+    Optional<VirtualSub> findFirstByUserAndAmount(User user,String amount);
 
 }

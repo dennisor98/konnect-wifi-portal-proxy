@@ -836,8 +836,9 @@ public class PortalService {
 	public Object activateSub(String subID) {
 		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		String body = "subID="+subID+"&konnecter="+user.getUserId()+"&token="+this.getUserToken(user);
+		log.error("{body} "+body);
 		Mono<String> responseMono =  this.portalWebClient.webClient.post().uri(PortalEndpointsConstant.ACTIVATE_SUB)
-				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(body))
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED).body(BodyInserters.fromValue(body))
 				.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class);
 		String responseJson = responseMono.block();
 		if(responseJson !=null) {

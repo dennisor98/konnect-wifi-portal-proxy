@@ -183,16 +183,29 @@ public class PnalService {
 						return 1;
 					}
 					
-					var vsubBuild =  VirtualSub.builder()
-							.amount(vsubs.getAmount())
-							.isActive(true)
-							.name("GIFT")
-							.packageId(paymentService.getPackageIdByCost(vsubs.getAmount()))
-							.subId(generateUniqueSubId())
-							.user(userOpt.get())
-							.build();
+					Optional<VirtualSub> vsubOpt =  vsubRepository.findFirstByUserAndAmount(userOpt.get(),vsubs.getAmount());
 					
-					vsubList.add(vsubBuild);
+					if(vsubOpt.isPresent()) {
+						Map<String,Object> error =  new HashMap<>();
+						error.put("contact","+254"+mobile);
+						error.put("reason","already gifted");
+						failed.add(error);
+						return 1;
+					}
+					if(vsubOpt.isEmpty()) {
+						var vsubBuild =  VirtualSub.builder()
+								.amount(vsubs.getAmount())
+								.isActive(true)
+								.name("GIFT")
+								.packageId(paymentService.getPackageIdByCost(vsubs.getAmount()))
+								.subId(generateUniqueSubId())
+								.user(userOpt.get())
+								.build();
+
+						vsubList.add(vsubBuild);
+					}
+					
+					
 					
 					return vsubList;
 				}).collect(Collectors.toList());
