@@ -223,8 +223,6 @@ public class PaymentService {
 	     resp.put("staMac",payment.getDeviceMac());
 	     resp.put("actNow",payment.getActNow() !=null && payment.getActNow()?"true":"false");
 	     resp.put("initiator",payment.getPlatform());
-	     log.error(payment+"{}");
-	     log.error(resp+"{body}");
 	     
 	     threadExceutorBean.addTask(new Runnable() {
 
@@ -255,7 +253,6 @@ public class PaymentService {
 	@Transactional
 	public void handleTransactionConfirmationCallBackNotification(MerchantTransactionNotificationDto payment,Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
 		try {
-			log.error("notifier called.."+payment);
 			String transAmount = payment.getTransAmount();
 			if (transAmount.contains(".")) {
 				transAmount = transAmount.split("\\.")[0];
@@ -277,8 +274,7 @@ public class PaymentService {
 		     resp.put("staMac",payment.getDeviceMac());
 		     resp.put("initiator",payment.getPlatform());
 		     resp.put("actNow",payment.getActNow() !=null && payment.getActNow()?"true":"false");
-		     log.error(payment+"{}");
-		     log.error(resp+"{body}");
+		   
 		     threadExceutorBean.addTask(new Runnable()  {
 				 @Override
 				public void run(){
@@ -290,7 +286,6 @@ public class PaymentService {
 
 		    	 @Override
 		    	 public void run() {
-		    		 log.error("Executing task...");
 		    		 try {
 		    			 Mono<?> respMono = webClient.webClient.post()
 		    					 .uri(payment.getApp().getCallbackUrl())
@@ -301,32 +296,25 @@ public class PaymentService {
 		    						 HttpStatusCode statusCode = clientResponse.statusCode();
 
 		    						 if (statusCode.value() != 200) {
-		    							 log.error("Request failed with status: {}", statusCode);
+		    							 System.out.println("Request failed with status: {} "+ statusCode);
 		    							 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
 		    						 }
 
 		    						 return clientResponse.bodyToMono(String.class);
 		    					 })
 		    					 .doOnError(error -> {
-		    						 log.error("Error occurred while making request: {}", error.getMessage(), error);
 		    						 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
 		    					 });
 
 		    			 var response = respMono.block();
-		    			 log.error("Response: {}", response);
 		    		 } catch (Exception e) {
-		    			 log.error("Unexpected error during request execution: {}", e.getMessage(), e);
+		    			 System.out.println("Unexpected error during request execution: {} "+ e.getMessage());
 		    			 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
 		    		 }
 		    	 }});
-		     channel.basicAck(deliveryTag, false);
+//		     channel.basicAck(deliveryTag, false);
 		}catch(Exception ex) {
-			try {
-				channel.basicReject(deliveryTag, false);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 		}
 	     
 
@@ -373,14 +361,7 @@ public class PaymentService {
 	                            });
 						responseMono.block();	
 						//acknowledge and don't requeue
-						channel.basicAck(deliveryTag, false);
 					} catch (Exception e) {
-						try {
-							channel.basicReject(deliveryTag, false);
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
 						e.printStackTrace();
 					} finally {
 						executor.shutdown();
@@ -429,17 +410,9 @@ public class PaymentService {
 	                                return clientResponse.bodyToMono(Void.class);
 	                            });
 						respMono.block();
-						channel.basicAck(deliveryTag, false);
 					} catch (Exception e) {
 						e.printStackTrace();
-						try {
-							channel.basicReject(deliveryTag, false);
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-					} finally {
-						executor.shutdown();
+			
 					}
 				}, 10, TimeUnit.SECONDS);
 			}
@@ -480,16 +453,8 @@ public class PaymentService {
 								.accept(MediaType.APPLICATION_JSON).retrieve()
 								.bodyToMono(Object.class);
 						respMono.block();	
-						channel.basicAck(deliveryTag,false);
 					} catch (Exception e) {
-						try {
-							
-							//reject and don't requeue
-							channel.basicReject(deliveryTag,false);
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
+						
 						e.printStackTrace();
 					} finally {
 						executor.shutdown();
@@ -512,14 +477,11 @@ public class PaymentService {
 			@Override
 			public void run() {
 				try {
-
-					log.error("THE COUNT " + count);
-					log.info("Start Polling this" + paymentRequest);
 					Thread.sleep(20000);
 					MpesaResponse results = getTxStatusByCheckoutRequestId(paymentRequest.getExternalCheckoutId());
 					saveOrUpdatePaymentMessage(results.toString(), paymentRequest.getKonnectCheckoutID());
 					// channel.basicAck(tag, false);
-					log.info("Polling results" + results);
+					System.out.println("Polling results" + results);
 
 				} catch (Exception e) {
 
@@ -565,7 +527,6 @@ public class PaymentService {
           }
           var pkg = packageOpt.get();
 			var payReq = PaymentRequest.builder().phoneNumber("254"+mobile).app(app).appKey(appKey).staMac(stk.getStaMac()).amount(pkg.getCost()).user(user).build();
-			log.info("{payReq}"+payReq);
 
 			return this.rabitMqSenderService.sendPaymentRequest(payReq);
 
@@ -600,7 +561,6 @@ public class PaymentService {
 		body.put("Password", this.authService.getMpesaMerchantPassword(timestamp));
 		body.put("Timestamp", timestamp);
 		body.put("CheckoutRequestID", checkoutRequestId);
-		log.info("body" + body.toPrettyString());
 
 		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.TX_QUERY)
 				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
@@ -657,7 +617,6 @@ public class PaymentService {
 		req.put("CallBackURL", mpesaCallBackUrl);
 		req.put("AccountReference", stk.getApp().getName());
 		req.put("TransactionDesc", stk.getApp().getName() + " : (" + mobile + ")");
-		log.error(req + "{req}");
 		Mono<String> responseMono = this.mpesaClient.webClient.post().uri(MpesaEndpointsConstants.STK_PUSH)
 				.header("Authorization", "Bearer " + this.authService.getMpesaAccessToken())
 				.contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(req))
@@ -665,7 +624,7 @@ public class PaymentService {
 
 		try {
 			String responseJson = responseMono.block();
-			log.error("response" + responseJson);
+			System.out.println("response" + responseJson);
 			if (responseJson != null) {
 
 				// Deserialize JSON into MpesaResponse object
@@ -757,16 +716,15 @@ public class PaymentService {
 			String json =  responseMono.block();
 			System.out.println("{json}"+json);
 			
-			 channel.basicAck(deliveryTag, false);
 		}catch(Exception ex) {
-			channel.basicReject(deliveryTag,true);
+			ex.printStackTrace();
 		}
 
 	}
 
 	
 	public Object createMerchantPaymentRequest(ToolkitPayDto req) {
-		log.error("payload",req);
+		System.out.println("payload "+req);
 		App app = null;
 		if(req.getAppKey() !=null) {
 			Optional<App> appOpt =  this.appRepository.findFirstByAppKeyAndAppSecret(req.getAppKey());
@@ -787,7 +745,6 @@ public class PaymentService {
 		String mobile = "254"+phone;
 		User user = userOpt.isPresent() ? userOpt.get() : null;
 		var payment_checkoutId =AdvancedUniqueKeyGenerator.generateUniqueKey().toUpperCase();
-		log.error("payload",req.getAuthAttempt());
 		var payment = Payment.builder().app(app).konnectCheckoutId(payment_checkoutId).idUser(req.getUserId()).user(user).isSuccessful(false).verified(false).source(app.getName()).activateNow(req.getActNow())
 				.amount(String.valueOf(req.getAmount())).mobileNumber(mobile).deviceMac(req.getAuthAttempt() !=null ? req.getAuthAttempt().getStaMac() : null).build();
 		this.paymentRepository.save(payment);
@@ -918,13 +875,13 @@ public class PaymentService {
 						payment.setAmount(getValueByKey("Amount", result));
 						payment.setTxtId(getValueByKey("ReceiptNo", result));
 						paymentRepository.save(payment);
-						log.error("{payment}"+payment);
+						System.out.println("{payment}"+payment);
 						var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("ReceiptNo",result)).actNow(payment.getActivateNow() == null? true:payment.getActivateNow())
 								.businessShortCode(getValueByKey("CreditPartyName", result).split("-")[0]).mobile(getValueByKey("DebitPartyName", result).split("-")[0]).platform(payment.getSource())
 								.konnectTransId(payment.getKonnectCheckoutId()).name(getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(getValueByKey("Amount", result))
 								.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(getValueByKey("ReceiptNo", result)).transTime(getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(getValueByKey("ReasonType", result))
 								.build();
-						log.error(merchantNotification+"{}");
+						System.out.println(merchantNotification+"{}");
 						rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 				
 			}else {
@@ -943,7 +900,6 @@ public class PaymentService {
 										.build();
 								paymentRepository.save(payment);
 								paymentRepository.flush();
-								log.error("transaction saved");
 								
 							String larkMessage = 
 									"<at id=all></at> \n"+
@@ -958,7 +914,6 @@ public class PaymentService {
 							larkService.sendPaymentNotification(larkMessage);
 							}
 							
-							log.error("payment exists");
 
 						}catch(Exception ex) {
 							ex.printStackTrace();
@@ -994,7 +949,7 @@ public class PaymentService {
 	public void processMpesaCallBack(StkCallbackResponseDTO paymentCallBack) {
 		var stkCall = paymentCallBack.getBody().getStkCallback();
 		Optional<Payment> paymentOpt = this.paymentRepository.findByTxtIdIgnoreCase(stkCall.getCheckoutRequestID());
-		log.error("{payment} "+paymentOpt);
+		System.out.println("{payment} "+paymentOpt);
 		if(paymentOpt.isPresent()) {
 			var payment = paymentOpt.get();
 			var merchantNotification = MerchantTransactionNotificationDto.builder().app(payment.getApp()).billRefNumber(getValueByKey("MpesaReceiptNumber",paymentCallBack))
@@ -1094,9 +1049,6 @@ public class PaymentService {
 	    map.put("transID", notification.getTransId());
 
 	    String url = "https://gw.sasakonnect.net/konnect-water/api/v1/pkgpurchase-callback";
-
-	    log.error("Sending request to URL: {}", url);
-	    log.error("Request Payload: {}", map);
 	    try {
 	        Mono<String> responseMono = this.webClient.webClient.post()
 	                .uri(url)
@@ -1105,32 +1057,27 @@ public class PaymentService {
 	                .accept(MediaType.APPLICATION_JSON)
 	                .retrieve()
 	                .bodyToMono(String.class)
-	                .doOnSuccess(response -> log.info("Response: {}", response))
-	                .doOnError(error -> log.error("Request failed", error));
+	                .doOnSuccess(response -> System.out.println("Response: {} "+ response))
+	                .doOnError(error -> System.out.println("Request failed "+ error));
 
 	        String jsonResponse = responseMono.block();
-	        log.info("Final Response: {}", jsonResponse);
 	    } catch (WebClientResponseException ex) {
-	        log.error("HTTP Status: {} | Response: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+	    	ex.printStackTrace();
 	    } catch (Exception ex) {
-	        log.error("Unexpected error", ex);
+	    	ex.printStackTrace();
 	    }
 
 	}
 	
 	
 	public Object getPayments(Pageable pageable,String filter) {
-		log.error("filter "+filter);
 		Page<Payment> paymentList;
 		if(filter.equalsIgnoreCase("all")) {
-			log.error("all");	
 			paymentList = this.paymentRepository.findAll(pageable);
 		}
 		else if(filter !=null && filter.equalsIgnoreCase("verified")) {
-			log.error("verified");	
 			paymentList = this.paymentRepository.findByVerifiedAndIsSuccessful(true,true,pageable);
 		}else {
-			log.error("unverified");	
 			paymentList = this.paymentRepository.findByVerifiedAndIsSuccessful(false,true,pageable);
 		}
 			

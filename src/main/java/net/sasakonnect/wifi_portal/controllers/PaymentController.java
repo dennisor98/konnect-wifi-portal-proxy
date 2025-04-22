@@ -68,7 +68,7 @@ public class PaymentController {
 	
 	@PostMapping(value = "/confirm", produces = "application/json")
 	public Object paymentConfirmationCallBack(@RequestBody(required = false) MpesaPaymentValidationDto requestBody) {
-		log.info("{request}"+ requestBody);
+		System.out.println("{request}"+ requestBody);
 		// this.paymentService.mpesacallBackUrl(requestBody);
          ObjectNode response = JsonNodeFactory.instance.objectNode();
 		response.put("ResultCode", "0");
@@ -79,10 +79,10 @@ public class PaymentController {
 	
 	@PostMapping(value = "/callbackResolver", produces = "application/json")
 	public Object validationCallBackResolver(@RequestBody(required = false) String requestBody) {
-		log.error("{stkCallBack}"+requestBody);
+		System.out.println("{stkCallBack}"+requestBody);
 
 		var callBackPayLoad = new Gson().fromJson(requestBody,StkCallbackResponseDTO.class);
-		log.error("{gson}"+callBackPayLoad);
+		System.out.println("{gson}"+callBackPayLoad);
 		var stkCall = callBackPayLoad.getBody().getStkCallback();
 		String checkoutReqId = stkCall.getCheckoutRequestID();
 		this.paymentService.updatePaymentWithCheckoutId(checkoutReqId,requestBody);
@@ -111,10 +111,9 @@ public class PaymentController {
 	  log.info("{result}"+result);
 	  try {
 		  var payment = new Gson().fromJson(result,MpesaResultDto.class);
-		  log.info("{result}"+payment);
 		   this.paymentService.processMpesaStatusResult(payment);
 	  }catch(Exception ex) {
-		  log.error("failed to serialize");
+		  System.out.println("failed to serialize");
 		  ex.printStackTrace();
 	  }
 	  

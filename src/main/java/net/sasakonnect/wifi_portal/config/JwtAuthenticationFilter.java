@@ -49,7 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter implements Han
 		while (headerNames.hasMoreElements()) {
 			String headerName = headerNames.nextElement();
 			String headerValue = request.getHeader(headerName);
-			log.warn("Header Name: {}, Header Value: {}", headerName, headerValue);
 		}
 		
 	  String device_header = request.getHeader("user-agent");
