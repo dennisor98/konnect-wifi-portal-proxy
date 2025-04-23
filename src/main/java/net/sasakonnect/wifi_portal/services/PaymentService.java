@@ -274,7 +274,9 @@ public class PaymentService {
 		     resp.put("staMac",payment.getDeviceMac());
 		     resp.put("initiator",payment.getPlatform());
 		     resp.put("actNow",payment.getActNow() !=null && payment.getActNow()?"true":"false");
-		   
+
+		     System.out.println(resp.toPrettyString());
+		     
 		     threadExceutorBean.addTask(new Runnable()  {
 				 @Override
 				public void run(){
@@ -302,8 +304,13 @@ public class PaymentService {
 
 		    						 return clientResponse.bodyToMono(String.class);
 		    					 })
+		    					 .doOnSuccess(success -> {
+		    						 
+		    						 System.out.println("success "+ success);
+		    					 })
 		    					 .doOnError(error -> {
 		    						 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
+		    						
 		    					 });
 
 		    			 var response = respMono.block();
