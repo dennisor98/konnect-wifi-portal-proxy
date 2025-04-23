@@ -17,13 +17,6 @@ public class RabbitConfig {
         return new Jackson2JsonMessageConverter();
     }
 
-//    @Bean
-//    RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, Jackson2JsonMessageConverter converter) {
-//        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-//        rabbitTemplate.setMessageConverter(converter);
-//        return rabbitTemplate;
-//    }
-
     @Bean(name="paymentRequestQueue")
     Queue paymentRequestQueue() {
         return new Queue("paymentRequestQueue", true);

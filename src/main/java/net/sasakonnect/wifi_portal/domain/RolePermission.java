@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 @Data
 public class RolePermission extends BasePortalDomain implements Serializable {	
     private static final long serialVersionUID = 317206204424801691L;
-
 	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;

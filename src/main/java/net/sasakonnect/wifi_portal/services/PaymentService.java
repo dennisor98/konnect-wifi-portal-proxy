@@ -790,6 +790,7 @@ public class PaymentService {
 				.konnectCheckoutId(payment_checkoutId)
 				.user(user).mobileNumber(mobile)
 				.isSuccessful(false).verified(false)
+				.activateNow(req.getActNow())
 				.source("super-app").activateNow(req.getActNow())
 				.build();
 		
