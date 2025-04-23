@@ -224,6 +224,8 @@ public class PaymentService {
 	     resp.put("actNow",payment.getActNow() !=null && payment.getActNow()?"true":"false");
 	     resp.put("initiator",payment.getPlatform());
 	     
+	     
+	     System.out.println("{callback body} "+resp);
 	     threadExceutorBean.addTask(new Runnable() {
 
 			@Override
@@ -238,7 +240,9 @@ public class PaymentService {
                             	rabbitSendService.addToFailedPaymentNotificationQueue(payment,"0");
                             }
                             return clientResponse.bodyToMono(Void.class);
-                        });
+                        })
+						.doOnSuccess(response -> System.out.println("{response} "+response))
+						.doOnError(error -> System.out.println("{error} "+error));
 				respMono.block();	
 				
 			     notifyKonnectWater(payment);
@@ -277,12 +281,7 @@ public class PaymentService {
 
 		     System.out.println(resp.toPrettyString());
 		     
-		     threadExceutorBean.addTask(new Runnable()  {
-				 @Override
-				public void run(){
-					 notifyKonnectWater(payment);
-				 }
-			 });
+		     
 	        
 		     threadExceutorBean.addTask(new Runnable() {
 
@@ -319,6 +318,7 @@ public class PaymentService {
 		    			 rabbitSendService.addToFailedPaymentNotificationQueue(payment, "0");
 		    		 }
 		    	 }});
+		     notifyKonnectWater(payment);
 //		     channel.basicAck(deliveryTag, false);
 		}catch(Exception ex) {
 			
@@ -889,7 +889,6 @@ public class PaymentService {
 								.konnectTransId(payment.getKonnectCheckoutId()).name(getValueByKey("DebitPartyName", result).split("-")[1]).transAmount(getValueByKey("Amount", result))
 								.app(payment.getApp()).deviceMac(payment.getDeviceMac()).transId(getValueByKey("ReceiptNo", result)).transTime(getValueByKey("InitiatedTime", result)).userId(payment.getIdUser()).transType(getValueByKey("ReasonType", result))
 								.build();
-						System.out.println(merchantNotification+"{}");
 						rabitMqSenderService.sendTransactionNotificationToMerchant(merchantNotification);
 				
 			}else {
