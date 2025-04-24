@@ -22,7 +22,7 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     
     Optional<Payment> findByTxtId(String checkoutId);
     
-    @Query("SELECT p FROM Payment p JOIN FETCH p.app WHERE p.mobileNumber = :mobileNumber AND p.verified = false AND DATE(p.createdAt) = CURRENT_DATE ORDER BY p.createdAt DESC LIMIT 1")
+    @Query("SELECT p FROM Payment p JOIN FETCH p.app WHERE p.mobileNumber = :mobileNumber AND p.verified = false AND p.isSuccessful = false AND DATE(p.createdAt) = CURRENT_DATE() ORDER BY p.createdAt DESC LIMIT 1")
     Optional<Payment> findxByMobileNumber(@Param("mobileNumber") String mobileNumber);
     
     

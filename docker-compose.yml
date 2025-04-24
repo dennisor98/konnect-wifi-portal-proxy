@@ -1,0 +1,38 @@
+version: "3.3"
+
+services:
+  mysql-dev1:
+    image: mysql:8.0  # use image instead of build unless you have a custom Dockerfile
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-data1:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  mysql-dev2:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-data2:/var/lib/mysql
+    ports:
+      - "3307:3306"
+
+  mysql-dev3:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-data3:/var/lib/mysql
+    ports:
+      - "3308:3306"
+
+volumes:
+  db-data1:
+  db-data2:
+  db-data3:
+
