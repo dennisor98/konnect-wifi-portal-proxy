@@ -264,6 +264,7 @@ public class PnalService {
 		        map.put("amount", sub.getAmount());
 		        map.put("active", sub.getIsActive() ? 1.0 : 0.0);
 		        map.put("uid", sub.getSubId());
+		        map.put("radiusDurationInSeconds",30L * 24 * 60 * 60);
 		        map.put("devices",""); 
 		       
 

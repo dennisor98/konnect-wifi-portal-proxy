@@ -177,7 +177,7 @@ public class PortalService {
 		List<InternetPackages> packagesList = this.packageRepository.findAll(Sort.by(Sort.Direction.ASC,"cost"));
 		var packages = packagesList.stream()
 				.filter(p -> {
-			        if (p.getIsGift() && vsubLists.isEmpty()) {
+			        if (p.getIsGift()  && vsubLists.isEmpty()) {
 			            return false;
 			        }
 			        return true;
@@ -616,6 +616,17 @@ public class PortalService {
 		}
 
 
+		return null;
+	}
+	
+	public Integer getNoOfDevicesByAmount(String amount) {
+		Optional<InternetPackages> pkgOpt = this.packageRepository.findByCost(Integer.valueOf(amount));
+		
+		if(pkgOpt.isPresent()) {
+			var pkg = pkgOpt.get();
+			return pkg.getNoOfUsers();
+		}
+		
 		return null;
 	}
 	
