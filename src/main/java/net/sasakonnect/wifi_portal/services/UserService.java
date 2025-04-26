@@ -863,6 +863,37 @@ public class UserService  implements UserDetailsService{
 		return ResponseEntity.status(HttpStatus.OK).body(res);
 	}
 	
+	public Object getAppVersions() {
+		try {
+			List<String> versions =  this.userRepository.findAppVersions();
+			
+			List<Object[]> versionDist  = this.userRepository.findAppVersionAnalysis();
+			var dist = versionDist.stream()
+					.map((d)->{
+						Map<String,Object> map = new HashMap<>();
+						map.put("version",d[0] !=null?d[0] : "Initial Version");
+						map.put("count",d[1]);
+						
+						return map;
+					}).collect(Collectors.toList());
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",true);
+			res.put("message","Request success");
+			res.put("versions",versions);
+			res.put("dist",dist);
+			
+			return ResponseEntity.status(HttpStatus.OK).body(res);
+		}catch(Exception ex) {
+			Map<String,Object> res = new HashMap<>();
+			res.put("success",false);
+			res.put("message","Oops! Server error!");
+			
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+		}
+		
+		
+	}
+	
 	public Object getAppDownloadsTrend() {
 		try {
 			List<Object[]> userTrendList = this.userRepository.findUserCountsByDate();

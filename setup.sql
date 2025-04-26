@@ -1,4 +1,5 @@
-CREATE USER 'clusteradmin'@'%' IDENTIFIED BY 'cladmin';
+CREATE USER IF NOT EXISTS 'clusteradmin'@'%' IDENTIFIED BY 'password';
+CREATE USER IF NOT EXISTS 'clusteradmin'@'localhost' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES ON *.* TO 'clusteradmin'@'%' WITH GRANT OPTION;
--- Optional: Only include reset master if replication is needed
-RESET MASTER;
+GRANT ALL PRIVILEGES ON *.* TO 'clusteradmin'@'localhost' WITH GRANT OPTION;
+

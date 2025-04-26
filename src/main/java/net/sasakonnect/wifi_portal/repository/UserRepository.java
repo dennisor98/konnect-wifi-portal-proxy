@@ -25,4 +25,14 @@ public interface UserRepository extends JpaRepository<User,String>{
   nativeQuery = true)
 List<Object[]> findUserCountsByDate();
 
+@Query("SELECT SUBSTRING(u.appVersion, 1, LOCATE('+', u.appVersion) - 1)"
+		+ " FROM User u WHERE u.appVersion IS NOT NULL "
+		+ "GROUP BY SUBSTRING(u.appVersion, 1, LOCATE('+', u.appVersion) - 1)"
+		)
+List<String> findAppVersions();
+
+@Query("SELECT SUBSTRING(u.appVersion, 1, LOCATE('+', u.appVersion) - 1),COUNT(u) FROM User u GROUP BY "
+		+ "SUBSTRING(u.appVersion, 1, LOCATE('+', u.appVersion) - 1)")
+List<Object[]> findAppVersionAnalysis();
+
 }

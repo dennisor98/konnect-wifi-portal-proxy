@@ -1,44 +1,51 @@
-version: "3.3"
+version: '3.8'
+
+networks:
+  mysqlnet:
+    driver: bridge
 
 services:
-  mysql-dev1:
+  mysql-node1:
     image: mysql:8.0
-    container_name: mysql-dev1
-    command: --default-authentication-plugin=mysql_native_password
+    container_name: mysql-node1
     environment:
-      MYSQL_ROOT_PASSWORD: password
-    ports:
-      - "3306:3306"
-    volumes:
-      - db-data1:/var/lib/mysql
-      - ./setup.sql:/docker-entrypoint-initdb.d/setup.sql
-
-  mysql-dev2:
-    image: mysql:8.0
-    container_name: mysql-dev2
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpass
     ports:
       - "3307:3306"
     volumes:
-      - db-data2:/var/lib/mysql
+      - db-data1:/var/lib/mysql
       - ./setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    networks:
+      - mysqlnet
 
-  mysql-dev3:
+  mysql-node2:
     image: mysql:8.0
-    container_name: mysql-dev3
-    command: --default-authentication-plugin=mysql_native_password
+    container_name: mysql-node2
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpass
     ports:
       - "3308:3306"
     volumes:
+      - db-data2:/var/lib/mysql
+    networks:
+      - mysqlnet
+  mysql-node3:
+    image: mysql:8.0
+    container_name: mysql-node3
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3309:3306"
+    volumes:
       - db-data3:/var/lib/mysql
-      - ./setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    networks:
+      - mysqlnet
 
 volumes:
   db-data1:
   db-data2:
   db-data3:
+
+networks:
+  mysqlnet:
 

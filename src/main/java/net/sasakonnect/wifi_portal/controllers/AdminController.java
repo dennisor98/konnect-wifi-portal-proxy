@@ -187,6 +187,12 @@ public class AdminController {
 	}
 	
 	
+	@HasPermission(GlobalPermissionsConstants.CanGetUsers.PERMISSION)
+	@GetMapping("/app/versions")
+	public Object searchUserByPhone() {
+		return this.userService.getAppVersions();
+	}
+	
 	
 	
 	@HasPermission(GlobalPermissionsConstants.CanAssignRole.PERMISSION)
